@@ -1,0 +1,13 @@
+{
+  "name": "ops-cli",
+  "version": "0.1.0",
+  "bin": {
+    "ops": "./ops.js"
+  },
+  "dependencies": {
+    "dotenv": "^4.0.0",
+    "fs-extra": "^2.0.0",
+    "yargs": "^7.1.0"
+  },
+  "private": true
+}
