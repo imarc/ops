@@ -8,14 +8,13 @@ module.exports = {
     isDarwin: ['darwin'].includes(process.platform),
     isWindows: ['win32'].includes(process.platform),
 
-    shiftArgs(yargs) {
-        let index = process.argv.findIndex(
+    shiftCommandFromArgs(yargs) {
+        let index = yargs.argv.command.findIndex(
             x => x === yargs.getContext().commands[0]
         );
 
-        return process.argv.slice(index + 1);
+        return yargs.argv.command.slice(index + 1);
     },
-
 
     dockerRun(args, optional) {
         optional = optional || [];

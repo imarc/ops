@@ -1,52 +1,99 @@
 #!/usr/bin/env node
 'use strict'
 
+var fs = require('fs');
 var yargs = require('yargs');
+var stringArgv = require('string-argv');
 var helpers = require('./helpers');
+var commands = require('./commands');
+var commandQueue = [];
 
-const NODE_IMAGE="node:8.7.0"
-const COMPOSER_IMAGE="composer:1.1"
+var opsfile = {
+    scripts: {}
+};
 
-let argv = yargs
-    .usage("$0 command")
+// load local opsfile
 
-    .command(
-        'npm',
-        `run npm (${NODE_IMAGE})`,
-        (yargs) => {
-            let args = helpers.shiftArgs(yargs);
+if (fs.existsSync(`${process.cwd()}/opsfile.js`)) {
+    opsfile = Object.assign(opsfile, require(`${process.cwd()}/opsfile.js`));
+}
 
-            helpers.dockerRunTransient([
-                '-ti',
-                '-v', `${process.cwd()}:/usr/src/app`,
-                '-w', '/usr/src/app',
-                '--entrypoint', 'npm',
-                NODE_IMAGE,
-                ...args
-            ]);
+// set constants
 
-            process.exit();
-        }
-    )
+const WILDCARD_ARG   = "$@"
 
-    .command(
-        'composer',
-        `run composer (${COMPOSER_IMAGE})`,
-        () => {
-            let args = helpers.shiftArgs(yargs);
+// build commands
 
-            helpers.dockerRunTransient([
-                '-ti',
-                '-v', `${process.cwd()}:/usr/src/app`,
-                '-w', '/usr/src/app',
-                COMPOSER_IMAGE,
-                ...args
-            ]);
+var app = yargs
+    .usage("$0 command");
 
-            process.exit();
-        }
-    )
-    .help()
-    .argv;
+app.command(
+    ['npm', 'n'],
+    `run npm`,
+    function(yargs) {
+        yargs.help(false);
+        let args = helpers.shiftCommandFromArgs(yargs);
+        commands.npm(args);
+    }
+);
 
-yargs.showHelp();
+app.command(
+    ['composer', 'c'],
+    `run composer`,
+    function(yargs) {
+        yargs.help(false);
+        let args = helpers.shiftCommandFromArgs(yargs);
+        commands.composer(args);
+    }
+);
+
+app.command(
+    ['docker-compose', 'dc'],
+    `run docker-compose`,
+    function(yargs) {
+        yargs.help(false);
+        let args = helpers.shiftCommandFromArgs(yargs);
+        commands.dockerCompose(args);
+    }
+);
+
+// build dynamic opsfile commands
+
+Object.keys(opsfile.commands).forEach((name) => {
+    app.command(name, '', (yargs) => {
+        yargs.help(false);
+
+        let args = helpers.shiftCommandFromArgs(yargs);
+
+        let commands = opsfile.commands[name].map((command) => {
+            command = stringArgv(command);
+
+            let index = command.findIndex((i) => {
+                return i === WILDCARD_ARG;
+            });
+
+            if (index > -1) {
+                command.splice(index, 1, ...args);
+            }
+
+            return command;
+        });
+
+        commandQueue.unshift(...commands);
+    });
+});
+
+// use help
+
+app.help('help').alias('help', 'h');
+
+// parse/run initial command
+
+app.parse(process.argv, { command: process.argv });
+
+// parse/run any queued up child commands
+
+var command;
+while (command = commandQueue.shift()) {
+    app.parse(command, { command });
+};
