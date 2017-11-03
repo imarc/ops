@@ -9,7 +9,7 @@ var commands = require('./commands');
 var commandQueue = [];
 
 var opsfile = {
-    scripts: {}
+    commands: {}
 };
 
 // load local opsfile
