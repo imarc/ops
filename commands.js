@@ -13,38 +13,41 @@ let commands = {
 
     },
 
-    dockerCompose(args) {
-        helpers.dockerRunTransient([
-            '-ti',
+    exec(args, stdio) {
+        let output = this.dockerCompose(['ps', '-q', args.shift()]);
+        let containerId = output.stdout.toString('utf8').trim();
+
+        return helpers.dockerExec([containerId, ...args], stdio);
+    },
+
+    dockerCompose(args, stdio) {
+        return helpers.dockerRunTransient([
             '-v', `${process.cwd()}:${process.cwd()}`,
             '-w', process.cwd(),
             '-v', '/var/run/docker.sock:/var/run/docker.sock',
             DOCKERCOMPOSE_IMAGE,
             ...args
-        ]);
+        ], stdio);
     },
 
-    npm(args) {
-        helpers.dockerRunTransient([
-            '-ti',
+    npm(args, stdio) {
+        return helpers.dockerRunTransient([
             '-v', `${process.cwd()}:/usr/src/app`,
             '-w', '/usr/src/app',
             '--entrypoint', 'npm',
             NODE_IMAGE,
             ...args
-        ]);
+        ], stdio);
     },
 
-    composer(args) {
-        helpers.dockerRunTransient([
-            '-ti',
+    composer(args, stdio) {
+        return helpers.dockerRunTransient([
             '-v', `${process.cwd()}:/usr/src/app`,
             '-w', '/usr/src/app',
             COMPOSER_IMAGE,
             ...args
-        ]);
+        ], stdio);
     },
-
 };
 
 module.exports = commands;

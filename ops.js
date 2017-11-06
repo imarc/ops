@@ -33,7 +33,7 @@ app.command(
     function(yargs) {
         yargs.help(false);
         let args = helpers.shiftCommandFromArgs(yargs);
-        commands.npm(args);
+        commands.npm(args, 'inherit');
     }
 );
 
@@ -43,7 +43,7 @@ app.command(
     function(yargs) {
         yargs.help(false);
         let args = helpers.shiftCommandFromArgs(yargs);
-        commands.composer(args);
+        commands.composer(args, 'inherit');
     }
 );
 
@@ -53,9 +53,20 @@ app.command(
     function(yargs) {
         yargs.help(false);
         let args = helpers.shiftCommandFromArgs(yargs);
-        commands.dockerCompose(args);
+        commands.dockerCompose(args, 'inherit');
     }
 );
+
+app.command(
+    ['exec', 'e'],
+    `run exec for a docker-compose service`,
+    function (yargs) {
+        yargs.help(false);
+        let args = helpers.shiftCommandFromArgs(yargs);
+        commands.exec(args, 'inherit');
+    }
+);
+
 
 // build dynamic opsfile commands
 

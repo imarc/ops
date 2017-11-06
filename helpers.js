@@ -16,27 +16,40 @@ module.exports = {
         return yargs.argv.command.slice(index + 1);
     },
 
-    dockerRun(args, optional) {
-        optional = optional || [];
+    dockerExec(args, stdio) {
+        return this.dockerCommand('exec', args, stdio);
+    },
 
-        if (this.isLinux) {
-            optional.shift(
-                '-u', userid.uid(username),
-                '-g', groupid.gif(username)
+    dockerRun(args, stdio) {
+        return this.dockerCommand('run', args, stdio);
+    },
+
+    dockerRunTransient(args, stdio) {
+        return this.dockerCommand('run', [ '--rm', ...args ], stdio);
+    },
+
+    dockerCommand(command, args, stdio) {
+        let optional = [];
+
+        if (stdio === 'inherit') {
+            optional.unshift(
+                '-ti'
             );
         }
 
-        args = [ 'run', ...optional, ...args ];
+        if (this.isLinux) {
+            optional.unshift(
+                '-u', `${userid.uid(username)}:${groupid.gif(username)}`
+            );
+        }
 
-        spawn('docker', args, {
+        args = [ command, ...optional, ...args ];
+
+        return spawn('docker', args, {
             cwd: process.cwd(),
             env: process.env,
             shell: true,
-            stdio: 'inherit'
+            stdio
         });
-    },
-
-    dockerRunTransient(args, optional) {
-        this.dockerRun([ '--rm', ...args ], optional);
     }
 };
