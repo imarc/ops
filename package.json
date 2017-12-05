@@ -5,8 +5,11 @@
     "ops": "./ops.js"
   },
   "dependencies": {
+    "color-prefix-stream": "^1.0.0",
     "dotenv": "^4.0.0",
     "fs-extra": "^2.0.0",
+    "pump": "^1.0.2",
+    "stream-line-wrapper": "^0.1.1",
     "string-argv": "0.0.2",
     "userid": "^0.3.1",
     "username": "^3.0.0",

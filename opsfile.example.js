@@ -1,5 +1,5 @@
 module.exports = {
-    scripts: {
+    commands: {
         install: [
             'npm install',
             'composer install --ignore-platform-reqs'

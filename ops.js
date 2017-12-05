@@ -6,6 +6,12 @@ var yargs = require('yargs');
 var stringArgv = require('string-argv');
 var helpers = require('./helpers');
 var commands = require('./commands');
+var prefixer = require('color-prefix-stream');
+var pump = require('pump');
+var spawn = require('child_process').spawn;
+var spawnSync = require('child_process').spawnSync;
+//var spawnSync = require('./spawn');
+
 var commandQueue = [];
 
 var opsfile = {
@@ -33,7 +39,7 @@ app.command(
     function(yargs) {
         yargs.help(false);
         let args = helpers.shiftCommandFromArgs(yargs);
-        commands.npm(args, 'inherit');
+        commands.npm(yargs.argv.spawnFn, args, yargs.argv.io);
     }
 );
 
@@ -43,7 +49,7 @@ app.command(
     function(yargs) {
         yargs.help(false);
         let args = helpers.shiftCommandFromArgs(yargs);
-        commands.composer(args, 'inherit');
+        commands.composer(yargs.argv.spawnFn, args, yargs.argv.io);
     }
 );
 
@@ -53,7 +59,7 @@ app.command(
     function(yargs) {
         yargs.help(false);
         let args = helpers.shiftCommandFromArgs(yargs);
-        commands.dockerCompose(args, 'inherit');
+        commands.dockerCompose(yargs.argv.spawnFn, args, yargs.argv.io);
     }
 );
 
@@ -63,7 +69,7 @@ app.command(
     function (yargs) {
         yargs.help(false);
         let args = helpers.shiftCommandFromArgs(yargs);
-        commands.exec(args, 'inherit');
+        commands.exec(yargs.argv.spawnFn, args, yargs.argv.io);
     }
 );
 
@@ -78,6 +84,12 @@ Object.keys(opsfile.commands).forEach((name) => {
 
         let commands = opsfile.commands[name].map((command) => {
             command = stringArgv(command);
+            let spawnFn = spawn;
+
+            if (command[0] === 'sync') {
+                spawnFn = spawnSync;
+                command.shift();
+            }
 
             let index = command.findIndex((i) => {
                 return i === WILDCARD_ARG;
@@ -87,7 +99,10 @@ Object.keys(opsfile.commands).forEach((name) => {
                 command.splice(index, 1, ...args);
             }
 
-            return command;
+            return {
+                argv: command,
+                spawnFn
+            };
         });
 
         commandQueue.unshift(...commands);
@@ -100,11 +115,19 @@ app.help('help').alias('help', 'h');
 
 // parse/run initial command
 
-app.parse(process.argv, { command: process.argv });
+app.parse(process.argv, {
+    command: process.argv,
+    spawnFn: spawnSync,
+    io: 'inherit'
+});
 
 // parse/run any queued up child commands
 
 var command;
 while (command = commandQueue.shift()) {
-    app.parse(command, { command });
+    app.parse(command.argv, {
+        command: command.argv,
+        spawnFn: command.spawnFn,
+        io: 'inherit'
+    });
 };

@@ -1,7 +1,8 @@
+'use strict';
 
-var spawn = require('child_process').spawnSync;
 var userid = require('userid');
 var username = require('username').sync();
+var prefixer = require('color-prefix-stream');
 
 module.exports = {
     isLinux: ['linux', 'freebsd'].includes(process.platform),
@@ -16,19 +17,19 @@ module.exports = {
         return yargs.argv.command.slice(index + 1);
     },
 
-    dockerExec(args, stdio) {
-        return this.dockerCommand('exec', args, stdio);
+    dockerExec(spawnFn, args, stdio) {
+        return this.dockerCommand(spawnFn, 'exec', args, stdio);
     },
 
-    dockerRun(args, stdio) {
-        return this.dockerCommand('run', args, stdio);
+    dockerRun(spawnFn, args, stdio) {
+        return this.dockerCommand(spawnFn, 'run', args, stdio);
     },
 
-    dockerRunTransient(args, stdio) {
-        return this.dockerCommand('run', [ '--rm', ...args ], stdio);
+    dockerRunTransient(spawnFn, args, stdio) {
+        return this.dockerCommand(spawnFn, 'run', [ '--rm', ...args ], stdio);
     },
 
-    dockerCommand(command, args, stdio) {
+    dockerCommand(spawnFn, command, args, stdio) {
         let optional = [];
 
         if (stdio === 'inherit') {
@@ -45,11 +46,13 @@ module.exports = {
 
         args = [ command, ...optional, ...args ];
 
-        return spawn('docker', args, {
+        return spawnFn('docker', args, {
             cwd: process.cwd(),
             env: process.env,
             shell: true,
             stdio
         });
+
+        return result;
     }
 };

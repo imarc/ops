@@ -1,27 +1,25 @@
-'use strict'
+'use strict';
 
 let helpers = require('./helpers');
-var spawn   = require('child_process').spawnSync;
+var spawn = require('child_process').spawn;
+var spawnSync = require('child_process').spawnSync;
+let os = require('os');
 
 const NODE_IMAGE     = "node:8.7.0"
-const COMPOSER_IMAGE = "composer:1.1"
+const COMPOSER_IMAGE = "composer:2.1"
 const DOCKERCOMPOSE_IMAGE = "docker/compose:1.16.1"
-//const WAIT_FOR_IT_IMAGE = "willwill/wait-for-it:latest"
 
 let commands = {
-    waitForIt(args) {
 
-    },
-
-    exec(args, stdio) {
-        let output = this.dockerCompose(['ps', '-q', args.shift()]);
+    exec(spawnFn, args, stdio) {
+        let output = this.dockerCompose(spawnSync, ['ps', '-q', args.shift()]);
         let containerId = output.stdout.toString('utf8').trim();
 
-        return helpers.dockerExec([containerId, ...args], stdio);
+        return helpers.dockerExec(spawnFn, [containerId, ...args], stdio);
     },
 
-    dockerCompose(args, stdio) {
-        return helpers.dockerRunTransient([
+    dockerCompose(spawnFn, args, stdio) {
+        return helpers.dockerRunTransient(spawnFn, [
             '-v', `${process.cwd()}:${process.cwd()}`,
             '-w', process.cwd(),
             '-v', '/var/run/docker.sock:/var/run/docker.sock',
@@ -30,8 +28,9 @@ let commands = {
         ], stdio);
     },
 
-    npm(args, stdio) {
-        return helpers.dockerRunTransient([
+    npm(spawnFn, args, stdio) {
+        return helpers.dockerRunTransient(spawnFn, [
+            '-v', `${os.homedir()}:${os.homedir()}:ro`,
             '-v', `${process.cwd()}:/usr/src/app`,
             '-w', '/usr/src/app',
             '--entrypoint', 'npm',
@@ -40,8 +39,8 @@ let commands = {
         ], stdio);
     },
 
-    composer(args, stdio) {
-        return helpers.dockerRunTransient([
+    composer(spawnFn, args, stdio) {
+        return helpers.dockerRunTransient(spawnFn, [
             '-v', `${process.cwd()}:/usr/src/app`,
             '-w', '/usr/src/app',
             COMPOSER_IMAGE,
