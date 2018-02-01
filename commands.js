@@ -6,20 +6,21 @@ var spawnSync = require('child_process').spawnSync;
 let os = require('os');
 
 const NODE_IMAGE     = "node:8.7.0"
-const COMPOSER_IMAGE = "composer:2.1"
+const COMPOSER_IMAGE = "composer:latest"
 const DOCKERCOMPOSE_IMAGE = "docker/compose:1.16.1"
 
 let commands = {
+    exec(args, stdio = 'inherit') {
+        return this.dockerCompose(['ps', '-q', args.shift()]).then((output) => {
+            let containerId = output.stdout.toString('utf8').trim();
+            return helpers.dockerExec([containerId, ...args], stdio);
+        });
 
-    exec(spawnFn, args, stdio) {
-        let output = this.dockerCompose(spawnSync, ['ps', '-q', args.shift()]);
-        let containerId = output.stdout.toString('utf8').trim();
 
-        return helpers.dockerExec(spawnFn, [containerId, ...args], stdio);
     },
 
-    dockerCompose(spawnFn, args, stdio) {
-        return helpers.dockerRunTransient(spawnFn, [
+    dockerCompose(args, stdio) {
+        return helpers.dockerRunTransient([
             '-v', `${process.cwd()}:${process.cwd()}`,
             '-w', process.cwd(),
             '-v', '/var/run/docker.sock:/var/run/docker.sock',
@@ -28,8 +29,8 @@ let commands = {
         ], stdio);
     },
 
-    npm(spawnFn, args, stdio) {
-        return helpers.dockerRunTransient(spawnFn, [
+    npm(args, stdio = 'inherit') {
+        return helpers.dockerRunTransient([
             '-v', `${os.homedir()}:${os.homedir()}:ro`,
             '-v', `${process.cwd()}:/usr/src/app`,
             '-w', '/usr/src/app',
@@ -39,8 +40,8 @@ let commands = {
         ], stdio);
     },
 
-    composer(spawnFn, args, stdio) {
-        return helpers.dockerRunTransient(spawnFn, [
+    composer(args, stdio) {
+        return helpers.dockerRunTransient([
             '-v', `${process.cwd()}:/usr/src/app`,
             '-w', '/usr/src/app',
             COMPOSER_IMAGE,

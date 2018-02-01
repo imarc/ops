@@ -5,7 +5,8 @@ var fs = require('fs');
 var yargs = require('yargs');
 var stringArgv = require('string-argv');
 var helpers = require('./helpers');
-var commands = require('./commands');
+var cmds = require('./commands');
+
 var prefixer = require('color-prefix-stream');
 var pump = require('pump');
 var spawn = require('child_process').spawn;
@@ -28,18 +29,18 @@ if (fs.existsSync(`${process.cwd()}/opsfile.js`)) {
 
 const WILDCARD_ARG   = "$@"
 
+
 // build commands
 
-var app = yargs
-    .usage("$0 command");
+// var app = yargs
+// .usage("$0 command");
 
+/*
 app.command(
     ['npm', 'n'],
     `run npm`,
     function(yargs) {
         yargs.help(false);
-        let args = helpers.shiftCommandFromArgs(yargs);
-        commands.npm(yargs.argv.spawnFn, args, yargs.argv.io);
     }
 );
 
@@ -49,7 +50,7 @@ app.command(
     function(yargs) {
         yargs.help(false);
         let args = helpers.shiftCommandFromArgs(yargs);
-        commands.composer(yargs.argv.spawnFn, args, yargs.argv.io);
+        commands.composer(args, yargs.argv.io);
     }
 );
 
@@ -59,7 +60,7 @@ app.command(
     function(yargs) {
         yargs.help(false);
         let args = helpers.shiftCommandFromArgs(yargs);
-        commands.dockerCompose(yargs.argv.spawnFn, args, yargs.argv.io);
+        commands.dockerCompose(args, yargs.argv.io);
     }
 );
 
@@ -69,13 +70,87 @@ app.command(
     function (yargs) {
         yargs.help(false);
         let args = helpers.shiftCommandFromArgs(yargs);
-        commands.exec(yargs.argv.spawnFn, args, yargs.argv.io);
+        commands.exec(args, yargs.argv.io);
     }
 );
+*/
 
+let commands = {
+    "npm": cmds.npm,
+    "exec": cmds.exec,
+
+    "npm2": [
+        [ "npm help", "npm help" ],
+    ]
+};
+
+// Ensure all commands are arrays
+
+Object.entries(commands).forEach(([key, value]) => {
+    if (!Array.isArray(value)) {
+        commands[key] = [value];
+    }
+});
+
+// console.log(yargs.argv);
+
+let command = yargs.argv._[0];
+
+/*
+let run = (commands, args = [], promise) => {
+    commands.forEach(fn => {
+        let next = promise.then(() => {
+            if (!Array.isArray(fn)) {
+                fn = [fn];
+            }
+
+            return Promise.all(fn.map((command) => {
+                let subArgs = args = [];
+
+                if (typeof(command) === 'string') {
+                    args = stringArgv(command);
+                    command = args.shift();
+                }
+
+                if (typeof(commands[command]) === 'function') {
+                    return commands[command](args);
+                }
+
+                return run(commands[command], args, next);
+            }));
+        });
+    });
+};
+*/
+
+let args = yargs.argv._.slice(1);
+
+commands[command].reduce((prev, current) => {
+    return prev.then(Promise.all(current.map(cmd => {
+        let args = [];
+
+        if (typeof(command) === 'string') {
+            args = stringArgv(command);
+            command = args.shift();
+        }
+
+        if (typeof(commands[command]) === 'function') {
+            return commands[command](args);
+        }
+    })));
+}, Promise.resolve());
+
+//run(commands[command], yargs.argv._.slice(1), Promise.resolve());
+
+
+/*
+if (!command) {
+}
+*/
 
 // build dynamic opsfile commands
 
+/*
 Object.keys(opsfile.commands).forEach((name) => {
     app.command(name, '', (yargs) => {
         yargs.help(false);
@@ -84,12 +159,6 @@ Object.keys(opsfile.commands).forEach((name) => {
 
         let commands = opsfile.commands[name].map((command) => {
             command = stringArgv(command);
-            let spawnFn = spawn;
-
-            if (command[0] === 'sync') {
-                spawnFn = spawnSync;
-                command.shift();
-            }
 
             let index = command.findIndex((i) => {
                 return i === WILDCARD_ARG;
@@ -101,7 +170,6 @@ Object.keys(opsfile.commands).forEach((name) => {
 
             return {
                 argv: command,
-                spawnFn
             };
         });
 
@@ -111,23 +179,23 @@ Object.keys(opsfile.commands).forEach((name) => {
 
 // use help
 
-app.help('help').alias('help', 'h');
+//app.help('help').alias('help', 'h');
 
 // parse/run initial command
 
 app.parse(process.argv, {
     command: process.argv,
-    spawnFn: spawnSync,
     io: 'inherit'
+}, (err, argv, output) => {
+    console.log(output);
 });
 
 // parse/run any queued up child commands
 
-var command;
 while (command = commandQueue.shift()) {
     app.parse(command.argv, {
         command: command.argv,
-        spawnFn: command.spawnFn,
         io: 'inherit'
     });
 };
+*/

@@ -3,6 +3,7 @@
 var userid = require('userid');
 var username = require('username').sync();
 var prefixer = require('color-prefix-stream');
+var execa = require('execa');
 
 module.exports = {
     isLinux: ['linux', 'freebsd'].includes(process.platform),
@@ -17,20 +18,21 @@ module.exports = {
         return yargs.argv.command.slice(index + 1);
     },
 
-    dockerExec(spawnFn, args, stdio) {
-        return this.dockerCommand(spawnFn, 'exec', args, stdio);
+    dockerExec(args, stdio) {
+        return this.dockerCommand(['exec', ...args], stdio);
     },
 
-    dockerRun(spawnFn, args, stdio) {
-        return this.dockerCommand(spawnFn, 'run', args, stdio);
+    dockerRun(args, stdio) {
+        return this.dockerCommand(['run', ...args], stdio);
     },
 
-    dockerRunTransient(spawnFn, args, stdio) {
-        return this.dockerCommand(spawnFn, 'run', [ '--rm', ...args ], stdio);
+    dockerRunTransient(args, stdio) {
+        return this.dockerCommand(['run', '--rm', ...args ], stdio);
     },
 
-    dockerCommand(spawnFn, command, args, stdio) {
+    dockerCommand(args, stdio) {
         let optional = [];
+        let command = args.shift();
 
         if (stdio === 'inherit') {
             optional.unshift(
@@ -46,13 +48,10 @@ module.exports = {
 
         args = [ command, ...optional, ...args ];
 
-        return spawnFn('docker', args, {
-            cwd: process.cwd(),
-            env: process.env,
+        return execa('docker', args, {
+            //detached: true,
             shell: true,
-            stdio
+            stdio: 'inherit'
         });
-
-        return result;
     }
 };
