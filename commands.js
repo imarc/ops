@@ -11,15 +11,15 @@ const DOCKERCOMPOSE_IMAGE = "docker/compose:1.16.1"
 
 let commands = {
     exec(args, stdio = 'inherit') {
-        return this.dockerCompose(['ps', '-q', args.shift()]).then((output) => {
-            let containerId = output.stdout.toString('utf8').trim();
-            return helpers.dockerExec([containerId, ...args], stdio);
+        return new Promise(resolve => {
+            commands.dockerCompose(['ps', '-q', args.shift()], 'pipe').then((output) => {
+                let containerId = output.stdout.toString('utf8').trim();
+                resolve(helpers.dockerExec([containerId, ...args], stdio));
+            });
         });
-
-
     },
 
-    dockerCompose(args, stdio) {
+    dockerCompose(args, stdio = "inherit") {
         return helpers.dockerRunTransient([
             '-v', `${process.cwd()}:${process.cwd()}`,
             '-w', process.cwd(),

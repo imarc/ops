@@ -9,12 +9,17 @@
     "dotenv": "^4.0.0",
     "execa": "^0.9.0",
     "fs-extra": "^2.0.0",
+    "outdent": "^0.4.1",
     "pump": "^1.0.2",
     "stream-line-wrapper": "^0.1.1",
     "string-argv": "0.0.2",
     "userid": "^0.3.1",
     "username": "^3.0.0",
+    "watch": "^1.0.2",
     "yargs": "^7.1.0"
+  },
+  "scripts": {
+    "watch": "watch 'clear; ops' . -p /node_modules/ --interval=1"
   },
   "private": true
 }

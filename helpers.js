@@ -49,9 +49,12 @@ module.exports = {
         args = [ command, ...optional, ...args ];
 
         return execa('docker', args, {
-            //detached: true,
+            detached: true,
             shell: true,
-            stdio: 'inherit'
+            stdio
+        }).catch(() => {
+            console.log('Exiting');
+            process.exit();
         });
     }
 };

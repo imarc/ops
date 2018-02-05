@@ -6,6 +6,7 @@ var yargs = require('yargs');
 var stringArgv = require('string-argv');
 var helpers = require('./helpers');
 var cmds = require('./commands');
+var outdent = require('outdent');
 
 var prefixer = require('color-prefix-stream');
 var pump = require('pump');
@@ -78,70 +79,61 @@ app.command(
 let commands = {
     "npm": cmds.npm,
     "exec": cmds.exec,
+    "docker-compose": cmds.dockerCompose,
+    "composer": cmds.composer,
 
     "npm2": [
         [ "npm help", "npm help" ],
-    ]
+    ],
+
+    "help": () =>  {
+        let cmdString = Object.keys(commands).sort().join(", ");
+
+        console.log(outdent`
+            Usage: ops <command>
+
+            Where <command> is one of:
+              ${cmdString}
+        `);
+    }
 };
 
-// Ensure all commands are arrays
+// add opsfile commands
 
-Object.entries(commands).forEach(([key, value]) => {
-    if (!Array.isArray(value)) {
-        commands[key] = [value];
-    }
+Object.keys(opsfile.commands).forEach(cmd => {
+    commands[cmd] = opsfile.commands[cmd];
 });
 
-// console.log(yargs.argv);
-
 let command = yargs.argv._[0];
-
-/*
-let run = (commands, args = [], promise) => {
-    commands.forEach(fn => {
-        let next = promise.then(() => {
-            if (!Array.isArray(fn)) {
-                fn = [fn];
-            }
-
-            return Promise.all(fn.map((command) => {
-                let subArgs = args = [];
-
-                if (typeof(command) === 'string') {
-                    args = stringArgv(command);
-                    command = args.shift();
-                }
-
-                if (typeof(commands[command]) === 'function') {
-                    return commands[command](args);
-                }
-
-                return run(commands[command], args, next);
-            }));
-        });
-    });
-};
-*/
-
 let args = yargs.argv._.slice(1);
 
-commands[command].reduce((prev, current) => {
-    return prev.then(Promise.all(current.map(cmd => {
-        let args = [];
+let processCommand = (command, args = []) => {
+    if (typeof(command) === 'function') {
+        return command(args);
+    }
 
-        if (typeof(command) === 'string') {
-            args = stringArgv(command);
-            command = args.shift();
+    if (typeof(command) === 'string') {
+        command = [command];
+    }
+
+    command.reduce((prev, current) => {
+        if (!Array.isArray(current)) {
+            current = [current];
         }
 
-        if (typeof(commands[command]) === 'function') {
-            return commands[command](args);
-        }
-    })));
-}, Promise.resolve());
+        return prev.then(Promise.all(current.map(cmd => {
+            if (typeof(cmd) === 'string') {
+                let newArgs = stringArgv(cmd);
+                cmd = commands[newArgs.shift()];
+                args = newArgs;
+            }
 
-//run(commands[command], yargs.argv._.slice(1), Promise.resolve());
+            return processCommand(cmd, args);
+        })));
+   }, Promise.resolve());
+};
 
+processCommand(command);
 
 /*
 if (!command) {
