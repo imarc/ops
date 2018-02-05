@@ -30,13 +30,13 @@ if (fs.existsSync(`${process.cwd()}/opsfile.js`)) {
 
 const WILDCARD_ARG   = "$@"
 
-
 // build commands
 
 // var app = yargs
 // .usage("$0 command");
 
 /*
+
 app.command(
     ['npm', 'n'],
     `run npm`,
@@ -74,11 +74,13 @@ app.command(
         commands.exec(args, yargs.argv.io);
     }
 );
+
 */
 
 let commands = {
     "npm": cmds.npm,
     "exec": cmds.exec,
+    "docker": cmds.docker,
     "docker-compose": cmds.dockerCompose,
     "composer": cmds.composer,
 
@@ -109,27 +111,29 @@ let args = yargs.argv._.slice(1);
 
 let processCommand = (command, args = []) => {
     if (typeof(command) === 'function') {
-        return command(args);
+       return command(args);
     }
 
     if (typeof(command) === 'string') {
         command = [command];
     }
 
-    command.reduce((prev, current) => {
-        if (!Array.isArray(current)) {
-            current = [current];
-        }
-
-        return prev.then(Promise.all(current.map(cmd => {
-            if (typeof(cmd) === 'string') {
-                let newArgs = stringArgv(cmd);
-                cmd = commands[newArgs.shift()];
-                args = newArgs;
+    return command.reduce((prev, current) => {
+        return prev.then(() => {
+            if (!Array.isArray(current)) {
+                current = [current];
             }
 
-            return processCommand(cmd, args);
-        })));
+            return Promise.all(current.map(cmd => {
+                if (typeof(cmd) === 'string') {
+                    let newArgs = stringArgv(cmd);
+                    cmd = commands[newArgs.shift()];
+                    args = newArgs;
+                }
+
+                return processCommand(cmd, args);
+            }));
+        });
    }, Promise.resolve());
 };
 

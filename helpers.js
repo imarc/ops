@@ -34,11 +34,13 @@ module.exports = {
         let optional = [];
         let command = args.shift();
 
+        /*
         if (stdio === 'inherit') {
             optional.unshift(
-                '-ti'
+                '-i'
             );
         }
+        */
 
         if (this.isLinux) {
             optional.unshift(
@@ -49,9 +51,9 @@ module.exports = {
         args = [ command, ...optional, ...args ];
 
         return execa('docker', args, {
-            detached: true,
+            //detached: true,
             shell: true,
-            stdio
+            stdio: 'inherit'
         }).catch(() => {
             console.log('Exiting');
             process.exit();

@@ -19,6 +19,10 @@ let commands = {
         });
     },
 
+    docker(args, stdio = 'inherit') {
+        return helpers.dockerCommand(args, 'inherit');
+    },
+
     dockerCompose(args, stdio = "inherit") {
         return helpers.dockerRunTransient([
             '-v', `${process.cwd()}:${process.cwd()}`,
