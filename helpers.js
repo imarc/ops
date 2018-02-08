@@ -30,17 +30,15 @@ module.exports = {
         return this.dockerCommand(['run', '--rm', ...args ], stdio);
     },
 
-    dockerCommand(args, stdio) {
+    dockerCommand(args, stdio = 'inherit') {
         let optional = [];
         let command = args.shift();
 
-        /*
         if (stdio === 'inherit') {
             optional.unshift(
-                '-i'
+                '-ti'
             );
         }
-        */
 
         if (this.isLinux) {
             optional.unshift(
@@ -52,11 +50,11 @@ module.exports = {
 
         return execa('docker', args, {
             //detached: true,
-            shell: true,
-            stdio: 'inherit'
+            killSignal: 'SIGINT',
+            //timeout: 4,
+            stdio
         }).catch(() => {
-            console.log('Exiting');
-            process.exit();
+            // process.exit();
         });
     }
 };

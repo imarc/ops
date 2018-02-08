@@ -10,7 +10,29 @@ const COMPOSER_IMAGE = "composer:latest"
 const DOCKERCOMPOSE_IMAGE = "docker/compose:1.16.1"
 
 let commands = {
-    exec(args, stdio = 'inherit') {
+    waitfor(args, stdio) {
+        return new Promise(resolve => {
+            let service = args.shift();
+
+            commands.dockerCompose(['ps', '-q', service], 'pipe').then((output) => {
+
+                console.log(`Waiting for ${service}`);
+
+                let containerId = output.stdout.toString('utf8').trim();
+                helpers.dockerExec([containerId, ...args], stdio).then(() => {
+                    console.log(`Found ${service}`);
+                    resolve();
+                });
+            });
+        });
+
+    },
+
+    shell(args, stdio) {
+        return processCommand(args.shift(), args, 'inherit');
+    },
+
+    exec(args, stdio) {
         return new Promise(resolve => {
             commands.dockerCompose(['ps', '-q', args.shift()], 'pipe').then((output) => {
                 let containerId = output.stdout.toString('utf8').trim();
@@ -19,11 +41,11 @@ let commands = {
         });
     },
 
-    docker(args, stdio = 'inherit') {
-        return helpers.dockerCommand(args, 'inherit');
+    docker(args, stdio) {
+        return helpers.dockerCommand(args, stdio);
     },
 
-    dockerCompose(args, stdio = "inherit") {
+    dockerCompose(args, stdio) {
         return helpers.dockerRunTransient([
             '-v', `${process.cwd()}:${process.cwd()}`,
             '-w', process.cwd(),
@@ -33,14 +55,16 @@ let commands = {
         ], stdio);
     },
 
-    npm(args, stdio = 'inherit') {
+    npm(args, stdio) {
         return helpers.dockerRunTransient([
             '-v', `${os.homedir()}:${os.homedir()}:ro`,
             '-v', `${process.cwd()}:/usr/src/app`,
             '-w', '/usr/src/app',
+            '--init', // for the PID 1 problem
             '--entrypoint', 'npm',
+            '-e', 'NPM_CONFIG_COLOR=always',
             NODE_IMAGE,
-            ...args
+            ...args,
         ], stdio);
     },
 

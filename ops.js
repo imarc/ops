@@ -6,13 +6,14 @@ var yargs = require('yargs');
 var stringArgv = require('string-argv');
 var helpers = require('./helpers');
 var cmds = require('./commands');
-var outdent = require('outdent');
 
-var prefixer = require('color-prefix-stream');
-var pump = require('pump');
-var spawn = require('child_process').spawn;
-var spawnSync = require('child_process').spawnSync;
+const outdent = require('outdent');
+const download = require('download-git-repo')
+const os = require('os');
+const wrap = require('word-wrap');
 //var spawnSync = require('./spawn');
+//
+const home = os.homedir();
 
 var commandQueue = [];
 
@@ -30,52 +31,7 @@ if (fs.existsSync(`${process.cwd()}/opsfile.js`)) {
 
 const WILDCARD_ARG   = "$@"
 
-// build commands
-
-// var app = yargs
-// .usage("$0 command");
-
-/*
-
-app.command(
-    ['npm', 'n'],
-    `run npm`,
-    function(yargs) {
-        yargs.help(false);
-    }
-);
-
-app.command(
-    ['composer', 'c'],
-    `run composer`,
-    function(yargs) {
-        yargs.help(false);
-        let args = helpers.shiftCommandFromArgs(yargs);
-        commands.composer(args, yargs.argv.io);
-    }
-);
-
-app.command(
-    ['docker-compose', 'dc'],
-    `run docker-compose`,
-    function(yargs) {
-        yargs.help(false);
-        let args = helpers.shiftCommandFromArgs(yargs);
-        commands.dockerCompose(args, yargs.argv.io);
-    }
-);
-
-app.command(
-    ['exec', 'e'],
-    `run exec for a docker-compose service`,
-    function (yargs) {
-        yargs.help(false);
-        let args = helpers.shiftCommandFromArgs(yargs);
-        commands.exec(args, yargs.argv.io);
-    }
-);
-
-*/
+//
 
 let commands = {
     "npm": cmds.npm,
@@ -84,19 +40,27 @@ let commands = {
     "docker-compose": cmds.dockerCompose,
     "composer": cmds.composer,
 
-    "npm2": [
-        [ "npm help", "npm help" ],
-    ],
+    "shell": () => {
+        return processCommand(args.shift(), args, 'inherit');
+    },
 
     "help": () =>  {
-        let cmdString = Object.keys(commands).sort().join(", ");
+        console.log();
 
         console.log(outdent`
             Usage: ops <command>
 
             Where <command> is one of:
-              ${cmdString}
         `);
+
+        console.log(wrap(
+            Object.keys(commands).sort().join(", "),
+            { width: 45, indent: '    ' }
+        ));
+
+        console.log();
+
+        return Promise.resolve();
     }
 };
 
@@ -106,17 +70,24 @@ Object.keys(opsfile.commands).forEach(cmd => {
     commands[cmd] = opsfile.commands[cmd];
 });
 
+// cmds
+
 let command = yargs.argv._[0];
 let args = yargs.argv._.slice(1);
 
-let processCommand = (command, args = []) => {
+let procs = [];
+
+let processCommand = (command, args = [], stdio=['ignore', 1, 2]) => {
     if (typeof(command) === 'function') {
-       return command(args);
+       let proc = command(args, stdio);
+       procs.push(proc);
+       return proc;
+    }
+    if (typeof(commands[command]) === 'function') {
+       return commands[command](args);
     }
 
-    if (typeof(command) === 'string') {
-        command = [command];
-    }
+    command = [command];
 
     return command.reduce((prev, current) => {
         return prev.then(() => {
@@ -137,61 +108,20 @@ let processCommand = (command, args = []) => {
    }, Promise.resolve());
 };
 
-processCommand(command);
+processCommand(command, args);
 
-/*
-if (!command) {
-}
-*/
-
-// build dynamic opsfile commands
-
-/*
-Object.keys(opsfile.commands).forEach((name) => {
-    app.command(name, '', (yargs) => {
-        yargs.help(false);
-
-        let args = helpers.shiftCommandFromArgs(yargs);
-
-        let commands = opsfile.commands[name].map((command) => {
-            command = stringArgv(command);
-
-            let index = command.findIndex((i) => {
-                return i === WILDCARD_ARG;
-            });
-
-            if (index > -1) {
-                command.splice(index, 1, ...args);
-            }
-
-            return {
-                argv: command,
-            };
-        });
-
-        commandQueue.unshift(...commands);
+let exit = () => {
+    procs.forEach(i => () => {
+        if (i !== undefined) {
+            // http://azimi.me/2014/12/31/kill-child_process-node-js.html
+            process.kill(-i.pid, 'SIGINT');
+        }
     });
-});
 
-// use help
-
-//app.help('help').alias('help', 'h');
-
-// parse/run initial command
-
-app.parse(process.argv, {
-    command: process.argv,
-    io: 'inherit'
-}, (err, argv, output) => {
-    console.log(output);
-});
-
-// parse/run any queued up child commands
-
-while (command = commandQueue.shift()) {
-    app.parse(command.argv, {
-        command: command.argv,
-        io: 'inherit'
-    });
+    setTimeout(() => {
+        process.exit(0);
+    }, 1000);
 };
-*/
+
+//process.on('SIGINT', exit);
+//process.on('SIGTERM', exit);
