@@ -2,13 +2,24 @@
 
 **Version 0.1.0**
 
-## Before you begin
+## Prerequisites
 
-Docker (and docker-compose) is required. Installation instructions:
+Ops supports Linux, Mac, and Windows Linux Subshell.
 
-- [Linux](https://docs.docker.com/engine/installation/linux/)
-- [Windows](https://docs.docker.com/docker-for-windows/install/)
-- [Mac](https://docs.docker.com/docker-for-mac/install/)
+bash, docker, docker-compose are required.
+
+### Linux Installation Instructions
+
+- [Install Docker CE](https://docs.docker.com/engine/installation/linux/)
+
+### Mac Installation Instructions
+
+- [Install Docker for Mac](https://docs.docker.com/docker-for-mac/install/)
+
+### Windows Subshell for Linux
+
+- [Install Docker for Windows](https://docs.docker.com/docker-for-windows/install/)
+- [Install Docker Client](https://medium.com/@sebagomez/installing-the-docker-client-on-ubuntus-windows-subsystem-for-linux-612b392a44c4)
 
 ## Install
 
