@@ -1,50 +1,27 @@
 #!/bin/bash
 
-OPS_VERSION=0.1.0
+OPS_VERSION=0.2.0
+
+# Find script dir and resolve symlinks
+
+SOURCE="${BASH_SOURCE[0]}"
+while [ -h "$SOURCE" ]; do
+  DIR="$( cd -P "$( dirname "$SOURCE" )" && pwd )"
+  SOURCE="$(readlink "$SOURCE")"
+  [[ $SOURCE != /* ]] && SOURCE="$DIR/$SOURCE"
+done
+
+SCRIPT_DIR="$( cd -P "$( dirname "$SOURCE" )" && pwd )"
+
+# Set docker images
 
 COMPOSER_IMAGE="composer:latest"
 JQ_IMAGE="stedolan/jq:latest"
 NODE_IMAGE="node:8.7.0"
 
-# Helpers
+# Include cmd helpers
 
-show-help() {
-    local name=$1
-    local prefix=$2
-    local commands=$(compgen -A function | awk "/^$prefix-/{sub(\"$prefix-\",\"\"); print}")
-
-    echo
-    echo "Usage: $name <command>"
-    echo
-    echo "where <command> is one of:"
-
-    local IFS=$'\n'
-    for line in $(echo $commands | awk NF=NF RS= OFS=", " | fold -w 56 -s);
-    do
-        echo "    $line"
-    done
-
-    echo
-}
-
-parse-command() {
-    local prefix=$1
-    local command="$2"
-    shift
-
-    [[ $(type -t $prefix-help) != 'function' ]]
-    local has_help=$?
-
-    [[ $(type -t $prefix-$command) != 'function' ]]
-    local has_command=$?
-
-    if [[ ( -z "$command" || $has_command == 0 ) && $has_help == 1 ]]; then
-        $prefix-help
-        exit
-    fi
-
-    $prefix-$command $@
-}
+source $SCRIPT_DIR/cmd.sh
 
 # Main Commands
 
@@ -57,7 +34,7 @@ ops-docker-compose() {
 }
 
 ops-composer() {
-    ops-run \
+    ops-docker run --rm \
         -it \
         -v "$(pwd):/usr/src/app" \
         -w "/usr/src/app" \
@@ -65,12 +42,24 @@ ops-composer() {
         $@
 }
 
+ops-exec() {
+    echo $@
+    local service=$1
+    shift
+
+    local id=$(ops-docker-compose ps -q $service)
+
+    [[ -z $id ]] && exit
+
+    ops-docker exec -i $id $@
+}
+
 ops-jq() {
-    ops-run -i $JQ_IMAGE $@
+    ops-docker run --rm -i $JQ_IMAGE $@
 }
 
 ops-node() {
-    ops-run \
+    ops-docker run --rm \
         -v "$(pwd):/usr/src/app" \
         -w "/usr/src/app" \
         -itP \
@@ -80,7 +69,7 @@ ops-node() {
 }
 
 ops-npm() {
-    ops-run \
+    ops-docker run --rm \
         -v "$(pwd):/usr/src/app" \
         -w "/usr/src/app" \
         -itP \
@@ -91,7 +80,7 @@ ops-npm() {
 }
 
 ops-yarn() {
-    ops-run \
+    ops-docker run --rm \
         -v "$(pwd):/usr/src/app" \
         -w "/usr/src/app" \
         -it \
@@ -99,10 +88,6 @@ ops-yarn() {
         --entrypoint "yarn" \
         $NODE_IMAGE \
         $@
-}
-
-ops-run() {
-    docker run --rm $@
 }
 
 ops-start() {
@@ -113,12 +98,39 @@ ops-stop() {
     ops-docker-compose stop
 }
 
+ops-logs() {
+    ops-docker-compose logs -f
+}
+
+ops-ps() {
+    ops-docker-compose ps
+}
+
+ops-shell() {
+    local service=$1
+    shift
+
+    local id=$(ops-docker-compose ps -q $service)
+
+    [[ -z $id ]] && exit
+
+    ops-docker exec -it $id $@
+}
+
+ops-stats() {
+    local ids=$(ops-docker-compose ps -q)
+
+    [[ -z $ids ]] && exit
+
+    ops-docker stats $ids
+}
+
 ops-system() {
-    parse-command system $@
+    cmd-run system $@
 }
 
 ops-help() {
-    show-help ops ops
+    cmd-help ops ops
     echo $(ops-version)
     echo
 }
@@ -126,7 +138,6 @@ ops-help() {
 ops-version() {
     echo "ops version $OPS_VERSION"
 }
-
 
 # System Sub-Commands
 
@@ -139,14 +150,14 @@ system-stop() {
 }
 
 system-help() {
-    show-help "ops system" system
+    cmd-help "ops system" system
     echo
 }
 
 # Run Main Command
 
 main() {
-    parse-command ops $@
+    cmd-run ops $@
     exit
 }
 
