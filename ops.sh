@@ -1,6 +1,6 @@
 #!/bin/bash
 
-OPS_VERSION=0.2.0
+OPS_VERSION=0.3.0
 
 # Find script dir and resolve symlinks
 
