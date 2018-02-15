@@ -1,17 +1,14 @@
 #!/bin/bash
 
-OPS_VERSION=0.3.0
+VERSION=0.3.1
+WORKING_DIR=$(pwd)
 
 # Find script dir and resolve symlinks
 
-SOURCE="${BASH_SOURCE[0]}"
-while [ -h "$SOURCE" ]; do
-  DIR="$( cd -P "$( dirname "$SOURCE" )" && pwd )"
-  SOURCE="$(readlink "$SOURCE")"
-  [[ $SOURCE != /* ]] && SOURCE="$DIR/$SOURCE"
-done
-
-SCRIPT_DIR="$( cd -P "$( dirname "$SOURCE" )" && pwd )"
+cd $(dirname $0)
+cd $(dirname $(ls -l $0 | awk '{print $NF}'))
+SCRIPT_DIR=$(pwd)
+cd $WORKING_DIR
 
 # Set docker images
 
@@ -25,21 +22,21 @@ source $SCRIPT_DIR/cmd.sh
 
 # Main Commands
 
+ops-composer() {
+    ops-docker run \
+        --rm -itP \
+        -v "$(pwd):/usr/src/app" \
+        -w "/usr/src/app" \
+        $COMPOSER_IMAGE \
+        $@
+}
+
 ops-docker() {
     docker $@
 }
 
 ops-docker-compose() {
     docker-compose $@
-}
-
-ops-composer() {
-    ops-docker run --rm \
-        -it \
-        -v "$(pwd):/usr/src/app" \
-        -w "/usr/src/app" \
-        $COMPOSER_IMAGE \
-        $@
 }
 
 ops-exec() {
@@ -59,33 +56,30 @@ ops-jq() {
 }
 
 ops-node() {
-    ops-docker run --rm \
+    ops-docker run \
+        --rm -itP --init \
         -v "$(pwd):/usr/src/app" \
         -w "/usr/src/app" \
-        -itP \
-        --init \
         $NODE_IMAGE \
         $@
 }
 
 ops-npm() {
-    ops-docker run --rm \
+    ops-docker run \
+        --rm -itP --init \
         -v "$(pwd):/usr/src/app" \
         -w "/usr/src/app" \
-        -itP \
-        --init \
         --entrypoint "npm" \
         $NODE_IMAGE \
         $@
 }
 
 ops-yarn() {
-    ops-docker run --rm \
+    ops-docker run \
+        --rm -itP --init \
         -v "$(pwd):/usr/src/app" \
         -w "/usr/src/app" \
-        -it \
-        --init \
-        --entrypoint "yarn" \
+        --entrypoint "yarn"
         $NODE_IMAGE \
         $@
 }
@@ -107,10 +101,8 @@ ops-ps() {
 }
 
 ops-shell() {
-    local service=$1
+    local id=$(ops-docker-compose ps -q $1)
     shift
-
-    local id=$(ops-docker-compose ps -q $service)
 
     [[ -z $id ]] && exit
 
@@ -119,9 +111,7 @@ ops-shell() {
 
 ops-stats() {
     local ids=$(ops-docker-compose ps -q)
-
     [[ -z $ids ]] && exit
-
     ops-docker stats $ids
 }
 
