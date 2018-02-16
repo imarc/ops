@@ -1,0 +1,25 @@
+defaultEntryPoints = ["https","http"]
+logLevel = "DEBUG"
+
+[entryPoints]
+  [entryPoints.http]
+  address = ":80"
+  [entryPoints.https]
+  address = ":443"
+    [entryPoints.https.tls]
+      [[entryPoints.https.tls.certificates]]
+      certFile = "/etc/traefik/self-signed-cert.crt"
+      keyFile = "/etc/traefik/self-signed-cert.key"
+
+[retry]
+
+[web]
+readOnly = true
+users = ["admin:$apr1$vtw10abf$o.4QTNi9t2qXOV6GazY3U."]
+certFile = "/etc/traefik/self-signed-cert.crt"
+keyFile  = "/etc/traefik/self-signed-cert.key"
+
+[docker]
+endpoint = "unix:///var/run/docker.sock"
+watch = true
+exposedbydefault = false

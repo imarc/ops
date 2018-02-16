@@ -1,0 +1,134 @@
+version: '3'
+
+services:
+  portainer:
+    image: portainer/portainer
+    labels:
+      - "traefik.enable=true"
+      - "traefik.docker.network=ops_gateway"
+    userns_mode: 'host'
+    networks:
+      - gateway
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+      - portainer:/data
+
+  apache:
+    image: imarcagency/php-apache:latest
+    labels:
+      - "traefik.enable=true"
+      - "traefik.docker.network=ops_gateway"
+      - "traefik.frontend.rule=HostRegexp:{subdomain:[a-z0-9-]+}.${OPS_DOMAIN}"
+      - "traefik.port=80"
+    environment:
+      - OPS_DOCKER_UID=${OPS_DOCKER_UID}
+      - OPS_DOCKER_GID=${OPS_DOCKER_GID}
+      - OPS_DOMAIN=${OPS_DOMAIN}
+    networks:
+      - gateway
+      - backend
+    volumes:
+      - ${OPS_HOME}/www/dashboard:/var/www/dashboard
+      - ${OPS_HOME}/apache/apache.conf:/etc/apache2/sites-enabled/000-default.conf
+      - ${OPS_HOME}/apache/fix-docroot.php:/etc/apache2/fix-docroot.php
+      - ${OPS_HOME}/apache/configure:/opt/configure
+      - ${OPS_SITES_DIR}:/var/www/html
+
+  traefik:
+    image: traefik:latest
+    command: --docker.domain=${OPS_DOMAIN}
+    networks:
+      - gateway
+    userns_mode: 'host'
+    ports:
+      - "80:80"
+      - "443:443"
+      - "8080:8080"
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+      - ${OPS_HOME}/traefik/traefik.dev.toml:/etc/traefik/traefik.toml
+      - ${OPS_HOME}/certs/self-signed-cert.crt:/etc/traefik/self-signed-cert.crt
+      - ${OPS_HOME}/certs/self-signed-cert.key:/etc/traefik/self-signed-cert.key
+      - ${OPS_HOME}/traefik/acme.json:/etc/traefik/acme/acme.json
+
+  mailhog:
+    image: mailhog/mailhog
+    labels:
+      - "traefik.port=8025"
+      - "traefik.enable=true"
+      - "traefik.docker.network=ops_gateway"
+    networks:
+      - gateway
+      - backend
+
+  dnsmasq:
+    image: jpillora/dnsmasq
+    ports:
+      - "53:53/udp"
+    environment:
+      - "USER=user"
+      - "PASS=pass"
+    labels:
+      - "traefik.port=8080"
+      - "traefik.enable=true"
+      - "traefik.docker.network=ops_gateway"
+    networks:
+      - gateway
+    volumes:
+      - ${OPS_HOME}/dnsmasq/dnsmasq.conf:/etc/dnsmasq.conf
+
+  redis:
+    image: "redis:3.2"
+    ports:
+      - "6379:6379"
+    networks:
+      - backend
+
+  memcached:
+    image: "memcached:1.4"
+    ports:
+      - "11211:11211"
+    networks:
+      - backend
+
+  postgres:
+    image: "postgres:9.6"
+    environment:
+        PGDATA: "/var/lib/postgresql/data/pgdata"
+    networks:
+      - backend
+    user: 'postgres:postgres'
+    ports:
+      - "5432:5432"
+    volumes:
+      - "postgres:/var/lib/postgresql/data/pgdata"
+
+  mariadb:
+      image: "mariadb:10.3"
+      environment:
+        - "MYSQL_ALLOW_EMPTY_PASSWORD=yes"
+      networks:
+        - backend
+      ports:
+        - "3306:3306"
+      volumes:
+          - "mariadb:/var/lib/mysql"
+
+  adminer:
+    image: "clue/adminer"
+    networks:
+      - backend
+      - gateway
+    labels:
+      - "traefik.enable=true"
+      - "traefik.docker.network=ops_gateway"
+
+
+networks:
+  gateway:
+  backend:
+
+volumes:
+  portainer:
+  postgres:
+  mariadb:

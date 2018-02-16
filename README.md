@@ -1,12 +1,29 @@
 # Ops CLI
 
-**Version 0.3.0**
+**Version 0.3.1**
+
+- A dead-simple local & secure PHP development environment w/tooling
+- Traefik proxy automatic HTTPS and dynamic per-project docker services
+- Quick initialization of projects from templates (WIP)
+- Ability to package an application for production deployment (WIP)
 
 ## Prerequisites
 
-Ops supports Linux, Mac, and Windows Linux Subshell.
+Ops supports Linux, Mac, and Windows Subshell Linux (WSL)
 
-bash, docker, docker-compose are required.
+bash, docker, docker-compose, are required.
+
+**See resources section for more prerequisite installation instructions**
+
+## Install
+
+    # install package with npm
+    npm install -g git+ssh://git@gitlab.imarc.net:imarc/ops.git
+
+    # run install script.
+    ops sys install
+
+## Resources
 
 ### Linux Installation Instructions
 
@@ -21,11 +38,7 @@ bash, docker, docker-compose are required.
 - [Install Docker for Windows](https://docs.docker.com/docker-for-windows/install/)
 - [Install Docker Client](https://medium.com/@sebagomez/installing-the-docker-client-on-ubuntus-windows-subsystem-for-linux-612b392a44c4)
 
-## Install
-
-    # install
-    npm install -g git+ssh://git@gitlab.imarc.net:imarc/ops.git
 
 ## License
 
-@2017 MIT License
+@2018 MIT License

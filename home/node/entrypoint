@@ -1,0 +1,12 @@
+#!/bin/bash
+
+if [ -n "$OPS_DOCKER_UID" ]; then
+    usermod -u $OPS_DOCKER_UID node
+fi
+
+if [ -n "$OPS_DOCKER_GID" ]; then
+    groupmod -g $OPS_DOCKER_GID node
+fi
+
+exec "$@"
+
