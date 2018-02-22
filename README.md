@@ -21,7 +21,7 @@ bash, docker, docker-compose, are required.
     npm install -g git+ssh://git@gitlab.imarc.net:imarc/ops.git
 
     # run install script.
-    ops sys install
+    ops system install
 
 ## Resources
 
