@@ -6,7 +6,7 @@ services:
     labels:
       - "traefik.enable=true"
       - "traefik.docker.network=ops_gateway"
-    userns_mode: 'host'
+    userns_mode: "host"
     networks:
       - gateway
     volumes:
@@ -14,15 +14,15 @@ services:
       - portainer:/data
 
   apache:
-    image: imarcagency/php-apache:latest
+    image: ${OPS_DOCKER_APACHE_IMAGE}
     labels:
       - "traefik.enable=true"
       - "traefik.docker.network=ops_gateway"
       - "traefik.frontend.rule=HostRegexp:{subdomain:[a-z0-9-]+}.${OPS_DOMAIN}"
       - "traefik.port=80"
     environment:
-      - OPS_DOCKER_UID=${OPS_DOCKER_UID}
-      - OPS_DOCKER_GID=${OPS_DOCKER_GID}
+      - APACHE_UID=${OPS_DOCKER_UID}
+      - APACHE_GID=${OPS_DOCKER_GID}
       - OPS_DOMAIN=${OPS_DOMAIN}
     networks:
       - gateway
@@ -51,6 +51,23 @@ services:
       - ${OPS_HOME}/certs/self-signed-cert.key:/etc/traefik/self-signed-cert.key
       - ${OPS_HOME}/traefik/acme.json:/etc/traefik/acme/acme.json
 
+  minio:
+    image: minio/minio
+    labels:
+      - "traefik.enable=true"
+      - "traefik.docker.network=ops_gateway"
+      - "traefik.port=80"
+    command: server --address ":80" /data
+    environment:
+      - "MINIO_ACCESS_KEY=${OPS_MINIO_ACCESS_KEY}"
+      - "MINIO_SECRET_KEY=${OPS_MINIO_SECRET_KEY}"
+    networks:
+      - gateway
+      - backend
+    volumes:
+      - minio:/data
+
+
   mailhog:
     image: mailhog/mailhog
     labels:
@@ -60,22 +77,6 @@ services:
     networks:
       - gateway
       - backend
-
-  dnsmasq:
-    image: jpillora/dnsmasq
-    ports:
-      - "53:53/udp"
-    environment:
-      - "USER=user"
-      - "PASS=pass"
-    labels:
-      - "traefik.port=8080"
-      - "traefik.enable=true"
-      - "traefik.docker.network=ops_gateway"
-    networks:
-      - gateway
-    volumes:
-      - ${OPS_HOME}/dnsmasq/dnsmasq.conf:/etc/dnsmasq.conf
 
   redis:
     image: "redis:3.2"
@@ -129,6 +130,7 @@ networks:
   backend:
 
 volumes:
+  minio:
   portainer:
   postgres:
   mariadb:

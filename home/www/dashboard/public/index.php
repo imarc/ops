@@ -27,7 +27,7 @@ $domain = $_ENV['OPS_DOMAIN'];
                 <a href="https://mailhog.ops.<?= $domain ?>">Mailhog</a>
             </li>
             <li>
-                <a href="https://dnsmasq.ops.<?= $domain ?>">Dnsmasq</a>
+                <a href="https://minio.ops.<?= $domain ?>">Minio</a>
             </li>
             <li>
                 <a href="https://ops.<?= $domain ?>:8080/dashboard/#/health">Traefik</a>

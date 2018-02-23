@@ -2,12 +2,16 @@ OPS_DOMAIN="imarc.io"
 OPS_SITES_DIR="$HOME/Sites"
 
 OPS_DOCKER_APACHE_IMAGE="imarcagency/php-apache:latest"
-OPS_DOCKER_COMPOSER_IMAGE="composer:1.6.3"
+OPS_DOCKER_COMPOSER_IMAGE="imarcagency/php-apache:latest"
 OPS_DOCKER_NODE_IMAGE="node:9.5.0"
+
+OPS_MINIO_ACCESS_KEY="minio-access"
+OPS_MINIO_SECRET_KEY="minio-secret"
+
+OPS_SHELL_SERVICE="apache"
+OPS_SHELL_COMMAND="bash"
 
 OPS_DOCKER_UID=
 OPS_DOCKER_GID=
 
-OPS_SHELL_SERVICE="apache"
-OPS_SHELL_COMMAND="bash"
 

@@ -81,9 +81,10 @@ ops-composer() {
     ops-docker run \
         --rm -itP \
         -v "$(pwd):/usr/src/app" \
+        -e "/usr/src/app" \
         -w "/usr/src/app" \
         $OPS_DOCKER_COMPOSER_IMAGE \
-        $@
+        composer $@
 }
 
 ops-docker() {
@@ -110,6 +111,18 @@ ops-help() {
 
 ops-logs() {
     system-docker-compose logs -f $@
+}
+
+ops-mc() {
+    ops-docker run \
+        --rm -it \
+        --network "ops_backend" \
+        -v "$OPS_HOME/minio:/root/.mc" \
+        -v "$OPS_SITES_DIR:/var/www/html" \
+        -w "/var/www/html" \
+        --entrypoint "mc" \
+        minio/mc \
+        $@
 }
 
 ops-mysql() {
@@ -271,6 +284,9 @@ system-docker-compose() {
     OPS_SITES_DIR=$OPS_SITES_DIR \
     OPS_DOCKER_UID=$OPS_DOCKER_UID \
     OPS_DOCKER_GID=$OPS_DOCKER_GID \
+    OPS_DOCKER_APACHE_IMAGE=$OPS_DOCKER_APACHE_IMAGE \
+    OPS_MINIO_ACCESS_KEY=$OPS_MINIO_ACCESS_KEY \
+    OPS_MINIO_SECRET_KEY=$OPS_MINIO_SECRET_KEY \
     docker-compose $@
 }
 
@@ -332,6 +348,11 @@ system-refresh() {
     sed "s/OPS_DOMAIN/$OPS_DOMAIN/" $OPS_HOME/dnsmasq/dnsmasq.conf.tmpl > $OPS_HOME/dnsmasq/dnsmasq.conf
     sed "s/OPS_DOMAIN/$OPS_DOMAIN/" $OPS_HOME/certs/ssl.conf.tmpl > $OPS_HOME/certs/ssl.conf
 
+    sed \
+        -e "s/OPS_MINIO_ACCESS_KEY/$OPS_MINIO_ACCESS_KEY/" \
+        -e "s/OPS_MINIO_SECRET_KEY/$OPS_MINIO_SECRET_KEY/" \
+        $OPS_HOME/minio/config.json.tmpl > $OPS_HOME/minio/config.json
+
     ops-docker build -t ops-node:$OPS_VERSION $OPS_HOME/node
     ops-docker build -t ops-utils:$OPS_VERSION $OPS_HOME/utils
 
@@ -352,7 +373,7 @@ system-refresh() {
         # other certs
         # ???
 
-    elif [[ "$OS" == max ]]; then
+    elif [[ "$OS" == mac ]]; then
 
         sudo security delete-certificate -c "ops-local-dev"
 
@@ -397,7 +418,7 @@ system-refresh() {
         # chrome certs
         certutil -d sql:$HOME/.pki/nssdb -A -t "P,," -n ops-local-dev -i $HOME/.ops/certs/self-signed-cert.crt
 
-    elif [[ "$OS" == max ]]; then
+    elif [[ "$OS" == mac ]]; then
 
         sudo security add-trusted-cert -d -r trustRoot -k /Library/Keychains/System.keychain $OPS_HOME/certs/self-signed-cert.crt
 
