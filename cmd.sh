@@ -11,7 +11,7 @@ cmd-help() {
     echo "where <command> is one of:"
 
     local IFS=$'\n'
-    for line in $(echo $commands | awk NF=NF RS= OFS=", " | fold -w 40 -s);
+    for line in $(echo $commands | awk NF=NF RS= OFS=", " | fold -w 50 -s);
     do
         echo "    $line"
     done

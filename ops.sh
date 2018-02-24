@@ -83,16 +83,17 @@ ops-composer() {
         -v "$(pwd):/usr/src/app" \
         -e "/usr/src/app" \
         -w "/usr/src/app" \
+        --label=ops.site="$(ops site id)" \
+        --user "www-data:www-data" \
         $OPS_DOCKER_COMPOSER_IMAGE \
-        composer $@
+        composer "$@"
 }
 
 ops-docker() {
-    docker $@
+    docker "$@"
 }
 
 ops-exec() {
-    echo $@
     local service=$1
     shift
 
@@ -100,7 +101,7 @@ ops-exec() {
 
     [[ -z $id ]] && exit
 
-    ops-docker exec -i $id $@
+    ops-docker exec -i $id "$@"
 }
 
 ops-help() {
@@ -110,7 +111,7 @@ ops-help() {
 }
 
 ops-logs() {
-    system-docker-compose logs -f $@
+    system-docker-compose logs -f "$@"
 }
 
 ops-mc() {
@@ -122,11 +123,28 @@ ops-mc() {
         -w "/var/www/html" \
         --entrypoint "mc" \
         minio/mc \
-        $@
+        "${@}"
 }
 
+
 ops-mysql() {
-    system-shell-exec mariadb mysql $@
+    system-shell-exec mariadb mysql "${@}"
+}
+
+ops-mysql-export() {
+    local db="$1"
+
+    ops-exec mariadb mysqldump --single-transaction "$db"
+}
+
+ops-mysql-import() {
+    local db="$1"
+    local sqlfile="$2"
+
+    ops-exec mariadb mysql -e "DROP DATABASE $db"
+    ops-exec mariadb mysql -e "CREATE DATABASE $db"
+
+    cat "$sqlfile" | ops-exec mariadb mysql "$db"
 }
 
 ops-node() {
@@ -134,9 +152,10 @@ ops-node() {
         --rm -itP --init \
         -v "$(pwd):/usr/src/app" \
         -w "/usr/src/app" \
+        --label=ops.site="$(ops site id)" \
         --user "node" \
         ops-node:$OPS_VERSION \
-        $@
+        "$@"
 }
 
 ops-npm() {
@@ -144,18 +163,19 @@ ops-npm() {
         --rm -itP --init \
         -v "$(pwd):/usr/src/app" \
         -w "/usr/src/app" \
+        --label=ops.site="$(ops site id)" \
         --user "node" \
         --entrypoint "npm" \
         ops-node:$OPS_VERSION \
-        $@
+        "$@"
 }
 
 ops-ps() {
-    system-docker-compose ps $@
+    system-docker-compose ps "$@"
 }
 
 ops-psql() {
-    system-shell-exec postgres psql $@
+    system-shell-exec postgres psql "$@"
 }
 
 ops-gulp() {
@@ -163,14 +183,15 @@ ops-gulp() {
         --rm -itP --init \
         -v "$(pwd):/usr/src/app" \
         -w "/usr/src/app" \
+        --label=ops.site="$(ops site id)" \
         --user "node" \
         --entrypoint "gulp" \
         ops-node:$OPS_VERSION \
-        $@
+        "$@"
 }
 
 ops-redis() {
-    system-shell-exec redis redis-cli $@
+    system-shell-exec redis redis-cli "$@"
 }
 
 ops-restart() {
@@ -182,7 +203,7 @@ ops-shell() {
 }
 
 ops-site() {
-    cmd-run site $@
+    cmd-run site "$@"
 }
 
 ops-stats() {
@@ -201,7 +222,7 @@ ops-stop() {
 }
 
 ops-system() {
-    cmd-run system $@
+    cmd-run system "$@"
 }
 
 ops-version() {
@@ -213,16 +234,32 @@ ops-yarn() {
         --rm -itP --init \
         -v "$(pwd):/usr/src/app" \
         -w "/usr/src/app" \
+        --label=ops.site="$(ops site id)" \
         --user "node" \
         --entrypoint "yarn" \
         ops-node:$OPS_VERSION \
-        $@
+        "$@"
 }
 
 # Site sub sommands
 
 site-docker-compose() {
-    docker-compose $@
+    docker-compose "$@"
+}
+
+site-id() {
+    local basename="$(basename $(pwd))"
+
+    (
+        while [[ "$(pwd)" != $OPS_SITES_DIR ]] && [[ "$(pwd)" != '/' ]]; do
+            cd ..
+            basename=$(basename $(pwd))
+        done
+    )
+
+    if [[ -n "$basename" ]]; then
+        echo $basename
+    fi
 }
 
 site-start() {
@@ -234,15 +271,14 @@ site-stop() {
 }
 
 site-logs() {
-    site-docker-compose logs -f $@
+    site-docker-compose logs -f "$@"
 }
 
 site-ps() {
-    site-docker-compose ps $@
+    site-docker-compose ps "$@"
 }
 
 site-exec() {
-    echo $@
     local service=$1
     shift
 
@@ -250,7 +286,7 @@ site-exec() {
 
     [[ -z $id ]] && exit
 
-    ops-docker exec -i $id $@
+    ops-docker exec -i $id "$@"
 }
 
 site-help() {
@@ -264,7 +300,7 @@ site-shell-exec() {
 
     [[ -z $id ]] && exit
 
-    ops-docker exec -it $id $@
+    ops-docker exec -it $id "$@"
 }
 
 site-stats() {
@@ -287,7 +323,7 @@ system-docker-compose() {
     OPS_DOCKER_APACHE_IMAGE=$OPS_DOCKER_APACHE_IMAGE \
     OPS_MINIO_ACCESS_KEY=$OPS_MINIO_ACCESS_KEY \
     OPS_MINIO_SECRET_KEY=$OPS_MINIO_SECRET_KEY \
-    docker-compose $@
+    docker-compose "$@"
 }
 
 system-shell-exec() {
@@ -300,10 +336,16 @@ system-shell-exec() {
         exit 1
     fi
 
-    ops-docker exec -it $id $@
+    ops-docker exec -it $id "$@"
 }
 
 system-config() {
+    #
+    # list: config
+    # get:  config [key]
+    # set:  config [key] [value]
+    #
+
     local key=$1
     shift
     local val=$(local IFS=" "; echo "$@");
@@ -318,8 +360,8 @@ system-config() {
 }
 
 system-install() {
-    # this needs to change
-    # but for now just destroy the home directory
+    # this needs to change but for now just destroy
+    # the existing home directory with every install
     rm -rf $OPS_HOME
 
     if [[ ! -d $OPS_HOME ]]; then
@@ -425,7 +467,7 @@ system-refresh() {
     fi
 
     #
-    # Regenerate/Restart services. (They might depend on the cert)
+    # Regenerate/Restart services. (They might depend on new configs/certs)
     #
 
     if [[ ! -z $(ops-ps | grep Up) ]]; then
@@ -447,8 +489,8 @@ system-help() {
 # Run Main Command
 
 main() {
-    cmd-run ops $@
+    cmd-run ops "$@"
     exit
 }
 
-main $@
+main "$@"

@@ -32,7 +32,7 @@ services:
       - ${OPS_HOME}/apache/apache.conf:/etc/apache2/sites-enabled/000-default.conf
       - ${OPS_HOME}/apache/fix-docroot.php:/etc/apache2/fix-docroot.php
       - ${OPS_HOME}/apache/configure:/opt/configure
-      - ${OPS_SITES_DIR}:/var/www/html
+      - ${OPS_SITES_DIR}:/var/www/html:cached
 
   traefik:
     image: traefik:latest
