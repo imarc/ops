@@ -73,15 +73,11 @@ validate-config() {
 # Main Commands
 
 ops-composer() {
-    local useropt=""
-    if [[ "$OS" == 'linux' ]]; then
-        local useropt="--user \"$OPS_DOCKER_UID:$OPS_DOCKER_GID\""
-    fi
-
     ops-docker run \
         --rm -itP \
         -v "$(pwd):/usr/src/app" \
-        -e "/usr/src/app" \
+        -v "$OPS_HOME/composer:/composer" \
+        -e "COMPOSER_HOME=/composer" \
         -w "/usr/src/app" \
         --label=ops.site="$(ops site id)" \
         --user "www-data:www-data" \

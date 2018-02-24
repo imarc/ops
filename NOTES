@@ -69,3 +69,6 @@ certutil -d sql:$HOME/.pki/nssdb -D -n ops-local-dev
 /usr/share/ca-certificates $ sudo bash -c 'cat /home/vagrant/.ops/certs/self-signed-cert.key > ops-local-dev.pem'
 /usr/share/ca-certificates $ sudo bash -c 'cat /home/vagrant/.ops/certs/self-signed-cert.crt >> ops-local-dev.pem'
 /usr/share/ca-certificates $ sudo bash -c 'cat /home/vagrant/.ops/certs/self-signed-cert.csr >> ops-local-dev.pem'
+
+portainer api examples
+https://gist.github.com/deviantony/77026d402366b4b43fa5918d41bc42f8
