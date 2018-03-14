@@ -54,4 +54,6 @@ Installing like this means your global ops script will point directly to the rep
 
 ## License
 
-@2018 MIT License
+MIT License
+
+Copyright (c) 2018 Imarc
