@@ -39,6 +39,19 @@ bash, docker, docker-compose, are required.
 - [Install Docker Client](https://medium.com/@sebagomez/installing-the-docker-client-on-ubuntus-windows-subsystem-for-linux-612b392a44c4)
 
 
+## Contributing
+
+If you are developing ops itself, debugging, or want to try out bleeding edge features, It is recommended you install like so:
+
+    # clone into a local dir and enter dir
+    git clone git@gitlab.imarc.net:imarc/ops.git
+    cd ops
+
+    # create 'ops' symlink to your repo
+    npm install -g .
+
+Installing like this means your global ops script will point directly to the repo and you can make changes on the fly.
+
 ## License
 
 @2018 MIT License
