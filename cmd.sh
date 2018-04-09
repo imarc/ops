@@ -41,10 +41,10 @@ cmd-run() {
     fi
 
     if [[ $has_hidden_command != 0 ]]; then
-        _$prefix-$command $@
+        _$prefix-$command "$@"
         return
     else
-        $prefix-$command $@
+        $prefix-$command "$@"
     fi
 
 }

@@ -219,7 +219,7 @@ ops-psql-import() {
     ops-psql -c "DROP DATABASE $db"
     ops-psql -c "CREATE DATABASE $db"
 
-    cat "$sqlfile" | ops-psql "$db"
+    cat "$sqlfile" | ops-exec postgres psql -U postgres "$db"
 }
 
 _ops-gulp() {
