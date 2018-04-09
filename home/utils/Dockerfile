@@ -2,15 +2,28 @@ FROM alpine:3.7
 
 MAINTAINER Imarc <info@imarc.com>
 
-RUN apk add --no-cache \
+RUN echo "http://dl-cdn.alpinelinux.org/alpine/edge/community" >> /etc/apk/repositories
+
+RUN apk add --update --no-cache \
         bash \
         curl \
+        docker \
         git \
         jq \
         openssh \
         openssl \
+        socat \
         rsync \
         netcat-openbsd \
+        ttyd \
+        py-pip \
         unzip \
-        wget
+        wget \
+        apache2 \
+        && rm -rf /var/cache/apk/*
 
+RUN pip install yq
+
+# install docker-compose
+RUN curl -L https://github.com/docker/compose/releases/download/1.19.0/docker-compose-`uname -s`-`uname -m` -o /usr/local/bin/docker-compose
+RUN chmod +x /usr/local/bin/docker-compose

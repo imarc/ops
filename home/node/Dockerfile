@@ -1,4 +1,4 @@
-FROM node:9.5.0
+FROM node:8.9.4
 
 RUN npm install -g gulp
 

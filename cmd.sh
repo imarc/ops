@@ -19,6 +19,7 @@ cmd-help() {
     echo
 }
 
+
 cmd-run() {
     local prefix=$1
     local command="$2"
@@ -31,10 +32,19 @@ cmd-run() {
     [[ $(type -t $prefix-$command) != 'function' ]]
     local has_command=$?
 
-    if [[ ( -z "$command" || $has_command == 0 ) && $has_help == 1 ]]; then
+    [[ $(type -t _$prefix-$command) != 'function' ]]
+    local has_hidden_command=$?
+
+    if [[ ( -z "$command" || $has_hidden_command == 0 && $has_command == 0 ) && $has_help == 1 ]]; then
         $prefix-help
         exit
     fi
 
-    $prefix-$command $@
+    if [[ $has_hidden_command != 0 ]]; then
+        _$prefix-$command $@
+        return
+    else
+        $prefix-$command $@
+    fi
+
 }

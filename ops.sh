@@ -1,6 +1,6 @@
 #!/bin/bash
 
-OPS_VERSION=0.3.1
+OPS_VERSION=0.4.0
 
 # Determine OS
 
@@ -72,20 +72,26 @@ validate-config() {
 
 # Main Commands
 
-ops-composer() {
-    ops-docker run \
+_ops-composer() {
+    mkdir -p "$HOME/.composer"
+    mkdir -p "$HOME/.ssh"
+
+    ops docker run \
         --rm -itP \
         -v "$(pwd):/usr/src/app" \
         -v "$OPS_HOME/composer:/composer" \
+        -v "$HOME/.ssh:/var/www/.ssh" \
+        -v "$ssh_agent:/ssh-agent" \
+        -e "SSH_AUTH_SOCK=/ssh-agent" \
         -e "COMPOSER_HOME=/composer" \
         -w "/usr/src/app" \
         --label=ops.site="$(ops site id)" \
         --user "www-data:www-data" \
         $OPS_DOCKER_COMPOSER_IMAGE \
-        composer "$@"
+        composer -n "$@"
 }
 
-ops-docker() {
+_ops-docker() {
     docker "$@"
 }
 
@@ -97,11 +103,36 @@ ops-exec() {
 
     [[ -z $id ]] && exit
 
-    ops-docker exec -i $id "$@"
+    ops docker exec -i $id "$@"
 }
 
 ops-help() {
-    cmd-help ops ops
+    #cmd-help ops ops
+
+    cat << 'EOD'
+Usage: ops <command>
+
+where <command> is one of:
+
+exec            Run a command on a service
+help            Display help
+logs            Follow system logs
+mariadb         Mariadb CLI
+mariadb-import  Import MariaDB database
+mariadb-export  Export MariaDB database
+ps              View service status
+psql            PostgreSQL CLI
+psql-import     Import PostgreSQL database
+psql-export     Export PostgreSQL database
+restart         Restart services
+shell           Bash prompt in Apache container
+start           Start services
+stats           View service stats (CPU, Mem, Net I/O)
+stop            Stop services
+version         Show Ops version
+
+EOD
+
     echo $(ops-version)
     echo
 }
@@ -110,8 +141,8 @@ ops-logs() {
     system-docker-compose logs -f "$@"
 }
 
-ops-mc() {
-    ops-docker run \
+_ops-mc() {
+    ops docker run \
         --rm -it \
         --network "ops_backend" \
         -v "$OPS_HOME/minio:/root/.mc" \
@@ -122,18 +153,17 @@ ops-mc() {
         "${@}"
 }
 
-
-ops-mysql() {
+ops-mariadb() {
     system-shell-exec mariadb mysql "${@}"
 }
 
-ops-mysql-export() {
+ops-mariadb-export() {
     local db="$1"
 
     ops-exec mariadb mysqldump --single-transaction "$db"
 }
 
-ops-mysql-import() {
+ops-mariadb-import() {
     local db="$1"
     local sqlfile="$2"
 
@@ -143,21 +173,23 @@ ops-mysql-import() {
     cat "$sqlfile" | ops-exec mariadb mysql "$db"
 }
 
-ops-node() {
-    ops-docker run \
+_ops-node() {
+    ops docker run \
         --rm -itP --init \
         -v "$(pwd):/usr/src/app" \
         -w "/usr/src/app" \
         --label=ops.site="$(ops site id)" \
         --user "node" \
+        --entrypoint "node" \
         ops-node:$OPS_VERSION \
         "$@"
 }
 
-ops-npm() {
-    ops-docker run \
+_ops-npm() {
+    ops docker run \
         --rm -itP --init \
         -v "$(pwd):/usr/src/app" \
+        -v "$HOME/.ssh:/home/node/.ssh" \
         -w "/usr/src/app" \
         --label=ops.site="$(ops site id)" \
         --user "node" \
@@ -171,11 +203,27 @@ ops-ps() {
 }
 
 ops-psql() {
-    system-shell-exec postgres psql "$@"
+    system-shell-exec postgres psql -U postgres "$@"
 }
 
-ops-gulp() {
-    ops-docker run \
+ops-psql-export() {
+    local db="$1"
+
+    ops-exec postgres pg_dump -U postgres "$db"
+}
+
+ops-psql-import() {
+    local db="$1"
+    local sqlfile="$2"
+
+    ops-psql -c "DROP DATABASE $db"
+    ops-psql -c "CREATE DATABASE $db"
+
+    cat "$sqlfile" | ops-psql "$db"
+}
+
+_ops-gulp() {
+    ops docker run \
         --rm -itP --init \
         -v "$(pwd):/usr/src/app" \
         -w "/usr/src/app" \
@@ -195,7 +243,18 @@ ops-restart() {
 }
 
 ops-shell() {
-    system-shell-exec $OPS_SHELL_SERVICE $OPS_SHELL_COMMAND
+    #system-shell-exec $OPS_SHELL_SERVICE $OPS_SHELL_COMMAND
+
+    ops docker run \
+        --rm -itP \
+        -v "$(pwd):/usr/src/app" \
+        -v "$HOME/.ssh:/var/www/.ssh" \
+        -e "COMPOSER_HOME=/composer" \
+        -w "/usr/src/app" \
+        --label=ops.site="$(ops site id)" \
+        --user "www-data:www-data" \
+        $OPS_DOCKER_APACHE_IMAGE \
+        bash
 }
 
 ops-site() {
@@ -205,16 +264,36 @@ ops-site() {
 ops-stats() {
     local ids=$(system-docker-compose ps -q)
     [[ -z $ids ]] && exit
-    ops-docker stats $ids
+    ops docker stats $ids
 }
 
 ops-start() {
     validate-config
-    system-docker-compose up -d
+    system-start
 }
 
 ops-stop() {
-    system-docker-compose stop
+    system-stop
+}
+
+_ops-yq() {
+    ops docker run \
+        --rm -i \
+        -v "$(pwd):/usr/src/" \
+        -w "/usr/src/" \
+        $OPS_DOCKER_UTILS_IMAGE \
+        yq \
+        "$@"
+}
+
+_ops-jq() {
+    ops docker run \
+        --rm -i \
+        -v "$(pwd):/usr/src/" \
+        -w "/usr/src/" \
+        $OPS_DOCKER_UTILS_IMAGE \
+        jq \
+        "$@"
 }
 
 ops-system() {
@@ -225,8 +304,8 @@ ops-version() {
     echo "ops version $OPS_VERSION"
 }
 
-ops-yarn() {
-    ops-docker run \
+_ops-yarn() {
+    ops docker run \
         --rm -itP --init \
         -v "$(pwd):/usr/src/app" \
         -w "/usr/src/app" \
@@ -240,6 +319,15 @@ ops-yarn() {
 # Site sub sommands
 
 site-docker-compose() {
+    local compose_file="docker-compose.yml"
+    if [[ -f "docker-compose.ops.yml" ]]; then
+        compose_file+=":docker-compose.ops.yml"
+    fi
+
+    OPS_DOMAIN=$OPS_DOMAIN \
+    OPS_SITE_BASENAME="$(basename $PWD)" \
+    COMPOSE_PROJECT_NAME="ops$(basename $PWD)" \
+    COMPOSE_FILE="$compose_file" \
     docker-compose "$@"
 }
 
@@ -282,7 +370,7 @@ site-exec() {
 
     [[ -z $id ]] && exit
 
-    ops-docker exec -i $id "$@"
+    ops docker exec -i $id "$@"
 }
 
 site-help() {
@@ -296,20 +384,20 @@ site-shell-exec() {
 
     [[ -z $id ]] && exit
 
-    ops-docker exec -it $id "$@"
+    ops docker exec -it $id "$@"
 }
 
 site-stats() {
     local ids=$(site-docker-compose ps -q)
     [[ -z $ids ]] && exit
 
-    ops-docker stats $ids
+    ops docker stats $ids
 }
 
 # System Sub-Commands
 
 system-docker-compose() {
-    COMPOSE_PROJECT_NAME=ops \
+    COMPOSE_PROJECT_NAME="ops" \
     COMPOSE_FILE=$OPS_HOME/docker-compose.system.yml \
     OPS_DOMAIN=$OPS_DOMAIN \
     OPS_HOME=$OPS_HOME \
@@ -332,7 +420,7 @@ system-shell-exec() {
         exit 1
     fi
 
-    ops-docker exec -it $id "$@"
+    ops docker exec -it $id "$@"
 }
 
 system-config() {
@@ -355,14 +443,18 @@ system-config() {
     fi
 }
 
-system-install() {
-    # this needs to change but for now just destroy
-    # the existing home directory with every install
+system-install-fresh() {
     rm -rf $OPS_HOME
 
-    if [[ ! -d $OPS_HOME ]]; then
-        cp -rp $OPS_SCRIPT_DIR/home $OPS_HOME
+    system-install
+}
+
+system-install() {
+    if [[  -d $OPS_HOME ]]; then
+        return
     fi
+
+    cp -rp $OPS_SCRIPT_DIR/home $OPS_HOME
 
     source $OPS_HOME/config
 
@@ -391,8 +483,8 @@ system-refresh() {
         -e "s/OPS_MINIO_SECRET_KEY/$OPS_MINIO_SECRET_KEY/" \
         $OPS_HOME/minio/config.json.tmpl > $OPS_HOME/minio/config.json
 
-    ops-docker build -t ops-node:$OPS_VERSION $OPS_HOME/node
-    ops-docker build -t ops-utils:$OPS_VERSION $OPS_HOME/utils
+    ops docker build -t ops-node:$OPS_VERSION $OPS_HOME/node
+    ops docker build -t ops-utils:$OPS_VERSION $OPS_HOME/utils
 
     #
     # Clear out old cert
@@ -421,12 +513,12 @@ system-refresh() {
     # Generate cert
     #
 
-    ops-docker run --rm \
+    ops docker run --rm \
         -v $OPS_HOME:/ops-home \
         -i $OPS_DOCKER_UTILS_IMAGE \
         openssl genrsa -out /ops-home/certs/self-signed-cert.key 2048
 
-    ops-docker run --rm \
+    ops docker run --rm \
         -v $OPS_HOME:/ops-home \
         -i $OPS_DOCKER_UTILS_IMAGE \
         openssl req -new -batch -passin pass: \
@@ -434,7 +526,7 @@ system-refresh() {
         -out /ops-home/certs/self-signed-cert.csr \
         -config /ops-home/certs/ssl.conf
 
-    ops-docker run --rm \
+    ops docker run --rm \
         -v $OPS_HOME:/ops-home \
         -i $OPS_DOCKER_UTILS_IMAGE \
         openssl x509 -req -sha256 -days 3650 \
@@ -477,14 +569,52 @@ system-refresh() {
     fi
 }
 
+system-start() {
+    system-docker-compose up -d
+}
+
+system-stop() {
+    system-docker-compose stop
+}
+
 system-help() {
     cmd-help "ops system" system
+    echo
+}
+
+
+# Project Creation
+
+_ops-init() {
+    cmd-run init "$@"
+}
+
+init-help() {
+    cmd-help "ops init" init
+    echo
+
+}
+
+init-craft2() {
+    local folder=$1
+    local domain=${2-"$1.$OPS_DOMAIN"}
+
+    echo 'Installing Craft'
+
+    ops composer create-project imarc/padstone $folder
+
+}
+
+init-laravel() {
     echo
 }
 
 # Run Main Command
 
 main() {
+    system-install
+    validate-config
+
     cmd-run ops "$@"
     exit
 }

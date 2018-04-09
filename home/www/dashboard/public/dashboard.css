@@ -1,0 +1,28 @@
+body {
+    color: #444;
+}
+
+.navbar {
+    background: #eee;
+}
+
+.navbar h1 {
+    font-size: 1em;
+    font-weight: normal;
+    padding: 0;
+    margin: 0;
+    display: inline;
+}
+
+main {
+    padding: 30px;
+}
+
+.note {
+    color: #888;
+    font-size: .8rem;
+}
+
+.site {
+    white-space: pre;
+}
