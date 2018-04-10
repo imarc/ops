@@ -1,6 +1,12 @@
 <?php
 $domain = $_ENV['OPS_DOMAIN'];
 $sitesDir = $_ENV['OPS_SITES_DIR'];
+
+$mariadb = new PDO('mysql:host=mariadb', 'root', null);
+$postgres = new PDO('pgsql:host=postgres;user=postgres');
+
+$mariadbDatabases = $mariadb->query('SHOW DATABASES');
+$postgresDatabases = $postgres->query('SELECT datname AS name FROM pg_database WHERE datistemplate = false');
 ?>
 <!doctype html>
 <html lang="">
@@ -24,9 +30,115 @@ $sitesDir = $_ENV['OPS_SITES_DIR'];
 
         <main class="container">
             <div class="row">
-                <div class="col-sm">
+                <div class="col-md">
+                    <h2>Projects</h2>
 
-                    <h2>Services</h2>
+                    <ul>
+                    <?php
+                    $sites = [];
+                    foreach(glob('/var/www/html/*', GLOB_ONLYDIR) as $dir) {
+                        $site = str_replace('/var/www/html/', '', $dir);
+                        if (!preg_match('/^[a-z][a-z0-9-]*$/', $site)) {
+                            continue;
+                        }
+
+                        //chdir($dir);
+                        //exec("git status -bs 2> /dev/null", $output);
+
+                        //var_dump($output);
+
+                        //var_dump($output);
+
+                        echo "<li><a class=\"site\" href=\"https://{$site}.{$domain}\">{$site} {$output[0]}</a></li>";
+                    }
+                    ?>
+                    </ul>
+
+                    <p class="note"><em>Only valid site directories within <strong><?= $sitesDir ?></strong> will show. Site directories must only contain letters, numbers, and dashes.</em></p>
+                </div>
+
+                <div class="col-md databases">
+                    <h2>Databases</h2>
+
+                    <header>
+                        <h3>MariaDB</h3>
+                        <small>
+                            /
+                            <a href="https://adminer.ops.<?= $domain ?>/?server=mariadb&username=root&database=">create db</a>
+                        </small>
+                    </header>
+
+                    <ul>
+                        <?php
+                        $count = 0;
+                        foreach ($mariadbDatabases as $db) {
+                            if (in_array($db[0], ['mysql', 'information_schema', 'performance_schema'])) {
+                                continue;
+                            }
+                            ?>
+
+                            <li>
+                                <?php
+                                $link = "https://adminer.ops.${domain}/?server=mariadb&username=root&db=" . $db[0];
+                                echo sprintf('<a href="%s">%s</a>', $link, $db[0]);
+
+                                $sqlLink = "https://adminer.ops.${domain}/?server=mariadb&username=root&sql=&db=" . $db[0];
+                                echo sprintf('<small> / <a href="%s">query</a></li></small>', $sqlLink);
+                                ?>
+                            </li>
+
+                            <?php
+                            $count++;
+                        }
+
+                        if ($count === 0) {
+                            echo '<li><em>None</em></li>';
+                        }
+                        ?>
+                    </ul>
+
+                    <header>
+                        <h3>Postgres</h3>
+                        <small>
+                            /
+                            <a href="https://adminer.ops.<?= $domain ?>/?pgsql=postgres&username=postgres&database=">create db</a>
+                        </small>
+                    </header>
+
+                    <ul>
+                        <?php
+                        $count = 0;
+                        foreach ($postgresDatabases as $db) {
+                            if (in_array($db['name'], ['postgres'])) {
+                                continue;
+                            }
+                            ?>
+
+                            <li>
+                                <?php
+                                $link = "https://adminer.ops.${domain}/?pgsql=postgres&username=postgres&ns=public&db=" . $db['name'];;
+                                echo sprintf('<a href="%s">%s</a>', $link, $db['name']);
+
+                                $sqlLink = "https://adminer.ops.${domain}/?pgsql=postgres&username=postgres&ns=public&sql=&db=" . $db['name'];;
+                                echo sprintf('<small> / <a href="%s">query</a></li></small>', $sqlLink);
+                                ?>
+                            </li>
+
+                            <?php
+                            $count++;
+
+                        }
+
+                        if ($count === 0) {
+                            echo '<li><em>None</em></li>';
+                        }
+                        ?>
+
+                    </ul>
+                </div>
+                <div class="col-md">
+
+                    <h2>Tools</h2>
 
                     <ul>
                         <li>
@@ -35,6 +147,9 @@ $sitesDir = $_ENV['OPS_SITES_DIR'];
                                 <li><a href="https://adminer.ops.<?= $domain ?>/?server=mariadb&amp;username=root">MariaDB</a></li>
                                 <li><a href="https://adminer.ops.<?= $domain ?>/?pgsql=postgres&amp;username=postgres">PostgreSQL</a></li>
                             </ul>
+                        </li>
+                        <li>
+                            <a href="https://redis-commander.ops.<?= $domain ?>">Redis Commander</a>
                         </li>
                         <li>
                             <a href="https://minio.ops.<?= $domain ?>">Minio</a>
@@ -51,25 +166,6 @@ $sitesDir = $_ENV['OPS_SITES_DIR'];
 
                         <li><a href="/phpinfo.php">PHP Info</a></li>
                     </ul>
-                </div>
-                <div class="col-sm">
-                    <h2>Sites</h2>
-
-                    <ul>
-                    <?php
-                    $sites = [];
-                    foreach(glob('/var/www/html/*', GLOB_ONLYDIR) as $dir) {
-                        $site = str_replace('/var/www/html/', '', $dir);
-                        if (!preg_match('/^[a-z][a-z0-9-]*$/', $site)) {
-                            continue;
-                        }
-
-                        echo "<li><a class=\"site\" href=\"https://{$site}.{$domain}\">{$site}</a></li>";
-                    }
-                    ?>
-                    </ul>
-
-                    <p class="note"><em>Only valid site directories within <strong><?= $sitesDir ?></strong> will show. Site directories must only contain letters, numbers, and dashes.</em></p>
                 </div>
             </div>
         </div>
