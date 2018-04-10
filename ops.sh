@@ -1,6 +1,6 @@
 #!/bin/bash
 
-OPS_VERSION=0.4.1
+OPS_VERSION=0.4.2
 
 # Determine OS
 
