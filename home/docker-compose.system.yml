@@ -87,6 +87,18 @@ services:
     networks:
       - backend
 
+  redis-commander:
+    image: rediscommander/redis-commander:latest
+    environment:
+      - REDIS_HOSTS=local:redis:6379
+    labels:
+      - "traefik.port=8081"
+      - "traefik.enable=true"
+      - "traefik.docker.network=ops_gateway"
+    networks:
+      - gateway
+      - backend
+
   memcached:
     image: "memcached:1.4"
     ports:
