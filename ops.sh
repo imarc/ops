@@ -167,7 +167,7 @@ ops-mariadb-import() {
     local db="$1"
     local sqlfile="$2"
 
-    ops-exec mariadb mysql -e "DROP DATABASE $db"
+    ops-exec mariadb mysql -e "DROP DATABASE IF EXISTS $db"
     ops-exec mariadb mysql -e "CREATE DATABASE $db"
 
     cat "$sqlfile" | ops-exec mariadb mysql "$db"

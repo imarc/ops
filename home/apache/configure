@@ -1,18 +1,3 @@
 #!/bin/bash
 
-# fix docker user ids
-# should probably remove this from the container image
-usermod -u 1010 docker
-groupmod -g 1010 docker
-
-if [ -n "$OPS_DOCKER_UID" ]; then
-    usermod -u $OPS_DOCKER_UID www-data
-fi
-
-if [ -n "$OPS_DOCKER_GID" ]; then
-    groupmod -g $OPS_DOCKER_GID www-data
-fi
-
-chmod 644 /etc/apache2/fix-docroot.php
-
-chown docker:docker /var/www
+a2enmod lua
