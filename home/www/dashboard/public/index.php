@@ -149,9 +149,6 @@ $postgresDatabases = $postgres->query('SELECT datname AS name FROM pg_database W
                             </ul>
                         </li>
                         <li>
-                            <a href="https://redis-commander.ops.<?= $domain ?>">Redis Commander</a>
-                        </li>
-                        <li>
                             <a href="https://minio.ops.<?= $domain ?>">Minio</a>
                         </li>
                         <li>

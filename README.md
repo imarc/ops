@@ -1,12 +1,14 @@
-# Ops CLI
+# Ops
 
-**Version 0.4.0**
+**Version 0.4.2**
 
 - A local isolated environment focused on PHP development
 - Zero-config host creation: make a folder.
 - Zero-config self-signed certs for local HTTPS.
 - Shared services out of the box: MariaDB, PostgreSQL, Redis, Mailhog, Adminer, and more.
 - Built on Docker and Traefik. Add ad-hoc services as needed.
+
+![Ops Dashboard](/imarc/ops/raw/master/dashboard.png)
 
 ## Prerequisites
 

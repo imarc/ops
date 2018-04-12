@@ -69,7 +69,6 @@ services:
     volumes:
       - minio:/data
 
-
   mailhog:
     image: mailhog/mailhog
     labels:
@@ -85,18 +84,6 @@ services:
     ports:
       - "6379:6379"
     networks:
-      - backend
-
-  redis-commander:
-    image: rediscommander/redis-commander:latest
-    environment:
-      - REDIS_HOSTS=local:redis:6379
-    labels:
-      - "traefik.port=8081"
-      - "traefik.enable=true"
-      - "traefik.docker.network=ops_gateway"
-    networks:
-      - gateway
       - backend
 
   memcached:
