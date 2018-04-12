@@ -8,7 +8,7 @@
 - Shared services out of the box: MariaDB, PostgreSQL, Redis, Mailhog, Adminer, and more.
 - Built on Docker and Traefik. Add ad-hoc services as needed.
 
-![Ops Dashboard](/imarc/ops/raw/master/dashboard.png)
+![Ops Dashboard](dashboard.png)
 
 ## Prerequisites
 
