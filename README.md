@@ -1,6 +1,6 @@
 # Ops
 
-**Version 0.4.2**
+**Version 0.4.4**
 
 - A local isolated environment focused on PHP development
 - Zero-config host creation: make a folder.
