@@ -11,7 +11,8 @@ local docroots = {
     '/public_html',
     '/web',
     '/htdocs',
-    '/docroot'
+    '/docroot',
+    ''
 }
 
 function set_docroot(r)

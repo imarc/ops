@@ -1,6 +1,6 @@
 #!/bin/bash
 
-OPS_VERSION=0.4.2
+OPS_VERSION=0.4.3
 
 # Determine OS
 
@@ -251,6 +251,7 @@ ops-shell() {
         -v "$HOME/.ssh:/var/www/.ssh" \
         -e "COMPOSER_HOME=/composer" \
         -w "/usr/src/app" \
+        --network="ops_backend" \
         --label=ops.site="$(ops site id)" \
         --user "www-data:www-data" \
         $OPS_DOCKER_APACHE_IMAGE \

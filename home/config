@@ -1,8 +1,8 @@
 OPS_DOMAIN="imarc.io"
 OPS_SITES_DIR="$HOME/Sites"
 
-OPS_DOCKER_APACHE_IMAGE="imarcagency/php-apache:latest"
-OPS_DOCKER_COMPOSER_IMAGE="imarcagency/php-apache:latest"
+OPS_DOCKER_APACHE_IMAGE="imarcagency/php-apache:2"
+OPS_DOCKER_COMPOSER_IMAGE="imarcagency/php-apache:2"
 OPS_DOCKER_NODE_IMAGE="node:8.9.4"
 
 OPS_MINIO_ACCESS_KEY="minio-access"

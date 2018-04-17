@@ -25,6 +25,7 @@ services:
       - APACHE_UID=${OPS_DOCKER_UID}
       - APACHE_GID=${OPS_DOCKER_GID}
       - OPS_DOMAIN=${OPS_DOMAIN}
+      - OPS_ENABLED=1
       - OPS_SITES_DIR=${OPS_SITES_DIR}
     networks:
       - gateway
@@ -32,8 +33,8 @@ services:
     volumes:
       - ${OPS_HOME}/www/dashboard:/var/www/dashboard
       - ${OPS_HOME}/apache/apache.conf:/etc/apache2/sites-enabled/000-default.conf
-      - ${OPS_HOME}/apache/fix-docroot.php:/etc/apache2/fix-docroot.php
-      - ${OPS_HOME}/apache/configure:/opt/configure
+      - ${OPS_HOME}/apache/configure:/usr/local/bin/docker-configure
+      - ${OPS_HOME}/apache/set_docroot.lua:/etc/apache2/set_docroot.lua
       - ${OPS_SITES_DIR}:/var/www/html:cached
 
   traefik:

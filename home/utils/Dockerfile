@@ -2,8 +2,6 @@ FROM alpine:3.7
 
 MAINTAINER Imarc <info@imarc.com>
 
-RUN echo "http://dl-cdn.alpinelinux.org/alpine/edge/community" >> /etc/apk/repositories
-
 RUN apk add --update --no-cache \
         bash \
         curl \
@@ -15,7 +13,6 @@ RUN apk add --update --no-cache \
         socat \
         rsync \
         netcat-openbsd \
-        ttyd \
         py-pip \
         unzip \
         wget \
