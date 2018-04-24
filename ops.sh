@@ -252,14 +252,14 @@ ops-shell() {
         -e "COMPOSER_HOME=/composer" \
         -w "/usr/src/app" \
         --network="ops_backend" \
-        --label=ops.site="$(ops site id)" \
+        --label=ops.project="$(ops project name)" \
         --user "www-data:www-data" \
         $OPS_DOCKER_APACHE_IMAGE \
         bash
 }
 
-ops-site() {
-    cmd-run site "$@"
+ops-project() {
+    cmd-run project "$@"
 }
 
 ops-stats() {
@@ -310,7 +310,7 @@ _ops-yarn() {
         --rm -itP --init \
         -v "$(pwd):/usr/src/app" \
         -w "/usr/src/app" \
-        --label=ops.site="$(ops site id)" \
+        --label=ops.project="$(ops project name)" \
         --user "node" \
         --entrypoint "yarn" \
         ops-node:$OPS_VERSION \
@@ -319,20 +319,22 @@ _ops-yarn() {
 
 # Site sub sommands
 
-site-docker-compose() {
+project-docker-compose() {
     local compose_file="docker-compose.yml"
     if [[ -f "docker-compose.ops.yml" ]]; then
         compose_file+=":docker-compose.ops.yml"
     fi
 
+    OPS_DOCKER_UID=$OPS_DOCKER_UID \
+    OPS_DOCKER_GID=$OPS_DOCKER_GID \
     OPS_DOMAIN=$OPS_DOMAIN \
-    OPS_SITE_BASENAME="$(basename $PWD)" \
+    OPS_PROJECT_NAME="$(basename $PWD)" \
     COMPOSE_PROJECT_NAME="ops$(basename $PWD)" \
     COMPOSE_FILE="$compose_file" \
     docker-compose "$@"
 }
 
-site-id() {
+project-name() {
     local basename="$(basename $(pwd))"
 
     (
@@ -347,40 +349,40 @@ site-id() {
     fi
 }
 
-site-start() {
-    site-docker-compose up -d
+project-start() {
+    project-docker-compose up -d
 }
 
-site-stop() {
-    site-docker-compose stop
+project-stop() {
+    project-docker-compose stop
 }
 
-site-logs() {
-    site-docker-compose logs -f "$@"
+project-logs() {
+    project-docker-compose logs -f "$@"
 }
 
-site-ps() {
-    site-docker-compose ps "$@"
+project-ps() {
+    project-docker-compose ps "$@"
 }
 
-site-exec() {
+project-exec() {
     local service=$1
     shift
 
-    local id=$(site-docker-compose ps -q $service)
+    local id=$(project-docker-compose ps -q $service)
 
     [[ -z $id ]] && exit
 
     ops docker exec -i $id "$@"
 }
 
-site-help() {
-    cmd-help "ops site" site
+project-help() {
+    cmd-help "ops project" project
     echo
 }
 
-site-shell-exec() {
-    local id=$(site-docker-compose ps -q $1)
+project-shell-exec() {
+    local id=$(project-docker-compose ps -q $1)
     shift
 
     [[ -z $id ]] && exit
@@ -388,8 +390,8 @@ site-shell-exec() {
     ops docker exec -it $id "$@"
 }
 
-site-stats() {
-    local ids=$(site-docker-compose ps -q)
+project-stats() {
+    local ids=$(project-docker-compose ps -q)
     [[ -z $ids ]] && exit
 
     ops docker stats $ids
