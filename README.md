@@ -110,7 +110,7 @@ subcommands deal with project specific compose commands. Running `ops project st
 will load a `docker-compose.ops.yml` file. The compose files that are loaded can be
 configured with the `OPS_COMPOSE_FILE` option.
 
-A generic docker-compose.ops.yml file. The most important
+Here is generic docker-compose.ops.yml file:
 
     version: '2'
 
@@ -140,6 +140,11 @@ A generic docker-compose.ops.yml file. The most important
         external: true
       ops_backend:
         external: true
+        
+The most important things are the labes and the networks. 
+Those settings are required for the proxy to function or for your app to conenct to shared services.
+Everything else can be customized to whatever your app requires.
+
 
 
 ## Contributing
