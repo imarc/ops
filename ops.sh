@@ -44,6 +44,21 @@ if [[ -f "$OPS_HOME/config" ]]; then
     source $OPS_HOME/config
 fi
 
+# Available config
+
+OPS_DOCKER_APACHE_IMAGE=${OPS_DOCKER_APACHE_IMAGE-"imarcagency/php-apache:2"}
+OPS_DOCKER_COMPOSER_IMAGE=${OPS_DOCKER_COMPOSER_IMAGE-"imarcagency/php-apache:2"}
+OPS_DOCKER_GID=${OPS_DOCKER_GID-"$(id -g $whoami)"}
+OPS_DOCKER_NODE_IMAGE="node:8.9.4"
+OPS_DOCKER_UID=${OPS_DOCKER_UID-"$(id -u $whoami)"}
+OPS_DOMAIN=${OPS_DOMAIN-"imarc.io"}
+OPS_MINIO_ACCESS_KEY=${OPS_MINIO_ACCESS_KEY-"minio-access"}
+OPS_MINIO_SECRET_KEY=${OPS_MINIO_SECRET_KEY-"minio-secret"}
+OPS_COMPOSE_FILE=${OPS_COMPOSE_FILE-"docker-compose.ops.yml"}
+OPS_SHELL_COMMAND=${OPS_SHELL_COMMAND-"bash"}
+OPS_SHELL_SERVICE=${OPS_SHELL_SERVICE-"apache"}
+OPS_SITES_DIR=${OPS_SITES_DIR-"$HOME/Sites"}
+
 # Internal helpers
 
 validate-config() {
@@ -320,17 +335,12 @@ _ops-yarn() {
 # Site sub sommands
 
 project-docker-compose() {
-    local compose_file="docker-compose.yml"
-    if [[ -f "docker-compose.ops.yml" ]]; then
-        compose_file+=":docker-compose.ops.yml"
-    fi
-
     OPS_DOCKER_UID=$OPS_DOCKER_UID \
     OPS_DOCKER_GID=$OPS_DOCKER_GID \
     OPS_DOMAIN=$OPS_DOMAIN \
     OPS_PROJECT_NAME="$(basename $PWD)" \
     COMPOSE_PROJECT_NAME="ops$(basename $PWD)" \
-    COMPOSE_FILE="$compose_file" \
+    COMPOSE_FILE="$OPS_COMPOSE_FILE" \
     docker-compose "$@"
 }
 
@@ -438,7 +448,7 @@ system-config() {
     local val=$(local IFS=" "; echo "$@");
 
     if [[ -n $key && -n $val ]]; then
-        sed -i"" -e "s/^$key=.*/$key=\"$val\"/" "$OPS_HOME/config"
+        sed -i ' ' -e "s#^$key=.*#$key=\"$val\"#" "$OPS_HOME/config"
     elif [[ -n $key ]]; then
         cat $OPS_HOME/config | awk "/^$1=(.*)/ { sub(/$1=/, \"\", \$0); print }"
     else

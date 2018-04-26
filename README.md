@@ -47,8 +47,8 @@ Start ops services:
 
 Go to the Dashboard ([https://ops.imarc.io](https://ops.imarc.io)) in your browser.
 
-To mount a new site/app, all you need to do is create a directory within $HOME/Sites.
-The directory name can only contain letters, numbers, and dashes. Your site will then
+To mount a new project, all you need to do is create a directory within $HOME/Sites.
+The directory name can only contain letters, numbers, and dashes. Your project will then
 be available at https://DIRECTORYNAME.imarc.io
 
 The web server will look for one of the following project directories to use as
@@ -94,6 +94,52 @@ secret key: minio-secret<br>
 hostname: mailhog<br>
 port: 1025
 
+## Custom Project Container
+
+*This is for advanced users and it would be best to have a solid understanding of docker and docker-compose files
+before moving forward with implementing this solution*
+
+There are times where you want to configura a custom container to run your project. This could be due to:
+
+- You need a PHP configuration/extension
+- You need to lock down the PHP version, or use a specific image.
+- You are using a language that isn't PHP
+
+With a little configuration, Ops allows you to run a custom container beside the shared services. Ops' `project`
+subcommands deal with project specific compose commands. Running `ops project start` within a project directory
+will load a `docker-compose.ops.yml` file. The compose files that are loaded can be
+configured with the `OPS_COMPOSE_FILE` option.
+
+A generic docker-compose.ops.yml file. The most important
+
+    version: '2'
+
+    services:
+      craft:
+        image: imarcagency/php-apache:2
+
+        labels:
+          - "ops.linked=true"
+          - "traefik.enable=true"
+          - "traefik.docker.network=ops_gateway"
+          - "traefik.frontend.rule=Host:${OPS_PROJECT_NAME}.${OPS_DOMAIN}"
+          - "traefik.port=80"
+        environment:
+          - "APACHE_UID=${OPS_DOCKER_UID}"
+          - "APACHE_GID=${OPS_DOCKER_GID}"
+          - "APACHE_ROOT=/var/www/public"
+        volumes:
+          - "./:/var/www/:cached"
+        networks:
+          - default
+          - ops_gateway
+          - ops_backend
+
+    networks:
+      ops_gateway:
+        external: true
+      ops_backend:
+        external: true
 
 
 ## Contributing
