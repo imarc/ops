@@ -14,7 +14,9 @@
 
 Ops supports Linux, Mac, and Windows Subshell Linux (WSL)
 
-bash, docker, and docker-compose are required.
+`bash`, `docker`, and `docker-compose` are required.
+
+`ssh` and `rsync` are highly recommended.
 
 ### Linux Installation Instructions
 
@@ -35,30 +37,23 @@ Install with npm:
 
     npm install -g git+ssh://git@gitlab.imarc.net:imarc/ops.git
 
-## Basics
+## Getting Started
 
-The first time you run ops, you will go through the install process. **You will
-also be asked for your password so ops can install the certs for HTTPS support**
+**On first run, you will be asked your password in order to trust the newly generated self-signed certs for HTTPS support**
 
-Start ops services:
+1. Start ops services: `ops start`
 
-    ops start
+1. To add a new project, create a directory within $HOME/Sites. 
+ 
+1. Your local project will be available at https://{directory}.imarc.io. 
 
+The project directory name can only contain letters, numbers, and dashes ([A-Za-z0-9-]+). If one of the following directories is found within a project, it will be used as the document root: `public`, `web`, `public_html`, `htdocs`, or `docroot`.
 
-Go to the Dashboard ([https://ops.imarc.io](https://ops.imarc.io)) in your browser.
+To stop ops, run `ops stop`
 
-To mount a new project, all you need to do is create a directory within $HOME/Sites.
-The directory name can only contain letters, numbers, and dashes. Your project will then
-be available at https://DIRECTORYNAME.imarc.io
+## Dashboard
 
-The web server will look for one of the following project directories to use as
-a document root: `public`, `web`, `public_html`, `htdocs`, or `docroot`. The
-project root directory will be used if no document root is found.
-
-
-To stop ops:
-
-    ops stop
+The dashboard, available at [https://ops.imarc.io](https://ops.imarc.io) will show you all projects and let you manage services.
 
 ## Services
 
@@ -93,6 +88,12 @@ secret key: minio-secret<br>
 *SMTP Config:*<br>
 hostname: mailhog<br>
 port: 1025
+
+## External Dependencies
+
+Out of the box, the main/shared PHP container relies on the imarcagency/php-apache image.
+
+This is a separate project and can be viewed on [Github](https://github.com/imarc/docker-php-apache) or [Docker Hub](https://hub.docker.com/r/imarcagency/php-apache/)
 
 ## Custom Project Container
 
@@ -145,8 +146,6 @@ The most important things are the labes and the networks.
 Those settings are required for the proxy to function or for your app to conenct to shared services.
 Everything else can be customized to whatever your app requires.
 
-
-
 ## Contributing
 
 If you are developing ops itself, debugging, or want to try out bleeding edge features, It is recommended you install like so:
@@ -158,7 +157,7 @@ If you are developing ops itself, debugging, or want to try out bleeding edge fe
     # create 'ops' symlink to your repo
     npm install -g .
 
-Installing like this means your global ops script will point directly to the repo and you can make changes on the fly.
+This means your global ops script will point directly to the repo and you can make changes on the fly.
 
 ## License
 
