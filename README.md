@@ -2,11 +2,11 @@
 
 **Version 0.4.5**
 
-- A local isolated environment focused on PHP development
+- A local development environment focused on PHP-based projects.
 - Zero-config host creation: make a folder.
 - Zero-config self-signed certs for local HTTPS.
 - Shared services out of the box: MariaDB, PostgreSQL, Redis, Mailhog, Adminer, and more.
-- Built on Docker and Traefik. Add ad-hoc services as needed.
+- Built on Docker and Traefik. Configure project-specific services when required.
 
 ![Ops Dashboard](dashboard.png)
 
