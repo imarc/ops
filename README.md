@@ -53,7 +53,7 @@ To stop ops, run `ops stop`
 
 ## The Dashboard
 
-The dashboard, available at [https://ops.imarc.io](https://ops.imarc.io) will show you all projects and let you manage services.
+The dashboard available at [https://ops.imarc.io](https://ops.imarc.io) will show you all projects and let you manage services.
 
 ## The Services
 
