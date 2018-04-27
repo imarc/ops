@@ -14,7 +14,7 @@
 
 Ops supports Linux, Mac, and Windows Subshell Linux (WSL)
 
-`bash`, `docker`, and `docker-compose` are required.
+`bash`, `npm`, `docker`, and `docker-compose` are required.
 
 `ssh` and `rsync` are highly recommended.
 
