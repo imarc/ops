@@ -31,13 +31,13 @@ Ops supports Linux, Mac, and Windows Subshell Linux (WSL)
 - [Install Docker for Windows](https://docs.docker.com/docker-for-windows/install/)
 - [Install Docker Client](https://medium.com/@sebagomez/installing-the-docker-client-on-ubuntus-windows-subsystem-for-linux-612b392a44c4)
 
-## Install
+## How To Install
 
 Install with npm:
 
     npm install -g git+ssh://git@gitlab.imarc.net:imarc/ops.git
 
-## Getting Started
+## Create Your First Project
 
 **On first run, you will be asked your password in order to trust the newly generated self-signed certs for HTTPS support**
 
@@ -51,11 +51,11 @@ The project directory name can only contain letters, numbers, and dashes ([A-Za-
 
 To stop ops, run `ops stop`
 
-## Dashboard
+## The Dashboard
 
 The dashboard, available at [https://ops.imarc.io](https://ops.imarc.io) will show you all projects and let you manage services.
 
-## Services
+## The Services
 
 You can connect your app to the following shared services:
 
