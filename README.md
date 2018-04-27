@@ -102,9 +102,9 @@ before moving forward with implementing this solution*
 
 There are times where you want to configura a custom container to run your project. This could be due to:
 
-- You need a PHP configuration/extension
-- You need to lock down the PHP version, or use a specific image.
-- You are using a language that isn't PHP
+- Your project needs a special PHP configuration or extension.
+- Your project need to lock down the PHP version or use a specific image.
+- You are using a language that isn't PHP.
 
 With a little configuration, Ops allows you to run a custom container beside the shared services. Ops' `project`
 subcommands deal with project specific compose commands. Running `ops project start` within a project directory
