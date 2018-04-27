@@ -146,6 +146,8 @@ The most important things are the labes and the networks.
 Those settings are required for the proxy to function or for your app to conenct to shared services.
 Everything else can be customized to whatever your app requires.
 
+See all the variables that get injected into this file [here](https://gitlab.imarc.net/imarc/ops/blob/master/ops.sh#L337)
+
 ## Contributing
 
 If you are developing ops itself, debugging, or want to try out bleeding edge features, It is recommended you install like so:
