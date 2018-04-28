@@ -41,11 +41,9 @@ Install with npm:
 
 **On first run, you will be asked your password in order to trust the newly generated self-signed certs for HTTPS support**
 
-1. Start ops services: `ops start`
+To start ops services, run `ops start`
 
-1. To add a new project, create a directory within $HOME/Sites. 
- 
-1. Your local project will be available at https://{directory}.imarc.io. 
+To add a new project, create a directory within $HOME/Sites. Your local project will then be available at https://{directory}.imarc.io. 
 
 The project directory name can only contain letters, numbers, and dashes ([A-Za-z0-9-]+). If one of the following directories is found within a project, it will be used as the document root: `public`, `web`, `public_html`, `htdocs`, or `docroot`.
 
