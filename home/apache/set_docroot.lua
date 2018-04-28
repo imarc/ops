@@ -1,7 +1,5 @@
 --[[
-    Simple mass vhost script
-    This example will check a map for a virtual host and rewrite filename and
-    document root accordingly.
+Set document root.
 ]]--
 
 require 'apache2'
