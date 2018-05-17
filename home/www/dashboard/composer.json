@@ -1,0 +1,9 @@
+{
+    "require": {
+        "guzzlehttp/guzzle": "~6.0",
+        "symfony/dotenv": "^4.0"
+    },
+    "autoload": {
+        "files": ["src/helpers.php"]
+    }
+}

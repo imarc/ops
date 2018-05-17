@@ -1,6 +1,6 @@
 # Ops
 
-**Version 0.4.5**
+**Version 0.4.6**
 
 - A local development environment focused on PHP-based projects.
 - Create a new host by making a directory.
@@ -43,7 +43,7 @@ Install with npm:
 
 To start ops services, run `ops start`
 
-To add a new project, create a directory within $HOME/Sites. Your local project will then be available at https://{directory}.imarc.io. 
+To add a new project, create a directory within $HOME/Sites. Your local project will then be available at https://{directory}.imarc.io.
 
 The project directory name can only contain letters, numbers, and dashes ([A-Za-z0-9-]+). If one of the following directories is found within a project, it will be used as the document root: `public`, `web`, `public_html`, `htdocs`, or `docroot`.
 
@@ -106,10 +106,10 @@ There are times where you want to configura a custom container to run your proje
 
 With a little configuration, Ops allows you to run a custom container beside the shared services. Ops' `project`
 subcommands deal with project specific compose commands. Running `ops project start` within a project directory
-will load a `docker-compose.ops.yml` file. The compose files that are loaded can be
+will load a `ops-compose.yml` file. The compose files that are loaded can be
 configured with the `OPS_COMPOSE_FILE` option.
 
-Here is generic docker-compose.ops.yml file:
+Here is a generic ops-compose.yml file:
 
     version: '2'
 
@@ -139,8 +139,8 @@ Here is generic docker-compose.ops.yml file:
         external: true
       ops_backend:
         external: true
-        
-The most important things are the labes and the networks. 
+
+The most important things are the labes and the networks.
 Those settings are required for the proxy to function or for your app to conenct to shared services.
 Everything else can be customized to whatever your app requires.
 

@@ -1,4 +1,12 @@
 <?php
+namespace OpsDashboard;
+
+use PDO;
+
+require dirname(__DIR__) . "/vendor/autoload.php";
+
+$containers = get_containers();
+
 $domain = $_ENV['OPS_DOMAIN'];
 $sitesDir = $_ENV['OPS_SITES_DIR'];
 
@@ -42,14 +50,48 @@ $postgresDatabases = $postgres->query('SELECT datname AS name FROM pg_database W
                             continue;
                         }
 
-                        //chdir($dir);
-                        //exec("git status -bs 2> /dev/null", $output);
+                        $env = parse_dotenv($dir);
 
-                        //var_dump($output);
+                        $extra = (
+                            !empty($env['OPS_PROJECT_TEMPLATE']) ||
+                            file_exists($dir . '/ops-compose.yml')
+                        );
+                        ?>
 
-                        //var_dump($output);
+                        <li>
+                            <a class="site" href="https://<?= $site ?>.<?= $domain ?>"><?= $site ?></a>
+                            <?php
+                            if ($extra) {
+                                ?>
+                                <span class="badge badge-primary">extra</span>
+                                <?php
+                            }
 
-                        echo "<li><a class=\"site\" href=\"https://{$site}.{$domain}\">{$site} {$output[0]}</a></li>";
+                            if (isset($containers[$site])) {
+                                echo '<ul>';
+                                foreach($containers[$site] as $service => $details) {
+                                    ?>
+
+                                    <li>
+                                        <?= $service ?>
+
+                                        <?php
+                                        echo sprintf(
+                                            '<small> / <a href="%s">logs</a> / <a href="%s">console</a> </small>',
+                                            $containers[$site][$service]['logs_link'],
+                                            $containers[$site][$service]['console_link']
+                                        );
+                                        ?>
+                                    </li>
+
+                                    <?php
+                                }
+                                echo '</ul>';
+                            }
+                            ?>
+                        </li>
+
+                        <?php
                     }
                     ?>
                     </ul>
@@ -142,26 +184,91 @@ $postgresDatabases = $postgres->query('SELECT datname AS name FROM pg_database W
 
                     <ul>
                         <li>
+                            Apache/PHP
+
+                            <?php
+                            echo sprintf(
+                                '<small> / <a href="%s">logs</a> / <a href="%s">console</a> / <a href="%s">info</a> </small>',
+                                $containers['ops']['apache']['logs_link'],
+                                $containers['ops']['apache']['console_link'],
+                                "/phpinfo.php"
+                            );
+                            ?>
+                        </li>
+                        <li>
                             <a href="https://adminer.ops.<?= $domain ?>">Adminer</a>
+
+                            <?php
+                            echo sprintf(
+                                '<small> / <a href="%s">logs</a> / <a href="%s">console</a> </small>',
+                                $containers['ops']['adminer']['logs_link'],
+                                $containers['ops']['adminer']['console_link']
+                            );
+                            ?>
+
                             <ul>
-                                <li><a href="https://adminer.ops.<?= $domain ?>/?server=mariadb&amp;username=root">MariaDB</a></li>
-                                <li><a href="https://adminer.ops.<?= $domain ?>/?pgsql=postgres&amp;username=postgres">PostgreSQL</a></li>
+                                <li>
+                                    <a href="https://adminer.ops.<?= $domain ?>/?server=mariadb&amp;username=root">MariaDB</a>
+
+                                    <?php
+                                    echo sprintf(
+                                        '<small> / <a href="%s">logs</a> / <a href="%s">console</a> </small>',
+                                        $containers['ops']['mariadb']['logs_link'],
+                                        $containers['ops']['mariadb']['console_link']
+                                    );
+                                    ?>
+                                </li>
+                                <li>
+                                    <a href="https://adminer.ops.<?= $domain ?>/?pgsql=postgres&amp;username=postgres">PostgreSQL</a>
+
+                                    <?php
+                                    echo sprintf(
+                                        '<small> / <a href="%s">logs</a> / <a href="%s">console</a> </small>',
+                                        $containers['ops']['postgres']['logs_link'],
+                                        $containers['ops']['postgres']['console_link']
+                                    );
+                                    ?>
+
+                                </li>
                             </ul>
                         </li>
                         <li>
                             <a href="https://minio.ops.<?= $domain ?>">Minio</a>
+
+                            <?php
+                            echo sprintf(
+                                '<small> / <a href="%s">logs</a> / <a href="%s">console</a> </small>',
+                                $containers['ops']['minio']['logs_link'],
+                                $containers['ops']['minio']['console_link']
+                            );
+                            ?>
                         </li>
                         <li>
                             <a href="https://mailhog.ops.<?= $domain ?>">Mailhog</a>
+
+                            <?php
+                            echo sprintf(
+                                '<small> / <a href="%s">logs</a> / <a href="%s">console</a> </small>',
+                                $containers['ops']['mailhog']['logs_link'],
+                                $containers['ops']['mailhog']['console_link']
+                            );
+                            ?>
                         </li>
                         <li>
                             <a href="https://ops.<?= $domain ?>:8080/dashboard/#/health">Traefik</a>
+
+                            <?php
+                            echo sprintf(
+                                '<small> / <a href="%s">logs</a> / <a href="%s">console</a> </small>',
+                                $containers['ops']['traefik']['logs_link'],
+                                $containers['ops']['traefik']['console_link']
+                            );
+                            ?>
                         </li>
+
                         <li>
                             <a href="https://portainer.ops.<?= $domain ?>">Portainer</a>
                         </li>
-
-                        <li><a href="/phpinfo.php">PHP Info</a></li>
                     </ul>
                 </div>
             </div>

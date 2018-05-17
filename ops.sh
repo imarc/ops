@@ -1,6 +1,6 @@
 #!/bin/bash
 
-OPS_VERSION=0.4.4
+OPS_VERSION=0.4.6
 
 # Determine OS
 
@@ -35,29 +35,45 @@ cd $OPS_WORKING_DIR
 
 source $OPS_SCRIPT_DIR/cmd.sh
 
-# Config
+# Load config
 
-OPS_HOME=${OPS_HOME-"$HOME/.ops"}
+if [[ -f '.env.example' ]]; then
+    source '.env.example'
+fi
+
+if [[ -f '.env' ]]; then
+    source '.env'
+fi
+
+if [[ -f 'ops-commands.sh' ]]; then
+    source 'ops-commands.sh'
+fi
+
+# options that can't be overidden by a project
+
+OPS_HOME="$HOME/.ops"
 OPS_DOCKER_UTILS_IMAGE="ops-utils:$OPS_VERSION"
+OPS_DOCKER_APACHE_IMAGE="imarcagency/php-apache:2"
+OPS_DOCKER_COMPOSER_IMAGE="imarcagency/php-apache:2"
+OPS_DOCKER_NODE_IMAGE="node:8.9.4"
+OPS_DOCKER_GID=""
+OPS_DOCKER_UID=""
+OPS_DOMAIN="imarc.io"
+OPS_MINIO_ACCESS_KEY="minio-access"
+OPS_MINIO_SECRET_KEY="minio-secret"
+OPS_SHELL_COMMAND="bash"
+OPS_SHELL_SERVICE="apache"
+OPS_SITES_DIR="$HOME/Sites"
+
+# options that can be overridden by a project
+
+OPS_PROJECT_COMPOSE_FILE=${OPS_PROJECT_COMPOSE_FILE-"ops-compose.yml"}
+OPS_PROJECT_TEMPLATE=${OPS_PROJECT_TEMPLATE-""}
+
 
 if [[ -f "$OPS_HOME/config" ]]; then
     source $OPS_HOME/config
 fi
-
-# Available config
-
-OPS_DOCKER_APACHE_IMAGE=${OPS_DOCKER_APACHE_IMAGE-"imarcagency/php-apache:2"}
-OPS_DOCKER_COMPOSER_IMAGE=${OPS_DOCKER_COMPOSER_IMAGE-"imarcagency/php-apache:2"}
-OPS_DOCKER_GID=${OPS_DOCKER_GID-"$(id -g $whoami)"}
-OPS_DOCKER_NODE_IMAGE="node:8.9.4"
-OPS_DOCKER_UID=${OPS_DOCKER_UID-"$(id -u $whoami)"}
-OPS_DOMAIN=${OPS_DOMAIN-"imarc.io"}
-OPS_MINIO_ACCESS_KEY=${OPS_MINIO_ACCESS_KEY-"minio-access"}
-OPS_MINIO_SECRET_KEY=${OPS_MINIO_SECRET_KEY-"minio-secret"}
-OPS_COMPOSE_FILE=${OPS_COMPOSE_FILE-"docker-compose.ops.yml"}
-OPS_SHELL_COMMAND=${OPS_SHELL_COMMAND-"bash"}
-OPS_SHELL_SERVICE=${OPS_SHELL_SERVICE-"apache"}
-OPS_SITES_DIR=${OPS_SITES_DIR-"$HOME/Sites"}
 
 # Internal helpers
 
@@ -122,31 +138,7 @@ ops-exec() {
 }
 
 ops-help() {
-    #cmd-help ops ops
-
-    cat << 'EOD'
-Usage: ops <command>
-
-where <command> is one of:
-
-exec            Run a command on a service
-help            Display help
-logs            Follow system logs
-mariadb         Mariadb CLI
-mariadb-import  Import MariaDB database
-mariadb-export  Export MariaDB database
-ps              View service status
-psql            PostgreSQL CLI
-psql-import     Import PostgreSQL database
-psql-export     Export PostgreSQL database
-restart         Restart services
-shell           Bash prompt in Apache container
-start           Start services
-stats           View service stats (CPU, Mem, Net I/O)
-stop            Stop services
-version         Show Ops version
-
-EOD
+    cmd-help ops ops
 
     echo $(ops-version)
     echo
@@ -193,7 +185,7 @@ _ops-node() {
         --rm -itP --init \
         -v "$(pwd):/usr/src/app" \
         -w "/usr/src/app" \
-        --label=ops.site="$(ops site id)" \
+        --label=ops.project="$(ops project id)" \
         --user "node" \
         --entrypoint "node" \
         ops-node:$OPS_VERSION \
@@ -204,9 +196,9 @@ _ops-npm() {
     ops docker run \
         --rm -itP --init \
         -v "$(pwd):/usr/src/app" \
-        -v "$HOME/.ssh:/home/node/.ssh" \
         -w "/usr/src/app" \
-        --label=ops.site="$(ops site id)" \
+        --label=ops.project="$(ops project id)" \
+        --label=traefik.enable=true \
         --user "node" \
         --entrypoint "npm" \
         ops-node:$OPS_VERSION \
@@ -335,13 +327,19 @@ _ops-yarn() {
 # Site sub sommands
 
 project-docker-compose() {
+    if [[ ! -f $OPS_PROJECT_COMPOSE_FILE ]] && [[ ! -z "$OPS_PROJECT_TEMPLATE" ]] && [[ -f "$OPS_HOME/templates/$OPS_PROJECT_TEMPLATE.yml" ]]; then
+        OPS_PROJECT_COMPOSE_FILE="$OPS_HOME/templates/$OPS_PROJECT_TEMPLATE.yml"
+        echo "Using template: $OPS_PROJECT_TEMPLATE"
+    fi
+
     OPS_DOCKER_UID=$OPS_DOCKER_UID \
     OPS_DOCKER_GID=$OPS_DOCKER_GID \
     OPS_DOMAIN=$OPS_DOMAIN \
     OPS_PROJECT_NAME="$(basename $PWD)" \
+    OPS_VERSION=$OPS_VERSION \
     COMPOSE_PROJECT_NAME="ops$(basename $PWD)" \
-    COMPOSE_FILE="$OPS_COMPOSE_FILE" \
-    docker-compose "$@"
+    COMPOSE_FILE="$OPS_PROJECT_COMPOSE_FILE" \
+    docker-compose --project-directory . "$@"
 }
 
 project-name() {
