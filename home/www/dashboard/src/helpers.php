@@ -22,9 +22,11 @@ function get_containers()
         $id = $rawContainer['Id'];
         $project = $rawContainer['Labels']['ops.project'];
         $service = $rawContainer['Labels']['ops.service'] ?? $rawContainer['Labels']['com.docker.compose.service'] ?? $id;
+        $hostname = $rawContainer['Labels']['ops.hostname'] ?? null;
 
         $container['id'] = $id;
         $container['project'] = $project;
+        $container['hostname'] = $hostname;
         $container['service'] = $service;
         $container['state'] = $rawContainer['State'];
         $container['status'] = $rawContainer['Status'];

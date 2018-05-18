@@ -45,27 +45,42 @@ $postgresDatabases = $postgres->query('SELECT datname AS name FROM pg_database W
                     <?php
                     $sites = [];
                     foreach(glob('/var/www/html/*', GLOB_ONLYDIR) as $dir) {
+                        $errors = [];
                         $site = str_replace('/var/www/html/', '', $dir);
                         if (!preg_match('/^[a-z][a-z0-9-]*$/', $site)) {
                             continue;
                         }
 
-                        $env = parse_dotenv($dir);
+                        try {
+                            $env = parse_dotenv($dir);
+                        } catch (\Exception $e) {
+                            $errors = ['error parsing .env files'];
+                        }
 
-                        $extra = (
+                        $requiresLink = (
                             !empty($env['OPS_PROJECT_TEMPLATE']) ||
                             file_exists($dir . '/ops-compose.yml')
                         );
                         ?>
 
                         <li>
-                            <a class="site" href="https://<?= $site ?>.<?= $domain ?>"><?= $site ?></a>
+
                             <?php
-                            if ($extra) {
+                            if ($requiresLink) {
                                 ?>
-                                <span class="badge badge-primary">extra</span>
+
+                                <?= $site ?>
+                                <span class="badge badge-primary">Link</span>
+
+                                <?php
+                            } else {
+                                ?>
+
+                                <a class="site" href="https://<?= $site ?>.<?= $domain ?>"><?= $site ?></a>
+
                                 <?php
                             }
+
 
                             if (isset($containers[$site])) {
                                 echo '<ul>';
@@ -73,13 +88,21 @@ $postgresDatabases = $postgres->query('SELECT datname AS name FROM pg_database W
                                     ?>
 
                                     <li>
-                                        <?= $service ?>
-
                                         <?php
+                                        if ($details['hostname']) {
+                                            ?>
+
+                                            <a href="https://<?= $details['hostname'] ?>"><?= $service ?></a>
+
+                                            <?php
+                                        } else {
+                                            echo $service;
+                                        }
+
                                         echo sprintf(
                                             '<small> / <a href="%s">logs</a> / <a href="%s">console</a> </small>',
-                                            $containers[$site][$service]['logs_link'],
-                                            $containers[$site][$service]['console_link']
+                                            $details['logs_link'],
+                                            $details['console_link']
                                         );
                                         ?>
                                     </li>

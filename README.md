@@ -105,9 +105,12 @@ There are times where you want to configura a custom container to run your proje
 - You are using a language that isn't PHP.
 
 With a little configuration, Ops allows you to run a custom container beside the shared services. Ops' `project`
-subcommands deal with project specific compose commands. Running `ops project start` within a project directory
-will load a `ops-compose.yml` file. The compose files that are loaded can be
-configured with the `OPS_COMPOSE_FILE` option.
+subcommands deal with project specific compose commands. Running `ops link` within a project directory
+will load a `ops-compose.yml` file.
+
+By linking a project, its containers will respond to with `ops start` and `ops stop` commands.
+
+To unlink a project and remove its container run `ops unlink` within a project directory.
 
 Here is a generic ops-compose.yml file:
 
@@ -118,7 +121,8 @@ Here is a generic ops-compose.yml file:
         image: imarcagency/php-apache:2
 
         labels:
-          - "ops.linked=true"
+          - "ops.project=${OPS_PROJECT_NAME}"
+          - "ops.hostname=${OPS_PROJECT_NAME}.${OPS_DOMAIN}"
           - "traefik.enable=true"
           - "traefik.docker.network=ops_gateway"
           - "traefik.frontend.rule=Host:${OPS_PROJECT_NAME}.${OPS_DOMAIN}"
@@ -140,7 +144,7 @@ Here is a generic ops-compose.yml file:
       ops_backend:
         external: true
 
-The most important things are the labes and the networks.
+The most important things are the labels and the networks.
 Those settings are required for the proxy to function or for your app to conenct to shared services.
 Everything else can be customized to whatever your app requires.
 

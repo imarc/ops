@@ -1,6 +1,6 @@
 #!/bin/bash
 
-OPS_VERSION=0.4.6
+OPS_VERSION=0.4.7
 
 # Determine OS
 
@@ -265,6 +265,32 @@ ops-shell() {
         bash
 }
 
+ops-link() {
+    local project_name=$(project-name)
+
+    if [[ -z $project_name ]]; then
+        echo 'No project found.'
+        exit 1
+    fi
+
+    echo "Linking $project_name."
+
+    project-start "$@"
+}
+
+ops-unlink() {
+    local project_name=$(project-name)
+
+    if [[ -z $project_name ]]; then
+        echo 'No project found.'
+        exit 1
+    fi
+
+    echo "Unlinking $project_name."
+
+    project-docker-compose rm -sv "$@"
+}
+
 ops-project() {
     cmd-run project "$@"
 }
@@ -278,10 +304,50 @@ ops-stats() {
 ops-start() {
     validate-config
     system-start
+
+    local info=$(docker ps -a --format '{{.ID}} {{.Label "ops.project"}}' --filter="label=ops.project")
+
+    IFS=$'\n'
+    for container in $info; do
+        IFS=' '
+
+        # https://stackoverflow.com/a/1478245
+        set $container
+
+        if [[ $2 != 'ops' ]] && [[ -e "$OPS_SITES_DIR/$2" ]]; then
+            (
+                cd $OPS_SITES_DIR/$2
+                ops project start
+            )
+        fi
+    done
 }
 
 ops-stop() {
     system-stop
+
+    local info=$(docker ps -a --format '{{.ID}} {{.Label "ops.project"}}' --filter="label=ops.project")
+
+    IFS=$'\n'
+    for container in $info; do
+        IFS=' '
+
+        # https://stackoverflow.com/a/1478245
+        set $container
+
+        if [[ $2 == 'ops' ]]; then
+            continue
+        fi
+
+        if [[ -e "$OPS_SITES_DIR/$2" ]]; then
+            (
+                cd $OPS_SITES_DIR/$2
+                ops project stop
+            )
+        else
+            docker stop $1 1> /dev/null
+        fi
+    done
 }
 
 _ops-yq() {
@@ -581,7 +647,7 @@ system-refresh() {
 }
 
 system-start() {
-    system-docker-compose up -d
+    system-docker-compose up -d --remove-orphans
 }
 
 system-stop() {
