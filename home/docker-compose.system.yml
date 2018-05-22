@@ -30,6 +30,7 @@ services:
       - OPS_DOMAIN=${OPS_DOMAIN}
       - OPS_ENABLED=1
       - OPS_SITES_DIR=${OPS_SITES_DIR}
+      - OPS_VERSION=${OPS_VERSION}
     networks:
       - gateway
       - backend
