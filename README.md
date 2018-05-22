@@ -33,13 +33,25 @@ Ops supports Linux, Mac, and Windows Subshell Linux (WSL)
 
 ## How To Install
 
-Install with npm:
+Install ops:
 
     npm install -g git+ssh://git@gitlab.imarc.net:imarc/ops.git
 
+    # Then run the following.
+    # You will be asked your password in order to trust the generated self-signed certs for HTTPS support
+    ops system install
+
+Update/Upgrade ops:
+
+    npm update -g git+ssh://git@gitlab.imarc.net:imarc/ops.git
+
+    # Then run the following.
+    # You will be asked your password in order to trust the generated self-signed certs for HTTPS support
+    ops system update
+
+
 ## Create Your First Project
 
-**On first run, you will be asked your password in order to trust the newly generated self-signed certs for HTTPS support**
 
 To start ops services, run `ops start`
 

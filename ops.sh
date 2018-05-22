@@ -1,6 +1,7 @@
 #!/bin/bash
+shopt -s extglob
 
-OPS_VERSION=0.4.7
+OPS_VERSION=0.4.9
 
 # Determine OS
 
@@ -484,6 +485,7 @@ system-docker-compose() {
     OPS_DOCKER_APACHE_IMAGE=$OPS_DOCKER_APACHE_IMAGE \
     OPS_MINIO_ACCESS_KEY=$OPS_MINIO_ACCESS_KEY \
     OPS_MINIO_SECRET_KEY=$OPS_MINIO_SECRET_KEY \
+    OPS_VERSION=$OPS_VERSION \
     docker-compose "$@"
 }
 
@@ -520,14 +522,21 @@ system-config() {
     fi
 }
 
-system-install-fresh() {
-    rm -rf $OPS_HOME
+system-update() {
+    if [[ ! -d $OPS_HOME ]]; then
+        system-install
+        return
+    fi
 
-    system-install
+    shopt -s extglob
+    cp -rp $OPS_SCRIPT_DIR/home/!(config) $OPS_HOME
+    shopt -u extglob
+
+    system-refresh
 }
 
 system-install() {
-    if [[  -d $OPS_HOME ]]; then
+    if [[ -d $OPS_HOME ]]; then
         return
     fi
 

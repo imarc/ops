@@ -9,6 +9,7 @@ $containers = get_containers();
 
 $domain = $_ENV['OPS_DOMAIN'];
 $sitesDir = $_ENV['OPS_SITES_DIR'];
+$version = $_ENV['OPS_VERSION'];
 
 $mariadb = new PDO('mysql:host=mariadb', 'root', null);
 $postgres = new PDO('pgsql:host=postgres;user=postgres');
@@ -31,7 +32,7 @@ $postgresDatabases = $postgres->query('SELECT datname AS name FROM pg_database W
     <body>
         <div class="navbar">
             <div class="container">
-                <h1>Ops Dashboard</h1>
+                <h1>Ops Dashboard <strong>v<?= $version ?></strong></h1>
                 <a href="https://gitlab.imarc.net/imarc/ops/blob/master/README.md">Documentation</a>
             </div>
         </div>
