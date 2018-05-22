@@ -1,7 +1,7 @@
 #!/bin/bash
 shopt -s extglob
 
-OPS_VERSION=0.4.12
+OPS_VERSION=0.4.13
 
 # Determine OS
 
@@ -251,19 +251,12 @@ ops-restart() {
 }
 
 ops-shell() {
-    #system-shell-exec $OPS_SHELL_SERVICE $OPS_SHELL_COMMAND
+    local id=$(system-docker-compose ps -q $OPS_SHELL_SERVICE)
+    local project=$(project-name)
 
-    ops docker run \
-        --rm -itP \
-        -v "$(pwd):/usr/src/app" \
-        -v "$HOME/.ssh:/var/www/.ssh" \
-        -e "COMPOSER_HOME=/composer" \
-        -w "/usr/src/app" \
-        --network="ops_backend" \
-        --label=ops.project="$(ops project name)" \
-        --user "www-data:www-data" \
-        $OPS_DOCKER_APACHE_IMAGE \
-        bash
+    [[ -z $id ]] && exit
+
+    ops docker exec -w "/var/www/html/$project" -u www-data -it $id "$OPS_SHELL_COMMAND"
 }
 
 ops-link() {
@@ -410,6 +403,11 @@ project-docker-compose() {
 }
 
 project-name() {
+
+    if [[ "$(pwd)" != $OPS_SITES_DIR/* ]]; then
+        exit 1
+    fi
+
     local basename="$(basename $(pwd))"
 
     (
