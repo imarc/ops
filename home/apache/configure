@@ -1,3 +1,13 @@
 #!/bin/bash
 
 a2enmod lua
+
+cat << EOF > /var/www/.bashrc
+alias ll="ls -l"
+alias ls="ls -la"
+EOF
+
+mkdir -p /var/www/.config
+
+chown www-data:www-data /var/www/.config
+chown www-data:www-data /var/www/.bashrc
