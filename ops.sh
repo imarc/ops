@@ -1,7 +1,7 @@
 #!/bin/bash
 shopt -s extglob
 
-OPS_VERSION=0.4.13
+OPS_VERSION=0.5.0
 
 # Determine OS
 
