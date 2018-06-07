@@ -38,10 +38,6 @@ source $OPS_SCRIPT_DIR/cmd.sh
 
 # Load config
 
-if [[ -f '.env.example' ]]; then
-    source '.env.example'
-fi
-
 if [[ -f '.env' ]]; then
     source '.env'
 fi
@@ -71,10 +67,12 @@ OPS_SITES_DIR="$HOME/Sites"
 OPS_PROJECT_COMPOSE_FILE=${OPS_PROJECT_COMPOSE_FILE-"ops-compose.yml"}
 OPS_PROJECT_TEMPLATE=${OPS_PROJECT_TEMPLATE-""}
 
-
 if [[ -f "$OPS_HOME/config" ]]; then
     source $OPS_HOME/config
 fi
+
+# variables that can't be overriden at all
+OPS_DASHBOARD_URL="https://ops.${OPS_DOMAIN}"
 
 # Internal helpers
 
@@ -296,6 +294,9 @@ ops-stats() {
 }
 
 ops-start() {
+    echo 'Starting ops services...'
+    echo
+
     validate-config
     system-start
 
@@ -315,6 +316,10 @@ ops-start() {
             )
         fi
     done
+
+    echo
+    echo "Visit your dashboard: ${OPS_DASHBOARD_URL}"
+    echo
 }
 
 ops-stop() {
@@ -342,6 +347,74 @@ ops-stop() {
             docker stop $1 1> /dev/null
         fi
     done
+}
+
+ops-sync() {
+    # Ops sync assumes the following:
+    #
+    # - SSH access is enabled to the remote web and/or DB servers
+    # - DB servers make their tools available to the SSH user: mysqldump, pg_dump, etc.
+
+    OPS_PROJECT_NAME="$(ops project name)"
+    OPS_PROJECT_DB_TYPE="${OPS_PROJECT_DB_TYPE}"
+    OPS_PROJECT_DB_NAME="${OPS_PROJECT_DB_NAME-$OPS_PROJECT_NAME}"
+    OPS_PROJECT_SYNC_PATHS="${OPS_PROJECT_SYNC_PATHS}"
+    OPS_PROJECT_SYNC_NODB="${OPS_PROJECT_SYNC_NODB-0}"
+
+    OPS_PROJECT_REMOTE_USER="${OPS_PROJECT_REMOTE_USER}"
+    OPS_PROJECT_REMOTE_HOST="${OPS_PROJECT_REMOTE_HOST-$OPS_PROJECT_NAME}"
+    OPS_PROJECT_REMOTE_PATH="${OPS_PROJECT_REMOTE_PATH}"
+
+    OPS_PROJECT_REMOTE_DB_HOST="${OPS_PROJECT_REMOTE_HOST}"
+    OPS_PROJECT_REMOTE_DB_TYPE="${OPS_PROJECT_DB_TYPE-$OPS_PROJECT_DB_TYPE}"
+    OPS_PROJECT_REMOTE_DB_NAME="${OPS_PROJECT_REMOTE_DB_NAME-$OPS_PROJECT_DB_NAME}"
+    OPS_PROJECT_REMOTE_DB_USER="${OPS_PROJECT_REMOTE_DB_USER-$OPS_PROJECT_REMOTE_USER}"
+
+    # best debugging helper
+    # ( set -o posix ; set ) | grep -E '^OPS_'
+
+    local ssh_host="$([[ ! -z $OPS_PROJECT_REMOTE_DB_USER ]] && echo "$OPS_PROJECT_REMOTE_DB_USER@")"
+    local ssh_host="$ssh_host$OPS_PROJECT_REMOTE_HOST"
+    local timestamp="$(date '+%Y%m%d')"
+    local dumpfile="$OPS_PROJECT_NAME-$timestamp.sql"
+
+    # sync database
+
+    if \
+        [[ $OPS_PROJECT_SYNC_NODB == 0 ]] && \
+        [[ ! -z "$OPS_PROJECT_DB_NAME" ]] && \
+        [[ ! -z "$OPS_PROJECT_DB_TYPE" ]] && \
+        [[ ! -z "$OPS_PROJECT_REMOTE_DB_TYPE" ]] && \
+        [[ ! -z "$OPS_PROJECT_REMOTE_DB_HOST" ]] && \
+        [[ ! -z "$OPS_PROJECT_REMOTE_DB_NAME" ]] && \
+        [[ ! -z "$OPS_PROJECT_REMOTE_DB_USER" ]]
+    then
+        if [[ "$OPS_PROJECT_REMOTE_DB_TYPE" = "mariadb" ]]; then
+            echo "Syncing remote mariadb database '$OPS_PROJECT_REMOTE_DB_NAME' to $dumpfile"
+            ssh -TC "$ssh_host" "mysqldump --single-transaction $OPS_PROJECT_REMOTE_DB_NAME" > $dumpfile
+            echo "Importing $dumpfile to '$OPS_PROJECT_DB_NAME' mariadb database"
+            ops-mariadb-import "$OPS_PROJECT_DB_NAME" $dumpfile
+
+        elif [[ "$OPS_PROJECT_REMOTE_DB_TYPE" = "pgsql" ]]; then
+            echo "Syncing remote pgsql database '$OPS_PROJECT_REMOTE_DB_NAME' to $dumpfile"
+            ssh -TC "$ssh_host" "pg_dump $OPS_PROJECT_REMOTE_DB_NAME" > $dumpfile
+            echo "Importing $dumpfile to '$OPS_PROJECT_DB_NAME' pgsql database"
+            ops-psql-import "$OPS_PROJECT_DB_NAME" $dumpfile
+        fi
+    fi
+
+    # sync filesystem
+
+    if \
+        [[ ! -z "$OPS_PROJECT_REMOTE_HOST" ]] && \
+        [[ ! -z "$OPS_PROJECT_REMOTE_PATH" ]] && \
+        [[ ! -z "$OPS_PROJECT_SYNC_PATHS" ]]
+    then
+        for sync_path in "$OPS_PROJECT_SYNC_PATHS"; do
+            echo -e "Syncing filesystem: $sync_path"
+            rsync -a "$ssh_host:$OPS_PROJECT_REMOTE_PATH/$sync_path/" "$sync_path"
+        done
+    fi
 }
 
 _ops-yq() {
@@ -530,7 +603,8 @@ system-update() {
     cp -rp $OPS_SCRIPT_DIR/home/!(config) $OPS_HOME
     shopt -u extglob
 
-    system-refresh
+    system-refresh-config
+    system-refresh-services
 }
 
 system-install() {
@@ -551,25 +625,12 @@ system-install() {
 
     source $OPS_HOME/config
 
-    system-refresh
+    system-refresh-config
+    system-refresh-certs
+    system-refresh-services
 }
 
-system-refresh() {
-    #
-    # Build config
-    #
-
-    sed "s/OPS_DOMAIN/$OPS_DOMAIN/" $OPS_HOME/dnsmasq/dnsmasq.conf.tmpl > $OPS_HOME/dnsmasq/dnsmasq.conf
-    sed "s/OPS_DOMAIN/$OPS_DOMAIN/" $OPS_HOME/certs/ssl.conf.tmpl > $OPS_HOME/certs/ssl.conf
-
-    sed \
-        -e "s/OPS_MINIO_ACCESS_KEY/$OPS_MINIO_ACCESS_KEY/" \
-        -e "s/OPS_MINIO_SECRET_KEY/$OPS_MINIO_SECRET_KEY/" \
-        $OPS_HOME/minio/config.json.tmpl > $OPS_HOME/minio/config.json
-
-    ops docker build -t ops-node:$OPS_VERSION $OPS_HOME/node
-    ops docker build -t ops-utils:$OPS_VERSION $OPS_HOME/utils
-
+system-refresh-certs() {
     #
     # Clear out old cert
     #
@@ -638,6 +699,27 @@ system-refresh() {
 
     fi
 
+
+}
+
+system-refresh-config() {
+    #
+    # Build config
+    #
+
+    sed "s/OPS_DOMAIN/$OPS_DOMAIN/" $OPS_HOME/dnsmasq/dnsmasq.conf.tmpl > $OPS_HOME/dnsmasq/dnsmasq.conf
+    sed "s/OPS_DOMAIN/$OPS_DOMAIN/" $OPS_HOME/certs/ssl.conf.tmpl > $OPS_HOME/certs/ssl.conf
+
+    sed \
+        -e "s/OPS_MINIO_ACCESS_KEY/$OPS_MINIO_ACCESS_KEY/" \
+        -e "s/OPS_MINIO_SECRET_KEY/$OPS_MINIO_SECRET_KEY/" \
+        $OPS_HOME/minio/config.json.tmpl > $OPS_HOME/minio/config.json
+
+    ops docker build -t ops-node:$OPS_VERSION $OPS_HOME/node
+    ops docker build -t ops-utils:$OPS_VERSION $OPS_HOME/utils
+}
+
+system-refresh-services() {
     #
     # Regenerate/Restart services. (They might depend on new configs/certs)
     #
@@ -654,6 +736,11 @@ system-refresh() {
 }
 
 system-start() {
+    # removing apache is a hacky mod_lua crash fix. this issue seems to happen
+    # when containers are left running on a restart with docker for mac. if not
+    # remedied, the apache container refuses to start up again.
+    system-docker-compose rm -fs apache &> /dev/null
+
     system-docker-compose up -d --remove-orphans
 }
 
