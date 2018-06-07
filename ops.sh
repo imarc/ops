@@ -392,7 +392,7 @@ ops-sync() {
     # best debugging helper
     # ( set -o posix ; set ) | grep -E '^OPS_'
 
-    local ssh_host="$([[ ! -z $OPS_PROJECT_REMOTE_DB_USER ]] && echo "$OPS_PROJECT_REMOTE_DB_USER@")"
+    local ssh_host="$([[ ! -z $OPS_PROJECT_REMOTE_USER ]] && echo "$OPS_PROJECT_REMOTE_USER@")"
     local ssh_host="$ssh_host$OPS_PROJECT_REMOTE_HOST"
     local timestamp="$(date '+%Y%m%d')"
     local dumpfile="$OPS_PROJECT_NAME-$timestamp.sql"
@@ -410,7 +410,7 @@ ops-sync() {
     then
         if [[ "$OPS_PROJECT_REMOTE_DB_TYPE" = "mariadb" ]]; then
             echo "Syncing remote mariadb database '$OPS_PROJECT_REMOTE_DB_NAME' to $dumpfile"
-            ssh -TC "$ssh_host" "mysqldump --single-transaction $OPS_PROJECT_REMOTE_DB_NAME" > $dumpfile
+            ssh -TC "$ssh_host" "mysqldump --single-transaction -u $OPS_PROJECT_REMOTE_DB_USER $OPS_PROJECT_REMOTE_DB_NAME" > $dumpfile
             echo "Importing $dumpfile to '$OPS_PROJECT_DB_NAME' mariadb database"
             ops-mariadb-import "$OPS_PROJECT_DB_NAME" $dumpfile
 
