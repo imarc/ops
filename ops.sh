@@ -354,6 +354,7 @@ ops-sync() {
     #
     # - SSH access is enabled to the remote web and/or DB servers
     # - DB servers make their tools available to the SSH user: mysqldump, pg_dump, etc.
+    # - the SSH user has passwordless access to databases from localhost
 
     RSYNC_BIN=$(which rsync)
 
