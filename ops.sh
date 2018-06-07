@@ -1,7 +1,7 @@
 #!/bin/bash
 shopt -s extglob
 
-OPS_VERSION=0.5.0
+OPS_VERSION=0.5.1
 
 # Determine OS
 
@@ -355,16 +355,34 @@ ops-sync() {
     # - SSH access is enabled to the remote web and/or DB servers
     # - DB servers make their tools available to the SSH user: mysqldump, pg_dump, etc.
 
+    RSYNC_BIN=$(which rsync)
+
+    if [[ -z "$RSYNC_BIN" ]]; then
+        echo 'Rsync is a required dependency. Please install.'
+        exit 1
+    fi
+
+    # do the following work in a subshell so
+    # dir switching is a little more graceful
+
+    (
+
     OPS_PROJECT_NAME="$(ops project name)"
+
+    cd "$OPS_SITES_DIR/$OPS_PROJECT_NAME"
+    source ".env"
+
     OPS_PROJECT_DB_TYPE="${OPS_PROJECT_DB_TYPE}"
     OPS_PROJECT_DB_NAME="${OPS_PROJECT_DB_NAME-$OPS_PROJECT_NAME}"
-    OPS_PROJECT_SYNC_PATHS="${OPS_PROJECT_SYNC_PATHS}"
+
+    OPS_PROJECT_SYNC_DIRS="${OPS_PROJECT_SYNC_DIRS}"
     OPS_PROJECT_SYNC_NODB="${OPS_PROJECT_SYNC_NODB-0}"
+    OPS_PROJECT_SYNC_EXCLUDES="${OPS_PROJECT_SYNC_EXCLUDES}"
+    OPS_PROJECT_SYNC_MAXSIZE="${OPS_PROJECT_SYNC_MAXSIZE-500M}"
 
     OPS_PROJECT_REMOTE_USER="${OPS_PROJECT_REMOTE_USER}"
     OPS_PROJECT_REMOTE_HOST="${OPS_PROJECT_REMOTE_HOST-$OPS_PROJECT_NAME}"
     OPS_PROJECT_REMOTE_PATH="${OPS_PROJECT_REMOTE_PATH}"
-
     OPS_PROJECT_REMOTE_DB_HOST="${OPS_PROJECT_REMOTE_HOST}"
     OPS_PROJECT_REMOTE_DB_TYPE="${OPS_PROJECT_DB_TYPE-$OPS_PROJECT_DB_TYPE}"
     OPS_PROJECT_REMOTE_DB_NAME="${OPS_PROJECT_REMOTE_DB_NAME-$OPS_PROJECT_DB_NAME}"
@@ -408,13 +426,23 @@ ops-sync() {
     if \
         [[ ! -z "$OPS_PROJECT_REMOTE_HOST" ]] && \
         [[ ! -z "$OPS_PROJECT_REMOTE_PATH" ]] && \
-        [[ ! -z "$OPS_PROJECT_SYNC_PATHS" ]]
+        [[ ! -z "$OPS_PROJECT_SYNC_DIRS" ]]
     then
-        for sync_path in "$OPS_PROJECT_SYNC_PATHS"; do
-            echo -e "Syncing filesystem: $sync_path"
-            rsync -a "$ssh_host:$OPS_PROJECT_REMOTE_PATH/$sync_path/" "$sync_path"
+        echo $OPS_PROJECT_REMOTE_PATH
+
+        for sync_dir in $OPS_PROJECT_SYNC_DIRS; do
+            echo -e "Syncing filesystem: $sync_dir"
+
+            # send exclude patterns as stdin, one per line.
+            $(echo "${OPS_PROJECT_SYNC_EXCLUDES// /$'\n'}" | \
+                rsync -a --exclude-from=- \
+                    --max-size=$OPS_PROJECT_SYNC_MAXSIZE \
+                    "$ssh_host:$OPS_PROJECT_REMOTE_PATH/$sync_dir/" \
+                    "$sync_dir")
         done
     fi
+
+    )
 }
 
 _ops-yq() {
@@ -476,23 +504,18 @@ project-docker-compose() {
 }
 
 project-name() {
-
     if [[ "$(pwd)" != $OPS_SITES_DIR/* ]]; then
         exit 1
     fi
 
-    local basename="$(basename $(pwd))"
-
-    (
+    echo $(
+        local basename="$(basename $(pwd))"
         while [[ "$(pwd)" != $OPS_SITES_DIR ]] && [[ "$(pwd)" != '/' ]]; do
-            cd ..
             basename=$(basename $(pwd))
+            cd ..
         done
-    )
-
-    if [[ -n "$basename" ]]; then
         echo $basename
-    fi
+    )
 }
 
 project-start() {
