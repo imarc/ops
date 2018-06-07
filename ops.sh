@@ -428,8 +428,6 @@ ops-sync() {
         [[ ! -z "$OPS_PROJECT_REMOTE_PATH" ]] && \
         [[ ! -z "$OPS_PROJECT_SYNC_DIRS" ]]
     then
-        echo $OPS_PROJECT_REMOTE_PATH
-
         for sync_dir in $OPS_PROJECT_SYNC_DIRS; do
             echo -e "Syncing filesystem: $sync_dir"
 
