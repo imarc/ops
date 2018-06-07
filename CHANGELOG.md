@@ -9,6 +9,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 - **dashboard** Tooltip for 'live' project badge
+- `ops sync` command
 - `ops system refresh-certs` command
 - `ops system refresh-config` command
 - `ops system refresh-services` command
