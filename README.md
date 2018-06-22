@@ -6,6 +6,7 @@
 - Create a new host by making a directory.
 - Local HTTPS with self-signed certs.
 - Shared services: MariaDB, PostgreSQL, Redis, Mailhog, Adminer, and more.
+- Sync remote databases and filesystem paths to local projects.
 - Built on Docker and Traefik. Configure project-specific services when required.
 
 ![Ops Dashboard](dashboard.png)
@@ -142,7 +143,7 @@ The following settings can be placed in the project's `.env`
 
     # rsync max filesize to sync
     # default: 500M
-    OPS_PROJECT_SYNC_MAXSIZE="500M}"
+    OPS_PROJECT_SYNC_MAXSIZE="500M"
 
     # the remote hostname for the filesystem sync
     # default: the project name (which is the directory name)
