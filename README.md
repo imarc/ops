@@ -116,7 +116,7 @@ Currently `ops sync` assumes the following:
 - DB servers make their tools available to the SSH user: mysqldump, pg_dump, etc.
 - the DB user has passwordless access to databases from localhost
 
-**Pro-tip:** There is an undocumented way to completely overload the sync command for a custom setup,
+**Pro-tip:** If you are brave, there is an undocumented way to completely overload the sync command for a custom setup.
 
 The following settings can be placed in the project's `.env`
 
