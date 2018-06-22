@@ -108,15 +108,15 @@ This is a separate project and can be viewed on [Github](https://github.com/imar
 ## Remote to Local Syncing
 
 With a few settings in a project's `.env` file, you can sync the project's database and filesystem storage
-from a remote server.
-
-Ideally, these settings should be checked into version control within a `.env.example` file to be shared amongst the development team.
+from a remote server. Ideally, these settings should be checked into version control within a `.env.example` file to be shared amongst the development team.
 
 Currently `ops sync` assumes the following:
 
 - SSH access is enabled to the remote web and/or DB servers
 - DB servers make their tools available to the SSH user: mysqldump, pg_dump, etc.
 - the DB user has passwordless access to databases from localhost
+
+**Pro-tip:** There is an undocumented way to completely overload the sync command for a custom setup,
 
 The following settings can be placed in the project's `.env`
 
