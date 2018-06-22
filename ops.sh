@@ -1,7 +1,7 @@
 #!/bin/bash
 shopt -s extglob
 
-OPS_VERSION=0.5.1
+OPS_VERSION=0.6.0
 
 # Determine OS
 
@@ -48,7 +48,7 @@ fi
 
 # options that can't be overidden by a project
 
-OPS_HOME="$HOME/.ops"
+OPS_HOME=${OPS_HOME-"$HOME/.ops"}
 OPS_DOCKER_UTILS_IMAGE="ops-utils:$OPS_VERSION"
 OPS_DOCKER_APACHE_IMAGE="imarcagency/php-apache:2"
 OPS_DOCKER_COMPOSER_IMAGE="imarcagency/php-apache:2"
@@ -160,16 +160,35 @@ _ops-mc() {
 }
 
 ops-mariadb() {
+    cmd-run mariadb "$@"
+}
+
+mariadb-help() {
+    cmd-help "ops mariadb" mariadb
+    echo
+}
+
+mariadb-cli() {
     system-shell-exec mariadb mysql "${@}"
 }
 
-ops-mariadb-export() {
+mariadb-create() {
+    local db="$1"
+
+    mariadb-cli -e "CREATE DATABASE $1"
+
+    if [[ $? == 0 ]]; then
+        echo "Created mariadb database: $1"
+    fi
+}
+
+mariadb-export() {
     local db="$1"
 
     ops-exec mariadb mysqldump --single-transaction "$db"
 }
 
-ops-mariadb-import() {
+mariadb-import() {
     local db="$1"
     local sqlfile="$2"
 
@@ -208,17 +227,46 @@ ops-ps() {
     system-docker-compose ps "$@"
 }
 
+
+ops-mariadb() {
+    cmd-run mariadb "$@"
+}
+
+mariadb-help() {
+    cmd-help "ops mariadb" mariadb
+    echo
+}
+
 ops-psql() {
+    cmd-run mariadb "$@"
+}
+
+psql-help() {
+    cmd-help "ops psql" psql
+    echo
+}
+
+psql-cli() {
     system-shell-exec postgres psql -U postgres "$@"
 }
 
-ops-psql-export() {
+psql-create() {
+    local db="$1"
+
+    ops-psql -c "CREATE DATABASE $1" 1> /dev/null
+
+    if [[ $? == 0 ]]; then
+        echo "Created postgres database: $1"
+    fi
+}
+
+psql-export() {
     local db="$1"
 
     ops-exec postgres pg_dump -U postgres "$db"
 }
 
-ops-psql-import() {
+psql-import() {
     local db="$1"
     local sqlfile="$2"
 
@@ -228,12 +276,28 @@ ops-psql-import() {
     cat "$sqlfile" | ops-exec postgres psql -U postgres "$db"
 }
 
+ops-lt() {
+    local project="$(ops project name)"
+
+    echo "$project.$OPS_DOMAIN"
+
+    ops docker run \
+        --rm --init -itP \
+        --label=ops.project="$project" \
+        --network=host \
+        efrecon/localtunnel \
+            --local-host="$project.$OPS_DOMAIN" \
+            --port=80
+
+        #ops-utils:$OPS_VERSION bash \
+}
+
 _ops-gulp() {
     ops docker run \
         --rm -itP --init \
         -v "$(pwd):/usr/src/app" \
         -w "/usr/src/app" \
-        --label=ops.site="$(ops site id)" \
+        --label=ops.project="$(ops project id)" \
         --user "node" \
         --entrypoint "gulp" \
         ops-node:$OPS_VERSION \
@@ -412,13 +476,13 @@ ops-sync() {
             echo "Syncing remote mariadb database '$OPS_PROJECT_REMOTE_DB_NAME' to $dumpfile"
             ssh -TC "$ssh_host" "mysqldump --single-transaction -u $OPS_PROJECT_REMOTE_DB_USER $OPS_PROJECT_REMOTE_DB_NAME" > $dumpfile
             echo "Importing $dumpfile to '$OPS_PROJECT_DB_NAME' mariadb database"
-            ops-mariadb-import "$OPS_PROJECT_DB_NAME" $dumpfile
+            mariadb-import "$OPS_PROJECT_DB_NAME" $dumpfile
 
         elif [[ "$OPS_PROJECT_REMOTE_DB_TYPE" = "pgsql" ]]; then
             echo "Syncing remote pgsql database '$OPS_PROJECT_REMOTE_DB_NAME' to $dumpfile"
             ssh -TC "$ssh_host" "pg_dump $OPS_PROJECT_REMOTE_DB_NAME" > $dumpfile
             echo "Importing $dumpfile to '$OPS_PROJECT_DB_NAME' pgsql database"
-            ops-psql-import "$OPS_PROJECT_DB_NAME" $dumpfile
+            psql-import "$OPS_PROJECT_DB_NAME" $dumpfile
         fi
     fi
 
@@ -431,6 +495,14 @@ ops-sync() {
     then
         for sync_dir in $OPS_PROJECT_SYNC_DIRS; do
             echo -e "Syncing filesystem: $sync_dir"
+            echo -e "Syncing directories..."
+
+            # sync entire dir structure first
+            rsync -a -f"+ */" -f"- *" \
+                "$ssh_host:$OPS_PROJECT_REMOTE_PATH/$sync_dir/" \
+                "$sync_dir"
+
+            echo -e "Syncing files..."
 
             # send exclude patterns as stdin, one per line.
             $(echo "${OPS_PROJECT_SYNC_EXCLUDES// /$'\n'}" | \
@@ -795,6 +867,13 @@ init-craft2() {
     echo 'Installing Craft'
 
     ops composer create-project imarc/padstone $folder
+
+}
+init-craft3() {
+    local folder=$1
+
+    echo 'Installing Craft 3'
+    composer create-project craftcms/craft $folder
 
 }
 

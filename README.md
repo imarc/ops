@@ -1,6 +1,6 @@
 # Ops
 
-**Version 0.5.1**
+**Version 0.6.0**
 
 - A local development environment focused on PHP-based projects.
 - Create a new host by making a directory.
@@ -104,6 +104,75 @@ port: 1025
 Out of the box, the main/shared PHP container relies on the imarcagency/php-apache image.
 
 This is a separate project and can be viewed on [Github](https://github.com/imarc/docker-php-apache) or [Docker Hub](https://hub.docker.com/r/imarcagency/php-apache/)
+
+## Remote to Local Syncing
+
+With a few settings in a project's `.env` file, you can sync the project's database and filesystem storage
+from a remote server.
+
+Ideally, these settings should be checked into version control within a `.env.example` file to be shared amongst the development team.
+
+Currently `ops sync` assumes the following:
+
+- SSH access is enabled to the remote web and/or DB servers
+- DB servers make their tools available to the SSH user: mysqldump, pg_dump, etc.
+- the DB user has passwordless access to databases from localhost
+
+The following settings can be placed in the project's `.env`
+
+    # the local database type: mariadb, postgres
+    # default: none
+    OPS_PROJECT_DB_TYPE=""
+
+    # the local database name.
+    # default: the project name (which is the directory name)
+    OPS_PROJECT_DB_NAME="${OPS_PROJECT_NAME}"
+
+    # space separated relative dirs to sync down
+    # default: none
+    OPS_PROJECT_SYNC_DIRS=""
+
+    # disable remote database sync. 1 or 0
+    # default: 0
+    OPS_PROJECT_SYNC_NODB="0"
+
+    # space separated rsync exclude patterns
+    # default: none
+    OPS_PROJECT_SYNC_EXCLUDES=""
+
+    # rsync max filesize to sync
+    # default: 500M
+    OPS_PROJECT_SYNC_MAXSIZE="500M}"
+
+    # the remote hostname for the filesystem sync
+    # default: the project name (which is the directory name)
+    OPS_PROJECT_REMOTE_HOST="${OPS_PROJECT_NAME}"
+
+    # the remote SSH user for the filesystem sync
+    # default: none
+    OPS_PROJECT_REMOTE_USER=""
+
+    # the remote project path for the filesystem sync
+    # default: none
+    OPS_PROJECT_REMOTE_PATH=""
+
+    # the remote hostname for the database sync
+    # default: the remote hostname for the filesystem sync
+    OPS_PROJECT_REMOTE_DB_HOST="${OPS_PROJECT_REMOTE_HOST}"
+
+    # the remote database type
+    # default: the local database type
+    OPS_PROJECT_REMOTE_DB_TYPE="${OPS_PROJECT_DB_TYPE-$OPS_PROJECT_DB_TYPE}"
+
+    # the remote database name
+    # default: the local database name
+    OPS_PROJECT_REMOTE_DB_NAME="${$OPS_PROJECT_DB_NAME}"
+
+    # the remote database user
+    # default: the remote SSH user
+    OPS_PROJECT_REMOTE_DB_USER="${OPS_PROJECT_REMOTE_USER}"
+
+
 
 ## Custom Project Container
 
