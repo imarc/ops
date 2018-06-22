@@ -1,7 +1,7 @@
 #!/bin/bash
 shopt -s extglob
 
-OPS_VERSION=0.5.0
+OPS_VERSION=0.6.0
 
 # Determine OS
 
@@ -38,10 +38,6 @@ source $OPS_SCRIPT_DIR/cmd.sh
 
 # Load config
 
-if [[ -f '.env.example' ]]; then
-    source '.env.example'
-fi
-
 if [[ -f '.env' ]]; then
     source '.env'
 fi
@@ -52,7 +48,7 @@ fi
 
 # options that can't be overidden by a project
 
-OPS_HOME="$HOME/.ops"
+OPS_HOME=${OPS_HOME-"$HOME/.ops"}
 OPS_DOCKER_UTILS_IMAGE="ops-utils:$OPS_VERSION"
 OPS_DOCKER_APACHE_IMAGE="imarcagency/php-apache:2"
 OPS_DOCKER_COMPOSER_IMAGE="imarcagency/php-apache:2"
@@ -71,10 +67,12 @@ OPS_SITES_DIR="$HOME/Sites"
 OPS_PROJECT_COMPOSE_FILE=${OPS_PROJECT_COMPOSE_FILE-"ops-compose.yml"}
 OPS_PROJECT_TEMPLATE=${OPS_PROJECT_TEMPLATE-""}
 
-
 if [[ -f "$OPS_HOME/config" ]]; then
     source $OPS_HOME/config
 fi
+
+# variables that can't be overriden at all
+OPS_DASHBOARD_URL="https://ops.${OPS_DOMAIN}"
 
 # Internal helpers
 
@@ -162,16 +160,35 @@ _ops-mc() {
 }
 
 ops-mariadb() {
+    cmd-run mariadb "$@"
+}
+
+mariadb-help() {
+    cmd-help "ops mariadb" mariadb
+    echo
+}
+
+mariadb-cli() {
     system-shell-exec mariadb mysql "${@}"
 }
 
-ops-mariadb-export() {
+mariadb-create() {
+    local db="$1"
+
+    mariadb-cli -e "CREATE DATABASE $1"
+
+    if [[ $? == 0 ]]; then
+        echo "Created mariadb database: $1"
+    fi
+}
+
+mariadb-export() {
     local db="$1"
 
     ops-exec mariadb mysqldump --single-transaction "$db"
 }
 
-ops-mariadb-import() {
+mariadb-import() {
     local db="$1"
     local sqlfile="$2"
 
@@ -210,17 +227,46 @@ ops-ps() {
     system-docker-compose ps "$@"
 }
 
+
+ops-mariadb() {
+    cmd-run mariadb "$@"
+}
+
+mariadb-help() {
+    cmd-help "ops mariadb" mariadb
+    echo
+}
+
 ops-psql() {
+    cmd-run mariadb "$@"
+}
+
+psql-help() {
+    cmd-help "ops psql" psql
+    echo
+}
+
+psql-cli() {
     system-shell-exec postgres psql -U postgres "$@"
 }
 
-ops-psql-export() {
+psql-create() {
+    local db="$1"
+
+    ops-psql -c "CREATE DATABASE $1" 1> /dev/null
+
+    if [[ $? == 0 ]]; then
+        echo "Created postgres database: $1"
+    fi
+}
+
+psql-export() {
     local db="$1"
 
     ops-exec postgres pg_dump -U postgres "$db"
 }
 
-ops-psql-import() {
+psql-import() {
     local db="$1"
     local sqlfile="$2"
 
@@ -230,12 +276,28 @@ ops-psql-import() {
     cat "$sqlfile" | ops-exec postgres psql -U postgres "$db"
 }
 
+ops-lt() {
+    local project="$(ops project name)"
+
+    echo "$project.$OPS_DOMAIN"
+
+    ops docker run \
+        --rm --init -itP \
+        --label=ops.project="$project" \
+        --network=host \
+        efrecon/localtunnel \
+            --local-host="$project.$OPS_DOMAIN" \
+            --port=80
+
+        #ops-utils:$OPS_VERSION bash \
+}
+
 _ops-gulp() {
     ops docker run \
         --rm -itP --init \
         -v "$(pwd):/usr/src/app" \
         -w "/usr/src/app" \
-        --label=ops.site="$(ops site id)" \
+        --label=ops.project="$(ops project id)" \
         --user "node" \
         --entrypoint "gulp" \
         ops-node:$OPS_VERSION \
@@ -296,6 +358,9 @@ ops-stats() {
 }
 
 ops-start() {
+    echo 'Starting ops services...'
+    echo
+
     validate-config
     system-start
 
@@ -315,6 +380,10 @@ ops-start() {
             )
         fi
     done
+
+    echo
+    echo "Visit your dashboard: ${OPS_DASHBOARD_URL}"
+    echo
 }
 
 ops-stop() {
@@ -342,6 +411,109 @@ ops-stop() {
             docker stop $1 1> /dev/null
         fi
     done
+}
+
+ops-sync() {
+    # Ops sync assumes the following:
+    #
+    # - SSH access is enabled to the remote web and/or DB servers
+    # - DB servers make their tools available to the SSH user: mysqldump, pg_dump, etc.
+    # - the SSH user has passwordless access to databases from localhost
+
+    RSYNC_BIN=$(which rsync)
+
+    if [[ -z "$RSYNC_BIN" ]]; then
+        echo 'Rsync is a required dependency. Please install.'
+        exit 1
+    fi
+
+    # do the following work in a subshell so
+    # dir switching is a little more graceful
+
+    (
+
+    OPS_PROJECT_NAME="$(ops project name)"
+
+    cd "$OPS_SITES_DIR/$OPS_PROJECT_NAME"
+    source ".env"
+
+    OPS_PROJECT_DB_TYPE="${OPS_PROJECT_DB_TYPE}"
+    OPS_PROJECT_DB_NAME="${OPS_PROJECT_DB_NAME-$OPS_PROJECT_NAME}"
+
+    OPS_PROJECT_SYNC_DIRS="${OPS_PROJECT_SYNC_DIRS}"
+    OPS_PROJECT_SYNC_NODB="${OPS_PROJECT_SYNC_NODB-0}"
+    OPS_PROJECT_SYNC_EXCLUDES="${OPS_PROJECT_SYNC_EXCLUDES}"
+    OPS_PROJECT_SYNC_MAXSIZE="${OPS_PROJECT_SYNC_MAXSIZE-500M}"
+
+    OPS_PROJECT_REMOTE_USER="${OPS_PROJECT_REMOTE_USER}"
+    OPS_PROJECT_REMOTE_HOST="${OPS_PROJECT_REMOTE_HOST-$OPS_PROJECT_NAME}"
+    OPS_PROJECT_REMOTE_PATH="${OPS_PROJECT_REMOTE_PATH}"
+    OPS_PROJECT_REMOTE_DB_HOST="${OPS_PROJECT_REMOTE_HOST}"
+    OPS_PROJECT_REMOTE_DB_TYPE="${OPS_PROJECT_DB_TYPE-$OPS_PROJECT_DB_TYPE}"
+    OPS_PROJECT_REMOTE_DB_NAME="${OPS_PROJECT_REMOTE_DB_NAME-$OPS_PROJECT_DB_NAME}"
+    OPS_PROJECT_REMOTE_DB_USER="${OPS_PROJECT_REMOTE_DB_USER-$OPS_PROJECT_REMOTE_USER}"
+
+    # best debugging helper
+    # ( set -o posix ; set ) | grep -E '^OPS_'
+
+    local ssh_host="$([[ ! -z $OPS_PROJECT_REMOTE_USER ]] && echo "$OPS_PROJECT_REMOTE_USER@")"
+    local ssh_host="$ssh_host$OPS_PROJECT_REMOTE_HOST"
+    local timestamp="$(date '+%Y%m%d')"
+    local dumpfile="$OPS_PROJECT_NAME-$timestamp.sql"
+
+    # sync database
+
+    if \
+        [[ $OPS_PROJECT_SYNC_NODB == 0 ]] && \
+        [[ ! -z "$OPS_PROJECT_DB_NAME" ]] && \
+        [[ ! -z "$OPS_PROJECT_DB_TYPE" ]] && \
+        [[ ! -z "$OPS_PROJECT_REMOTE_DB_TYPE" ]] && \
+        [[ ! -z "$OPS_PROJECT_REMOTE_DB_HOST" ]] && \
+        [[ ! -z "$OPS_PROJECT_REMOTE_DB_NAME" ]] && \
+        [[ ! -z "$OPS_PROJECT_REMOTE_DB_USER" ]]
+    then
+        if [[ "$OPS_PROJECT_REMOTE_DB_TYPE" = "mariadb" ]]; then
+            echo "Syncing remote mariadb database '$OPS_PROJECT_REMOTE_DB_NAME' to $dumpfile"
+            ssh -TC "$ssh_host" "mysqldump --single-transaction -u $OPS_PROJECT_REMOTE_DB_USER $OPS_PROJECT_REMOTE_DB_NAME" > $dumpfile
+            echo "Importing $dumpfile to '$OPS_PROJECT_DB_NAME' mariadb database"
+            mariadb-import "$OPS_PROJECT_DB_NAME" $dumpfile
+
+        elif [[ "$OPS_PROJECT_REMOTE_DB_TYPE" = "pgsql" ]]; then
+            echo "Syncing remote pgsql database '$OPS_PROJECT_REMOTE_DB_NAME' to $dumpfile"
+            ssh -TC "$ssh_host" "pg_dump $OPS_PROJECT_REMOTE_DB_NAME" > $dumpfile
+            echo "Importing $dumpfile to '$OPS_PROJECT_DB_NAME' pgsql database"
+            psql-import "$OPS_PROJECT_DB_NAME" $dumpfile
+        fi
+    fi
+
+    # sync filesystem
+
+    if \
+        [[ ! -z "$OPS_PROJECT_REMOTE_HOST" ]] && \
+        [[ ! -z "$OPS_PROJECT_REMOTE_PATH" ]] && \
+        [[ ! -z "$OPS_PROJECT_SYNC_DIRS" ]]
+    then
+        for sync_dir in $OPS_PROJECT_SYNC_DIRS; do
+            echo -e "Syncing filesystem: $sync_dir"
+            echo -e "Syncing directories..."
+
+            # sync entire dir structure first
+            rsync -a -f"+ */" -f"- *" \
+                "$ssh_host:$OPS_PROJECT_REMOTE_PATH/$sync_dir/" \
+                "$sync_dir"
+
+            echo -e "Syncing files..."
+
+            # send exclude patterns as stdin, one per line.
+            $(echo "${OPS_PROJECT_SYNC_EXCLUDES// /$'\n'}" | \
+                rsync -a --exclude-from=- \
+                    --max-size=$OPS_PROJECT_SYNC_MAXSIZE \
+                    "$ssh_host:$OPS_PROJECT_REMOTE_PATH/$sync_dir/" \
+                    "$sync_dir")
+        done
+    fi
+
+    )
 }
 
 _ops-yq() {
@@ -403,23 +575,18 @@ project-docker-compose() {
 }
 
 project-name() {
-
     if [[ "$(pwd)" != $OPS_SITES_DIR/* ]]; then
         exit 1
     fi
 
-    local basename="$(basename $(pwd))"
-
-    (
+    echo $(
+        local basename="$(basename $(pwd))"
         while [[ "$(pwd)" != $OPS_SITES_DIR ]] && [[ "$(pwd)" != '/' ]]; do
-            cd ..
             basename=$(basename $(pwd))
+            cd ..
         done
-    )
-
-    if [[ -n "$basename" ]]; then
         echo $basename
-    fi
+    )
 }
 
 project-start() {
@@ -530,7 +697,8 @@ system-update() {
     cp -rp $OPS_SCRIPT_DIR/home/!(config) $OPS_HOME
     shopt -u extglob
 
-    system-refresh
+    system-refresh-config
+    system-refresh-services
 }
 
 system-install() {
@@ -551,25 +719,12 @@ system-install() {
 
     source $OPS_HOME/config
 
-    system-refresh
+    system-refresh-config
+    system-refresh-certs
+    system-refresh-services
 }
 
-system-refresh() {
-    #
-    # Build config
-    #
-
-    sed "s/OPS_DOMAIN/$OPS_DOMAIN/" $OPS_HOME/dnsmasq/dnsmasq.conf.tmpl > $OPS_HOME/dnsmasq/dnsmasq.conf
-    sed "s/OPS_DOMAIN/$OPS_DOMAIN/" $OPS_HOME/certs/ssl.conf.tmpl > $OPS_HOME/certs/ssl.conf
-
-    sed \
-        -e "s/OPS_MINIO_ACCESS_KEY/$OPS_MINIO_ACCESS_KEY/" \
-        -e "s/OPS_MINIO_SECRET_KEY/$OPS_MINIO_SECRET_KEY/" \
-        $OPS_HOME/minio/config.json.tmpl > $OPS_HOME/minio/config.json
-
-    ops docker build -t ops-node:$OPS_VERSION $OPS_HOME/node
-    ops docker build -t ops-utils:$OPS_VERSION $OPS_HOME/utils
-
+system-refresh-certs() {
     #
     # Clear out old cert
     #
@@ -638,6 +793,27 @@ system-refresh() {
 
     fi
 
+
+}
+
+system-refresh-config() {
+    #
+    # Build config
+    #
+
+    sed "s/OPS_DOMAIN/$OPS_DOMAIN/" $OPS_HOME/dnsmasq/dnsmasq.conf.tmpl > $OPS_HOME/dnsmasq/dnsmasq.conf
+    sed "s/OPS_DOMAIN/$OPS_DOMAIN/" $OPS_HOME/certs/ssl.conf.tmpl > $OPS_HOME/certs/ssl.conf
+
+    sed \
+        -e "s/OPS_MINIO_ACCESS_KEY/$OPS_MINIO_ACCESS_KEY/" \
+        -e "s/OPS_MINIO_SECRET_KEY/$OPS_MINIO_SECRET_KEY/" \
+        $OPS_HOME/minio/config.json.tmpl > $OPS_HOME/minio/config.json
+
+    ops docker build -t ops-node:$OPS_VERSION $OPS_HOME/node
+    ops docker build -t ops-utils:$OPS_VERSION $OPS_HOME/utils
+}
+
+system-refresh-services() {
     #
     # Regenerate/Restart services. (They might depend on new configs/certs)
     #
@@ -654,6 +830,11 @@ system-refresh() {
 }
 
 system-start() {
+    # removing apache is a hacky mod_lua crash fix. this issue seems to happen
+    # when containers are left running on a restart with docker for mac. if not
+    # remedied, the apache container refuses to start up again.
+    system-docker-compose rm -fs apache &> /dev/null
+
     system-docker-compose up -d --remove-orphans
 }
 
@@ -686,6 +867,13 @@ init-craft2() {
     echo 'Installing Craft'
 
     ops composer create-project imarc/padstone $folder
+
+}
+init-craft3() {
+    local folder=$1
+
+    echo 'Installing Craft 3'
+    composer create-project craftcms/craft $folder
 
 }
 
