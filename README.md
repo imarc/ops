@@ -234,7 +234,7 @@ See all the variables that get injected into this file [here](https://gitlab.ima
 
 ## Contributing
 
-If you are developing ops itself, debugging, or want to try out bleeding edge features, It is recommended you install like so:
+If you are contributing to ops, debugging, or want to try out bleeding edge features, It is recommended you install like so:
 
     # clone into a local dir and enter dir
     git clone git@gitlab.imarc.net:imarc/ops.git
@@ -243,7 +243,7 @@ If you are developing ops itself, debugging, or want to try out bleeding edge fe
     # create 'ops' symlink to your repo
     npm install -g .
 
-This means your global ops script will point directly to the repo and you can make changes on the fly.
+This means your global ops script will point directly to the repo and you can make live changes.
 
 ## License
 
