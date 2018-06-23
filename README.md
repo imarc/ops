@@ -6,6 +6,7 @@
 - Create a new host by making a directory.
 - Local HTTPS with self-signed certs.
 - Shared services: MariaDB, PostgreSQL, Redis, Mailhog, Adminer, and more.
+- Sync remote databases and filesystem paths to local projects.
 - Built on Docker and Traefik. Configure project-specific services when required.
 
 ![Ops Dashboard](dashboard.png)
@@ -108,15 +109,15 @@ This is a separate project and can be viewed on [Github](https://github.com/imar
 ## Remote to Local Syncing
 
 With a few settings in a project's `.env` file, you can sync the project's database and filesystem storage
-from a remote server.
-
-Ideally, these settings should be checked into version control within a `.env.example` file to be shared amongst the development team.
+from a remote server. Ideally, these settings should be checked into version control within a `.env.example` file to be shared amongst the development team.
 
 Currently `ops sync` assumes the following:
 
 - SSH access is enabled to the remote web and/or DB servers
 - DB servers make their tools available to the SSH user: mysqldump, pg_dump, etc.
 - the DB user has passwordless access to databases from localhost
+
+**Pro-tip:** If you are brave, there is an undocumented way to completely overload the sync command for a custom setup.
 
 The following settings can be placed in the project's `.env`
 
@@ -142,7 +143,7 @@ The following settings can be placed in the project's `.env`
 
     # rsync max filesize to sync
     # default: 500M
-    OPS_PROJECT_SYNC_MAXSIZE="500M}"
+    OPS_PROJECT_SYNC_MAXSIZE="500M"
 
     # the remote hostname for the filesystem sync
     # default: the project name (which is the directory name)
@@ -233,7 +234,7 @@ See all the variables that get injected into this file [here](https://gitlab.ima
 
 ## Contributing
 
-If you are developing ops itself, debugging, or want to try out bleeding edge features, It is recommended you install like so:
+If you are contributing to ops, debugging, or want to try out bleeding edge features, It is recommended you install like so:
 
     # clone into a local dir and enter dir
     git clone git@gitlab.imarc.net:imarc/ops.git
@@ -242,7 +243,7 @@ If you are developing ops itself, debugging, or want to try out bleeding edge fe
     # create 'ops' symlink to your repo
     npm install -g .
 
-This means your global ops script will point directly to the repo and you can make changes on the fly.
+This means your global ops script will point directly to the repo and you can make live changes.
 
 ## License
 
