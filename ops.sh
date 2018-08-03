@@ -1,7 +1,7 @@
 #!/bin/bash
 shopt -s extglob
 
-OPS_VERSION=0.6.0
+OPS_VERSION=0.6.1
 
 # Determine OS
 
@@ -237,15 +237,6 @@ mariadb-help() {
     echo
 }
 
-ops-psql() {
-    cmd-run mariadb "$@"
-}
-
-psql-help() {
-    cmd-help "ops psql" psql
-    echo
-}
-
 psql-cli() {
     system-shell-exec postgres psql -U postgres "$@"
 }
@@ -253,7 +244,7 @@ psql-cli() {
 psql-create() {
     local db="$1"
 
-    ops-psql -c "CREATE DATABASE $1" 1> /dev/null
+    psql-cli -c "CREATE DATABASE $1" 1> /dev/null
 
     if [[ $? == 0 ]]; then
         echo "Created postgres database: $1"
@@ -270,10 +261,19 @@ psql-import() {
     local db="$1"
     local sqlfile="$2"
 
-    ops-psql -c "DROP DATABASE $db"
-    ops-psql -c "CREATE DATABASE $db"
+    psql-cli -c "DROP DATABASE $db IF EXISTS"
+    psql-cli -c "CREATE DATABASE $db"
 
     cat "$sqlfile" | ops-exec postgres psql -U postgres "$db"
+}
+
+psql-help() {
+    cmd-help "ops psql" psql
+    echo
+}
+
+ops-psql() {
+    cmd-run psql "$@"
 }
 
 ops-lt() {
@@ -319,6 +319,7 @@ ops-shell() {
     [[ -z $id ]] && exit
 
     ops docker exec -w "/var/www/html/$project" -u www-data -it $id "$OPS_SHELL_COMMAND"
+    ops docker exec -w "/var/www/html/$project" -u www-data -ti $id "$OPS_SHELL_COMMAND"
 }
 
 ops-link() {
@@ -443,15 +444,17 @@ ops-sync() {
     OPS_PROJECT_SYNC_DIRS="${OPS_PROJECT_SYNC_DIRS}"
     OPS_PROJECT_SYNC_NODB="${OPS_PROJECT_SYNC_NODB-0}"
     OPS_PROJECT_SYNC_EXCLUDES="${OPS_PROJECT_SYNC_EXCLUDES}"
-    OPS_PROJECT_SYNC_MAXSIZE="${OPS_PROJECT_SYNC_MAXSIZE-500M}"
+    OPS_PROJECT_SYNC_MAXSIZE="${OPS_PROJECT_SYNC_MAXSIZE:-500M}"
 
     OPS_PROJECT_REMOTE_USER="${OPS_PROJECT_REMOTE_USER}"
     OPS_PROJECT_REMOTE_HOST="${OPS_PROJECT_REMOTE_HOST-$OPS_PROJECT_NAME}"
     OPS_PROJECT_REMOTE_PATH="${OPS_PROJECT_REMOTE_PATH}"
-    OPS_PROJECT_REMOTE_DB_HOST="${OPS_PROJECT_REMOTE_HOST}"
+    OPS_PROJECT_REMOTE_DB_HOST="${OPS_PROJECT_REMOTE_DB_HOST:-127.0.0.1}"
     OPS_PROJECT_REMOTE_DB_TYPE="${OPS_PROJECT_DB_TYPE-$OPS_PROJECT_DB_TYPE}"
     OPS_PROJECT_REMOTE_DB_NAME="${OPS_PROJECT_REMOTE_DB_NAME-$OPS_PROJECT_DB_NAME}"
     OPS_PROJECT_REMOTE_DB_USER="${OPS_PROJECT_REMOTE_DB_USER-$OPS_PROJECT_REMOTE_USER}"
+    OPS_PROJECT_REMOTE_DB_PASSWORD="${OPS_PROJECT_REMOTE_DB_PASSWORD}"
+    OPS_PROJECT_REMOTE_DB_PORT="${OPS_PROJECT_REMOTE_DB_PORT}"
 
     # best debugging helper
     # ( set -o posix ; set ) | grep -E '^OPS_'
@@ -474,12 +477,26 @@ ops-sync() {
     then
         if [[ "$OPS_PROJECT_REMOTE_DB_TYPE" = "mariadb" ]]; then
             echo "Syncing remote mariadb database '$OPS_PROJECT_REMOTE_DB_NAME' to $dumpfile"
-            ssh -TC "$ssh_host" "mysqldump --single-transaction -u $OPS_PROJECT_REMOTE_DB_USER $OPS_PROJECT_REMOTE_DB_NAME" > $dumpfile
+
+            OPS_PROJECT_REMOTE_DB_PORT="${OPS_PROJECT_REMOTE_DB_PORT:-"3306"}"
+
+            local mysqldump_password="$([[ ! -z $OPS_PROJECT_REMOTE_DB_PASSWORD ]] && echo "-p$OPS_PROJECT_REMOTE_DB_PASSWORD")"
+
+            ssh -TC "$ssh_host" "mysqldump --single-transaction \
+                -P $OPS_PROJECT_REMOTE_DB_PORT \
+                -h $OPS_PROJECT_REMOTE_DB_HOST \
+                -u $OPS_PROJECT_REMOTE_DB_USER \
+                $mysqldump_password \
+                $OPS_PROJECT_REMOTE_DB_NAME" > $dumpfile
+
             echo "Importing $dumpfile to '$OPS_PROJECT_DB_NAME' mariadb database"
             mariadb-import "$OPS_PROJECT_DB_NAME" $dumpfile
 
         elif [[ "$OPS_PROJECT_REMOTE_DB_TYPE" = "pgsql" ]]; then
             echo "Syncing remote pgsql database '$OPS_PROJECT_REMOTE_DB_NAME' to $dumpfile"
+
+            OPS_PROJECT_REMOTE_DB_PORT="${OPS_PROJECT_REMOTE_DB_PORT:-"5432"}"
+
             ssh -TC "$ssh_host" "pg_dump $OPS_PROJECT_REMOTE_DB_NAME" > $dumpfile
             echo "Importing $dumpfile to '$OPS_PROJECT_DB_NAME' pgsql database"
             psql-import "$OPS_PROJECT_DB_NAME" $dumpfile
