@@ -1,6 +1,6 @@
 # Ops
 
-**Version 0.6.0**
+**Version 0.6.1**
 
 - A local development environment focused on PHP-based projects.
 - Create a new host by making a directory.
@@ -172,6 +172,19 @@ The following settings can be placed in the project's `.env`
     # the remote database user
     # default: the remote SSH user
     OPS_PROJECT_REMOTE_DB_USER="${OPS_PROJECT_REMOTE_USER}"
+
+    # the remote database password
+    #
+    # !!! best practice is to not use this and place a .my.cnf file
+    # !!! in your remote home directory. that is more secure as it
+    # !!! won't leak your password in cli history or process lists
+    #
+    # default: none
+    OPS_PROJECT_REMOTE_DB_PASSWORD=""
+
+    # the remote database port
+    # default: 3306 for mariadb, 5432 for psql
+    OPS_PROJECT_REMOTE_DB_PORT=""
 
 
 
