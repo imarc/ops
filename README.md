@@ -1,7 +1,5 @@
 # Ops
 
-**Version 0.6.1**
-
 - A local development environment focused on PHP-based projects.
 - Create a new host by making a directory.
 - Local HTTPS with self-signed certs.
