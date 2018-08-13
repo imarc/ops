@@ -1,7 +1,5 @@
 #!/bin/bash
 
-a2enmod lua
-
 cat << EOF > /var/www/.bashrc
 alias ll="ls -l"
 alias ls="ls -la"

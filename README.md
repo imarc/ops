@@ -56,7 +56,7 @@ Update/Upgrade ops:
 
 To start ops services, run `ops start`
 
-To add a new project, create a directory within $HOME/Sites. Your local project will then be available at https://{directory}.imarc.io.
+To add a new project, create a directory within $HOME/Sites. Your local project will then be available at `https://{directory}.imarc.io`.
 
 The project directory name can only contain letters, numbers, and dashes ([A-Za-z0-9-]+). If one of the following directories is found within a project, it will be used as the document root: `public`, `web`, `public_html`, `htdocs`, or `docroot`.
 
@@ -64,7 +64,17 @@ To stop ops, run `ops stop`
 
 ## The Dashboard
 
-The dashboard available at [https://ops.imarc.io](https://ops.imarc.io) will show you all projects and let you manage services.
+The dashboard ([https://ops.imarc.io](https://ops.imarc.io)) will show you all projects and let you manage services.
+
+## Different PHP versions
+
+Sites at the base ops domain (`https://{directory}.imarc.io`) currently run **PHP 7.1**
+
+Explicitly use different PHP versions with the following urls:
+
+- **PHP 5.6** `https://{directory}.php56.imarc.io`
+- **PHP 7.1** `https://{directory}.php71.imarc.io`
+- **PHP 7.2** `https://{directory}.php72.imarc.io`
 
 ## The Services
 
