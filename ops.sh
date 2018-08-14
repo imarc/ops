@@ -60,14 +60,14 @@ OPS_DOCKER_UID=""
 OPS_DOMAIN="imarc.io"
 OPS_MINIO_ACCESS_KEY="minio-access"
 OPS_MINIO_SECRET_KEY="minio-secret"
-OPS_SHELL_COMMAND="bash"
-OPS_SHELL_SERVICE="apache-php71"
 OPS_SITES_DIR="$HOME/Sites"
 
 # options that can be overridden by a project
-
+OPS_PROJECT_PHP_VERSION=${OPS_PROJECT_PHP_VERSION-'php71'}
 OPS_PROJECT_COMPOSE_FILE=${OPS_PROJECT_COMPOSE_FILE-"ops-compose.yml"}
 OPS_PROJECT_TEMPLATE=${OPS_PROJECT_TEMPLATE-""}
+OPS_SHELL_COMMAND=${OPS_SHELL_COMMAND-"bash"}
+OPS_SHELL_SERVICE=${OPS_SHELL_SERVICE-"apache-$OPS_PROJECT_PHP_VERSION"}
 
 if [[ -f "$OPS_HOME/config" ]]; then
     source $OPS_HOME/config
@@ -321,7 +321,6 @@ ops-shell() {
     [[ -z $id ]] && exit
 
     ops docker exec -w "/var/www/html/$project" -u www-data -it $id "$OPS_SHELL_COMMAND"
-    ops docker exec -w "/var/www/html/$project" -u www-data -ti $id "$OPS_SHELL_COMMAND"
 }
 
 ops-link() {

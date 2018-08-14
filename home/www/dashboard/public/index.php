@@ -62,6 +62,11 @@ $postgresDatabases = $postgres->query('SELECT datname AS name FROM pg_database W
                             !empty($env['OPS_PROJECT_TEMPLATE']) ||
                             file_exists($dir . '/ops-compose.yml')
                         );
+
+                        $phpVersion = $env['OPS_PROJECT_PHP_VERSION']
+                            ? $env['OPS_PROJECT_PHP_VERSION'] . '.'
+                            : '';
+
                         ?>
 
                         <li>
@@ -84,7 +89,7 @@ $postgresDatabases = $postgres->query('SELECT datname AS name FROM pg_database W
                             } else {
                                 ?>
 
-                                <a class="site" href="https://<?= $site ?>.<?= $domain ?>"><?= $site ?></a>
+                                <a class="site" href="https://<?= $site ?>.<?= $phpVersion ?><?= $domain ?>"><?= $site ?></a>
 
                                 <?php
                             }
