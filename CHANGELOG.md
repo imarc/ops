@@ -5,12 +5,31 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/)
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.7.2] - 2018-08-15
+
+### Added
+- Lots of php 5.6 extensions
+
+### Fixed
+- `psql import` IF EXISTS clause
+
+### Changed
+- php `upload_max_filesize` and `post_max_size` are now 100M
+- php `display_errors` and `display_startup_errors` are now on
+
+## [0.7.1] - 2018-08-14
+
+### Fixed
+- **dashboard** project links respect custom php version
+- `ops shell` respects custom php version
+
 ## [0.7.0] - 2018-08-13
 
 ### Added
 - php image dockerfiles moved to ops repo
 - official ops docker images: imarcagenct/ops-apache-php*
 - php 5.6 support
+- php 7.2 support
 
 ## [0.6.1] - 2018-08-03
 

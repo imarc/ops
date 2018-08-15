@@ -263,7 +263,7 @@ psql-import() {
     local db="$1"
     local sqlfile="$2"
 
-    psql-cli -c "DROP DATABASE $db IF EXISTS"
+    psql-cli -c "DROP DATABASE IF EXISTS $db"
     psql-cli -c "CREATE DATABASE $db"
 
     cat "$sqlfile" | ops-exec postgres psql -U postgres "$db"
@@ -311,7 +311,8 @@ ops-redis() {
 }
 
 ops-restart() {
-    system-docker-compose restart
+    ops-stop
+    ops-start
 }
 
 ops-shell() {
