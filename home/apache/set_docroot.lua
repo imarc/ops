@@ -13,8 +13,64 @@ local docroots = {
     ''
 }
 
+function dump(o)
+   if type(o) == 'table' then
+      local s = '{ '
+      for k,v in pairs(o) do
+         if type(k) ~= 'number' then k = '"'..k..'"' end
+         s = s .. '['..k..'] = ' .. dump(v) .. ','
+      end
+      return s .. '} '
+   else
+      return tostring(o)
+   end
+end
+
+function exists(file)
+    local ok, err, code = os.rename(file, file)
+
+    if not ok and code == 13 then
+        return true
+    end
+
+    return ok, err
+end
+
+function dotenv(path)
+    local env = {}
+
+    for line in io.lines(path .. '/.env') do
+        local key, value = string.match(line, '^([^#][^=]+)=[\'"]?([^\'"]+)')
+        if key then env[key] = value end
+    end
+
+    return env
+end
+
 function set_docroot(r)
+    local path = r:ivm_get('ops-docroot-' .. r.hostname)
+
+    if exists(path) then
+        r.filename = path .. r.uri
+        r:set_document_root(path)
+        return apache2.OK
+    end
+
+    -- print('here')
+
     local path = '/var/www/html/' .. r.hostname:match("^([^.]+)")
+    local env = dotenv(path .. '/.env')
+
+    if env['OPS_PROJECT_DOCROOT'] then
+        local docroot = string.match(env['OPS_PROJECT_DOCROOT'], '^/?([^/]+)')
+        if docroot then docroot = '/' .. docroot end
+
+        r:ivm_set('ops-docroot-' .. r.hostname, path .. docroot)
+
+        r.filename = path .. docroot .. r.uri
+        r:set_document_root(path .. docroot)
+        return apache2.OK
+    end
 
     for k,docroot in ipairs(docroots) do
         local code = os.execute(('[ -e "%s%s" ]'):format(path, docroot))
