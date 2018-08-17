@@ -63,10 +63,9 @@ $postgresDatabases = $postgres->query('SELECT datname AS name FROM pg_database W
                             file_exists($dir . '/ops-compose.yml')
                         );
 
-                        $phpVersion = $env['OPS_PROJECT_PHP_VERSION']
+                        $phpVersion = isset($env['OPS_PROJECT_PHP_VERSION'])
                             ? $env['OPS_PROJECT_PHP_VERSION'] . '.'
                             : '';
-
                         ?>
 
                         <li>
