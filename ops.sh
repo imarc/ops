@@ -392,7 +392,7 @@ ops-start() {
 ops-stop() {
     system-stop
 
-    local info=$(docker ps -a --format '{{.ID}} {{.Label "ops.project"}}' --filter="label=ops.project")
+    local info=$(ops docker ps -a --format '{{.ID}} {{.Label "ops.project"}}' --filter="label=ops.project")
 
     IFS=$'\n'
     for container in $info; do
@@ -904,6 +904,12 @@ init-laravel() {
 # Run Main Command
 
 main() {
+    docker ps > /dev/null
+
+    if [[ $? != 0 ]]; then
+        exit
+    fi
+
     system-install
     validate-config
 

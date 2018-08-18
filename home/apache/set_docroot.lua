@@ -26,14 +26,17 @@ function dump(o)
    end
 end
 
-function exists(file)
-    local ok, err, code = os.rename(file, file)
+function exists(path)
+    local code = os.execute(('[ -e "%s" ]'):format(path))
 
-    if not ok and code == 13 then
-        return true
+    -- mod_lua shows different behavior with different
+    -- versions. os.execute returns true/nil instead or
+    -- 0/1. this snippet ensures the exit code is always an integer
+    if code == true or code == nil then
+        code = code == true and false or true
     end
 
-    return ok, err
+    return code
 end
 
 function dotenv(path)
@@ -50,7 +53,7 @@ end
 function set_docroot(r)
     local path = r:ivm_get('ops-docroot-' .. r.hostname)
 
-    if exists(path) then
+    if path != nil and exists(path) then
         r.filename = path .. r.uri
         r:set_document_root(path)
         return apache2.OK
@@ -76,7 +79,7 @@ function set_docroot(r)
         local code = os.execute(('[ -e "%s%s" ]'):format(path, docroot))
 
         -- mod_lua shows different behavior with different
-        -- distributions. os.execute returns true/nil instead or
+        -- versions. os.execute returns true/nil instead or
         -- 0/1. this snippet ensures the exit code is always an integer
         if code == true or code == nil then
             code = code == true and 0 or 1
