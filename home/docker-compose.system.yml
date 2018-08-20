@@ -21,7 +21,7 @@ services:
       - "ops.project=ops"
       - "traefik.enable=true"
       - "traefik.docker.network=ops_gateway"
-      - "traefik.frontend.rule=HostRegexp:localhost,{subdomain:[a-z0-9-]+}.php72.${OPS_DOMAIN}"
+      - "traefik.frontend.rule=HostRegexp:{subdomain:[a-z0-9-]+}.php72.${OPS_DOMAIN},ops.php72.${OPS_DOMAIN}"
       - "traefik.frontend.priority=1"
       - "traefik.port=80"
     environment:
@@ -48,7 +48,7 @@ services:
       - "ops.project=ops"
       - "traefik.enable=true"
       - "traefik.docker.network=ops_gateway"
-      - "traefik.frontend.rule=HostRegexp:localhost,{subdomain:[a-z0-9-]+}.php71.${OPS_DOMAIN},{subdomain:[a-z0-9-]+}.${OPS_DOMAIN}"
+      - "traefik.frontend.rule=HostRegexp:{subdomain:[a-z0-9-]+}.php71.${OPS_DOMAIN},ops.php71.${OPS_DOMAIN},{subdomain:[a-z0-9-]+}.${OPS_DOMAIN}"
       - "traefik.frontend.priority=1"
       - "traefik.port=80"
     environment:
@@ -74,7 +74,7 @@ services:
       - "ops.project=ops"
       - "traefik.enable=true"
       - "traefik.docker.network=ops_gateway"
-      - "traefik.frontend.rule=HostRegexp:{subdomain:[a-z0-9-]+}.php56.${OPS_DOMAIN}"
+      - "traefik.frontend.rule=HostRegexp:{subdomain:[a-z0-9-]+}.php56.${OPS_DOMAIN},ops.php56.${OPS_DOMAIN}"
       - "traefik.frontend.priority=1"
       - "traefik.port=80"
     environment:
