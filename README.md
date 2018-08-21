@@ -183,9 +183,9 @@ The following settings can be placed in the project's `.env`
 
     # the remote database password
     #
-    # !!! best practice is to not use this and place a .my.cnf file
-    # !!! in your remote home directory. that is more secure as it
-    # !!! won't leak your password in cli history or process lists
+    # !!! best practice is to not use this and instead place a .my.cnf file
+    # !!! in your remote home directory. that is more secure as it won't
+    # !!! leak your password in cli history or process lists
     #
     # default: none
     OPS_PROJECT_REMOTE_DB_PASSWORD=""
@@ -193,7 +193,6 @@ The following settings can be placed in the project's `.env`
     # the remote database port
     # default: 3306 for mariadb, 5432 for psql
     OPS_PROJECT_REMOTE_DB_PORT=""
-
 
 
 ## Custom Project Container

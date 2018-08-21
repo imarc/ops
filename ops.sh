@@ -1,7 +1,6 @@
 #!/bin/bash
 shopt -s extglob
 
-
 # Determine OS
 
 OS=""
@@ -25,56 +24,19 @@ fi
 
 # Find script dir (and resolve symlinks)
 
-OPS_WORKING_DIR=$(pwd)
+declare -rx OPS_WORKING_DIR=$(pwd)
 cd $(dirname $0)
 cd $(dirname $(ls -l $0 | awk '{print $NF}'))
-OPS_SCRIPT_DIR=$(pwd)
+declare -rx OPS_SCRIPT_DIR=$(pwd)
 cd $OPS_WORKING_DIR
 
 # get version from package.json
 
-OPS_VERSION=$(cat $OPS_SCRIPT_DIR/package.json | awk '/"version":/ { gsub(/[",]/, ""); print $2 }')
+declare -rx OPS_VERSION=$(cat $OPS_SCRIPT_DIR/package.json | awk '/"version":/ { gsub(/[",]/, ""); print $2 }')
 
 # Include cmd helpers
 
 source $OPS_SCRIPT_DIR/cmd.sh
-
-# Load config
-
-if [[ -f '.env' ]]; then
-    source '.env'
-fi
-
-if [[ -f 'ops-commands.sh' ]]; then
-    source 'ops-commands.sh'
-fi
-
-# options that can't be overidden by a project
-
-OPS_HOME=${OPS_HOME-"$HOME/.ops"}
-OPS_DOCKER_UTILS_IMAGE="ops-utils:$OPS_VERSION"
-OPS_DOCKER_COMPOSER_IMAGE="imarcagency/ops-php71:latest"
-OPS_DOCKER_NODE_IMAGE="node:8.9.4"
-OPS_DOCKER_GID=""
-OPS_DOCKER_UID=""
-OPS_DOMAIN="imarc.io"
-OPS_MINIO_ACCESS_KEY="minio-access"
-OPS_MINIO_SECRET_KEY="minio-secret"
-OPS_SITES_DIR="$HOME/Sites"
-
-# options that can be overridden by a project
-OPS_PROJECT_PHP_VERSION=${OPS_PROJECT_PHP_VERSION-'php71'}
-OPS_PROJECT_COMPOSE_FILE=${OPS_PROJECT_COMPOSE_FILE-"ops-compose.yml"}
-OPS_PROJECT_TEMPLATE=${OPS_PROJECT_TEMPLATE-""}
-OPS_SHELL_COMMAND=${OPS_SHELL_COMMAND-"bash"}
-OPS_SHELL_SERVICE=${OPS_SHELL_SERVICE-"apache-$OPS_PROJECT_PHP_VERSION"}
-
-if [[ -f "$OPS_HOME/config" ]]; then
-    source $OPS_HOME/config
-fi
-
-# variables that can't be overriden at all
-OPS_DASHBOARD_URL="https://ops.${OPS_DOMAIN}"
 
 # Internal helpers
 
@@ -369,6 +331,7 @@ ops-start() {
 
     local info=$(docker ps -a --format '{{.ID}} {{.Label "ops.project"}}' --filter="label=ops.project")
 
+
     IFS=$'\n'
     for container in $info; do
         IFS=' '
@@ -378,6 +341,7 @@ ops-start() {
 
         if [[ $2 != 'ops' ]] && [[ -e "$OPS_SITES_DIR/$2" ]]; then
             (
+            echo $2
                 cd $OPS_SITES_DIR/$2
                 ops project start
             )
@@ -514,7 +478,7 @@ ops-sync() {
     then
         for sync_dir in $OPS_PROJECT_SYNC_DIRS; do
             echo -e "Syncing filesystem: $sync_dir"
-            echo -e "Syncing directories..."
+            echo -e "Syncing directory structure..."
 
             # sync entire dir structure first
             rsync -a -f"+ */" -f"- *" \
@@ -524,7 +488,7 @@ ops-sync() {
             echo -e "Syncing files..."
 
             # send exclude patterns as stdin, one per line.
-            $(echo "${OPS_PROJECT_SYNC_EXCLUDES// /$'\n'}" | \
+            $(printf %"s\n" $OPS_PROJECT_SYNC_EXCLUDES | \
                 rsync -a --exclude-from=- \
                     --max-size=$OPS_PROJECT_SYNC_MAXSIZE \
                     "$ssh_host:$OPS_PROJECT_REMOTE_PATH/$sync_dir/" \
@@ -578,19 +542,17 @@ _ops-yarn() {
 # Site sub sommands
 
 project-docker-compose() {
-    if [[ ! -f $OPS_PROJECT_COMPOSE_FILE ]] && [[ ! -z "$OPS_PROJECT_TEMPLATE" ]] && [[ -f "$OPS_HOME/templates/$OPS_PROJECT_TEMPLATE.yml" ]]; then
+    if [[ ! -f $(project-name)/$OPS_PROJECT_COMPOSE_FILE ]] && [[ ! -z "$OPS_PROJECT_TEMPLATE" ]] && [[ -f "$OPS_HOME/templates/$OPS_PROJECT_TEMPLATE.yml" ]]; then
         OPS_PROJECT_COMPOSE_FILE="$OPS_HOME/templates/$OPS_PROJECT_TEMPLATE.yml"
         echo "Using template: $OPS_PROJECT_TEMPLATE"
     fi
 
-    OPS_DOCKER_UID=$OPS_DOCKER_UID \
-    OPS_DOCKER_GID=$OPS_DOCKER_GID \
-    OPS_DOMAIN=$OPS_DOMAIN \
-    OPS_PROJECT_NAME="$(basename $PWD)" \
-    OPS_VERSION=$OPS_VERSION \
+    echo 'here'
+
+    OPS_PROJECT_NAME="$(project-name)" \
     COMPOSE_PROJECT_NAME="ops$(basename $PWD)" \
     COMPOSE_FILE="$OPS_PROJECT_COMPOSE_FILE" \
-    docker-compose --project-directory . "$@"
+    docker-compose --project-directory "$OPS_SITE_DIR/$(project-name)" "$@"
 }
 
 project-name() {
@@ -604,7 +566,7 @@ project-name() {
             basename=$(basename $(pwd))
             cd ..
         done
-        echo $basename
+        echo -n $basename
     )
 }
 
@@ -661,15 +623,6 @@ project-stats() {
 system-docker-compose() {
     COMPOSE_PROJECT_NAME="ops" \
     COMPOSE_FILE=$OPS_HOME/docker-compose.system.yml \
-    OPS_DOMAIN=$OPS_DOMAIN \
-    OPS_HOME=$OPS_HOME \
-    OPS_SITES_DIR=$OPS_SITES_DIR \
-    OPS_DOCKER_UID=$OPS_DOCKER_UID \
-    OPS_DOCKER_GID=$OPS_DOCKER_GID \
-    OPS_DOCKER_APACHE_IMAGE=$OPS_DOCKER_APACHE_IMAGE \
-    OPS_MINIO_ACCESS_KEY=$OPS_MINIO_ACCESS_KEY \
-    OPS_MINIO_SECRET_KEY=$OPS_MINIO_SECRET_KEY \
-    OPS_VERSION=$OPS_VERSION \
     docker-compose "$@"
 }
 
@@ -901,8 +854,6 @@ init-laravel() {
     echo
 }
 
-# Run Main Command
-
 main() {
     system-install
     validate-config
@@ -910,5 +861,53 @@ main() {
     cmd-run ops "$@"
     exit
 }
+
+# options that can be overidden by environment
+
+export OPS_HOME=${OPS_HOME-"$HOME/.ops"}
+
+# load config
+
+if [[ -f "$OPS_HOME/config" ]]; then
+    source $OPS_HOME/config
+fi
+
+# options that can be overridden by global config
+
+declare -rx OPS_DOCKER_UTILS_IMAGE=${OPS_DOCKER_UTILS_IMAGE-"ops-utils:$OPS_VERSION"}
+declare -rx OPS_DOCKER_COMPOSER_IMAGE=${OPS_DOCKER_COMPOSER_IMAGE-"imarcagency/ops-php71:latest"}
+declare -rx OPS_DOCKER_NODE_IMAGE=${OPS_DOCKER_NODE_IMAGE-"node:8.9.4"}
+declare -rx OPS_DOCKER_GID=${OPS_DOCKER_GID-""}
+declare -rx OPS_DOCKER_UID=${OPS_DOCKER_UID-""}
+declare -rx OPS_DOMAIN=${OPS_DOMAIN-"imarc.io"}
+declare -rx OPS_MINIO_ACCESS_KEY=${OPS_MINIO_ACCESS_KEY-"minio-access"}
+declare -rx OPS_MINIO_SECRET_KEY=${OPS_MINIO_SECRET_KEY-"minio-secret"}
+declare -rx OPS_SITES_DIR=${OPS_SITES_DIR-"$HOME/Sites"}
+
+# options that can be overridden by a project
+
+OPS_PROJECT_PHP_VERSION='php71'
+OPS_PROJECT_COMPOSE_FILE="ops-compose.yml"
+OPS_PROJECT_TEMPLATE=""
+OPS_SHELL_COMMAND="bash"
+OPS_SHELL_SERVICE="apache-$OPS_PROJECT_PHP_VERSION"
+
+# load project config
+
+project_name="$(project-name)"
+
+if [[ -f "$project_name/.env" ]]; then
+    source "$project_name/.env"
+fi
+
+# load custom commands
+
+if [[ -f "$project_name/ops-commands.sh" ]]; then
+    source "$project_name/ops-commands.sh"
+fi
+
+# variables that can't be overriden at all
+OPS_DASHBOARD_URL="https://ops.${OPS_DOMAIN}"
+
 
 main "$@"
