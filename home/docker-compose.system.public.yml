@@ -1,0 +1,35 @@
+version: '3'
+
+services:
+  portainer:
+    labels:
+        - "traefik.frontend.auth.basic=${OPS_ADMIN_AUTH}"
+
+  traefik:
+    command: --docker.domain=${OPS_DOMAIN}
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ${OPS_HOME}/traefik/traefik.toml:/etc/traefik/traefik.toml
+
+  apache-php56:
+    labels:
+      - "traefik.frontend.auth.basic=${OPS_ADMIN_AUTH}"
+
+  apache-php71:
+    labels:
+      - "traefik.frontend.auth.basic=${OPS_ADMIN_AUTH}"
+
+  apache-php72:
+    labels:
+      - "traefik.frontend.auth.basic=${OPS_ADMIN_AUTH}"
+
+  mailhog:
+    labels:
+      - "traefik.frontend.auth.basic=${OPS_ADMIN_AUTH}"
+
+  adminer:
+    labels:
+      - "traefik.frontend.auth.basic=${OPS_ADMIN_AUTH}"
+

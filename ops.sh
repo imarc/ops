@@ -61,6 +61,8 @@ OPS_DOMAIN="imarc.io"
 OPS_MINIO_ACCESS_KEY="minio-access"
 OPS_MINIO_SECRET_KEY="minio-secret"
 OPS_SITES_DIR="$HOME/Sites"
+OPS_SITES_AUTH=""
+OPS_ADMIN_AUTH=""
 
 # options that can be overridden by a project
 OPS_PROJECT_PHP_VERSION=${OPS_PROJECT_PHP_VERSION-'php71'}
@@ -659,8 +661,18 @@ project-stats() {
 # System Sub-Commands
 
 system-docker-compose() {
+    COMPOSE_FILE="$OPS_HOME/docker-compose.system.yml"
+
+    if [[ ! -z "$OPS_PUBLIC" ]]; then
+	    COMPOSE_FILE="$COMPOSE_FILE:$OPS_HOME/docker-compose.system.public.yml"
+    else
+	    COMPOSE_FILE="$COMPOSE_FILE:$OPS_HOME/docker-compose.system.private.yml"
+    fi
+
     COMPOSE_PROJECT_NAME="ops" \
-    COMPOSE_FILE=$OPS_HOME/docker-compose.system.yml \
+    COMPOSE_FILE=$COMPOSE_FILE \
+    OPS_ADMIN_AUTH=$OPS_ADMIN_AUTH \
+    OPS_SITES_AUTH=$OPS_SITES_AUTH \
     OPS_DOMAIN=$OPS_DOMAIN \
     OPS_HOME=$OPS_HOME \
     OPS_SITES_DIR=$OPS_SITES_DIR \
