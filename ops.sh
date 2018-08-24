@@ -63,6 +63,9 @@ OPS_MINIO_SECRET_KEY="minio-secret"
 OPS_SITES_DIR="$HOME/Sites"
 OPS_SITES_AUTH=""
 OPS_ADMIN_AUTH=""
+OPS_ACME_EMAIL=""
+OPS_ACME_DNS_PROVIDER=""
+OPS_ACME_PRODUCTION=""
 
 # options that can be overridden by a project
 OPS_PROJECT_PHP_VERSION=${OPS_PROJECT_PHP_VERSION-'php71'}
@@ -73,10 +76,21 @@ OPS_SHELL_SERVICE=${OPS_SHELL_SERVICE-"apache-$OPS_PROJECT_PHP_VERSION"}
 
 if [[ -f "$OPS_HOME/config" ]]; then
     source $OPS_HOME/config
+
+    # generate a literal (non-quoted) version for docker-compose
+    # https://github.com/docker/compose/issues/3702
+    cat $OPS_HOME/config |
+        sed -e '/^$/d' -e '/^#/d' |
+	xargs -n1 echo > $OPS_HOME/config.literal
 fi
 
 # variables that can't be overriden at all
 OPS_DASHBOARD_URL="https://ops.${OPS_DOMAIN}"
+
+OPS_ACME_CA_SERVER="https://acme-staging-v02.api.letsencrypt.org/directory"
+if [[ $OPS_ACME_PRODUCTION == 1 ]]; then
+    OPS_ACME_CA_SERVER="https://acme-v02.api.letsencrypt.org/directory"
+fi
 
 # Internal helpers
 
@@ -674,6 +688,9 @@ system-docker-compose() {
     OPS_ADMIN_AUTH=$OPS_ADMIN_AUTH \
     OPS_SITES_AUTH=$OPS_SITES_AUTH \
     OPS_DOMAIN=$OPS_DOMAIN \
+    OPS_ACME_CA_SERVER=$OPS_ACME_CA_SERVER \
+    OPS_ACME_EMAIL=$OPS_ACME_EMAIL \
+    OPS_ACME_DNS_PROVIDER=$OPS_ACME_DNS_PROVIDER \
     OPS_HOME=$OPS_HOME \
     OPS_SITES_DIR=$OPS_SITES_DIR \
     OPS_DOCKER_UID=$OPS_DOCKER_UID \
@@ -724,9 +741,15 @@ system-update() {
         return
     fi
 
-    shopt -s extglob
-    cp -rp $OPS_SCRIPT_DIR/home/!(config) $OPS_HOME
-    shopt -u extglob
+    #shopt -s extglob
+    #cp -rp $OPS_SCRIPT_DIR/home/!(config) $OPS_HOME
+    #shopt -u extglob
+
+    rsync -a \
+      --exclude=config \
+      --exclude=acme.json \
+      $OPS_SCRIPT_DIR/home/ \
+      $OPS_HOME
 
     system-refresh-config
     system-refresh-certs

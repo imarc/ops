@@ -7,6 +7,20 @@ services:
 
   traefik:
     command: --docker.domain=${OPS_DOMAIN}
+      --debug
+      --acme.caServer=${OPS_ACME_CA_SERVER}
+      --acme.dnsChallenge.provider=${OPS_ACME_DNS_PROVIDER}
+      --acme.email=${OPS_ACME_EMAIL}
+      --acme.domains='${OPS_DOMAIN}'
+      --acme.domains='*.${OPS_DOMAIN}'
+      --acme.domains='*.ops.${OPS_DOMAIN}'
+      --acme.domains='*.php56.${OPS_DOMAIN}'
+      --acme.domains='*.php71.${OPS_DOMAIN}'
+      --acme.domains='*.php72.${OPS_DOMAIN}'
+    env_file:
+      - "${OPS_HOME}/config.literal"
+
+
     ports:
       - "80:80"
       - "443:443"
@@ -15,15 +29,15 @@ services:
 
   apache-php56:
     labels:
-      - "traefik.frontend.auth.basic=${OPS_ADMIN_AUTH}"
+      - "traefik.frontend.auth.basic=${OPS_SITES_AUTH}"
 
   apache-php71:
     labels:
-      - "traefik.frontend.auth.basic=${OPS_ADMIN_AUTH}"
+      - "traefik.frontend.auth.basic=${OPS_SITES_AUTH}"
 
   apache-php72:
     labels:
-      - "traefik.frontend.auth.basic=${OPS_ADMIN_AUTH}"
+      - "traefik.frontend.auth.basic=${OPS_SITES_AUTH}"
 
   mailhog:
     labels:

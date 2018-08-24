@@ -16,7 +16,5 @@ watch = true
 exposedbydefault = false
 
 [acme]
-email = "info@imarc.com"
 storage = "/etc/traefik/acme/acme.json"
 entryPoint = "https"
-onHostRule = true

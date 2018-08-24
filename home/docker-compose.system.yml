@@ -95,7 +95,7 @@ services:
       - ${OPS_SITES_DIR}:/var/www/html:cached
 
   traefik:
-    image: traefik:latest
+    image: traefik:alpine
     command: --docker.domain=${OPS_DOMAIN}
     networks:
       - gateway
@@ -121,7 +121,7 @@ services:
       - "MINIO_ACCESS_KEY=${OPS_MINIO_ACCESS_KEY}"
       - "MINIO_SECRET_KEY=${OPS_MINIO_SECRET_KEY}"
     ports:
-      - "9000:9000"
+      - "127.0.0.1:9000:9000"
     networks:
       - gateway
       - backend
@@ -142,7 +142,7 @@ services:
   redis:
     image: "redis:3.2"
     ports:
-      - "6379:6379"
+      - "127.0.0.1:6379:6379"
     labels:
       - "ops.project=ops"
     networks:
@@ -151,7 +151,7 @@ services:
   memcached:
     image: "memcached:1.4"
     ports:
-      - "11211:11211"
+      - "127.0.0.1:11211:11211"
     labels:
       - "ops.project=ops"
     networks:
@@ -166,7 +166,7 @@ services:
     labels:
       - "ops.project=ops"
     ports:
-      - "5432:5432"
+      - "127.0.0.1:5432:5432"
     volumes:
       - "postgres:/var/lib/postgresql/data/pgdata"
 
@@ -179,7 +179,7 @@ services:
     labels:
       - "ops.project=ops"
     ports:
-      - "3306:3306"
+      - "127.0.0.1:3306:3306"
     volumes:
       - "mariadb:/var/lib/mysql"
 
