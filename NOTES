@@ -72,3 +72,13 @@ certutil -d sql:$HOME/.pki/nssdb -D -n ops-local-dev
 
 portainer api examples
 https://gist.github.com/deviantony/77026d402366b4b43fa5918d41bc42f8
+
+nginx+lua component
+http://openresty.org/en/dynamic-routing-based-on-redis.html
+reads dotenv
+forwards to proper php version based on ENV var
+if php version (or any other special backend) doesn't exist, spin it up with docker
+    some kind of streaming vaiting screen?
+
+
+
