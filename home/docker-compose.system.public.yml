@@ -14,9 +14,6 @@ services:
       --acme.domains='${OPS_DOMAIN}'
       --acme.domains='*.${OPS_DOMAIN}'
       --acme.domains='*.ops.${OPS_DOMAIN}'
-      --acme.domains='*.php56.${OPS_DOMAIN}'
-      --acme.domains='*.php71.${OPS_DOMAIN}'
-      --acme.domains='*.php72.${OPS_DOMAIN}'
     env_file:
       - "${OPS_HOME}/config.literal"
     ports:
