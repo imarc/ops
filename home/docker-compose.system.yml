@@ -50,6 +50,7 @@ services:
     environment:
       - APACHE_UID=${OPS_DOCKER_UID}
       - APACHE_GID=${OPS_DOCKER_GID}
+      - APACHE_ROOT=/var/www/dashboard/public
       - OPS_DOMAIN=${OPS_DOMAIN}
       - OPS_ENABLED=1
       - OPS_SITES_DIR=${OPS_SITES_DIR}
@@ -58,8 +59,9 @@ services:
       - gateway
       - backend
     volumes:
-      - ${OPS_HOME}/www/dashboard:/var/www/html/dashboard
+      - ${OPS_HOME}/www/dashboard:/var/www/dashboard
       - ${OPS_HOME}/apache/configure:/usr/local/bin/docker-configure
+      - ${OPS_SITES_DIR}:/var/www/html:cached
 
   apache-php72:
     image: imarcagency/ops-apache-php72:${OPS_VERSION}
@@ -76,7 +78,6 @@ services:
       - gateway
       - backend
     volumes:
-      - ${OPS_HOME}/www/dashboard:/var/www/dashboard
       - ${OPS_HOME}/apache/apache.conf:/etc/apache2/sites-enabled/000-default.conf
       - ${OPS_HOME}/apache/configure:/usr/local/bin/docker-configure
       - ${OPS_HOME}/apache/set_docroot.lua:/etc/apache2/set_docroot.lua
@@ -98,7 +99,6 @@ services:
       - gateway
       - backend
     volumes:
-      - ${OPS_HOME}/www/dashboard:/var/www/dashboard
       - ${OPS_HOME}/apache/apache.conf:/etc/apache2/sites-enabled/000-default.conf
       - ${OPS_HOME}/apache/configure:/usr/local/bin/docker-configure
       - ${OPS_HOME}/apache/set_docroot.lua:/etc/apache2/set_docroot.lua
@@ -119,7 +119,6 @@ services:
       - gateway
       - backend
     volumes:
-      - ${OPS_HOME}/www/dashboard:/var/www/dashboard
       - ${OPS_HOME}/apache/apache.conf:/etc/apache2/sites-enabled/000-default.conf
       - ${OPS_HOME}/apache/configure:/usr/local/bin/docker-configure
       - ${OPS_HOME}/apache/set_docroot.lua:/etc/apache2/set_docroot.lua
