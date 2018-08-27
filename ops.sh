@@ -60,14 +60,18 @@ OPS_DOCKER_UID=""
 OPS_DOMAIN="imarc.io"
 OPS_MINIO_ACCESS_KEY="minio-access"
 OPS_MINIO_SECRET_KEY="minio-secret"
-OPS_SITES_DIR="$HOME/Sites"
-OPS_SITES_AUTH=""
-OPS_ADMIN_AUTH=""
 OPS_ACME_EMAIL=""
 OPS_ACME_DNS_PROVIDER=""
 OPS_ACME_PRODUCTION=""
+OPS_ADMIN_AUTH=""
+OPS_DEFAULT_BACKEND="apache-php71"
+OPS_DEFAULT_DOCROOT="public"
+OPS_SITES_DIR="$HOME/Sites"
+OPS_SITES_AUTH=""
 
 # options that can be overridden by a project
+OPS_PROJECT_BACKEND=""
+OPS_PROJECT_DOCROOT=""
 OPS_PROJECT_PHP_VERSION=${OPS_PROJECT_PHP_VERSION-'php71'}
 OPS_PROJECT_COMPOSE_FILE=${OPS_PROJECT_COMPOSE_FILE-"ops-compose.yml"}
 OPS_PROJECT_TEMPLATE=${OPS_PROJECT_TEMPLATE-""}
@@ -408,7 +412,7 @@ ops-start() {
 ops-stop() {
     system-stop
 
-    local info=$(docker ps -a --format '{{.ID}} {{.Label "ops.project"}}' --filter="label=ops.project")
+    local info=$(ops docker ps -a --format '{{.ID}} {{.Label "ops.project"}}' --filter="label=ops.project")
 
     IFS=$'\n'
     for container in $info; do
@@ -699,6 +703,8 @@ system-docker-compose() {
     OPS_MINIO_ACCESS_KEY=$OPS_MINIO_ACCESS_KEY \
     OPS_MINIO_SECRET_KEY=$OPS_MINIO_SECRET_KEY \
     OPS_VERSION=$OPS_VERSION \
+    OPS_DEFAULT_DOCROOT=$OPS_DEFAULT_DOCROOT \
+    OPS_DEFAULT_BACKEND=$OPS_DEFAULT_BACKEND \
     docker-compose "$@"
 }
 
@@ -939,6 +945,12 @@ init-laravel() {
 # Run Main Command
 
 main() {
+    docker ps > /dev/null
+
+    if [[ $? != 0 ]]; then
+        exit
+    fi
+
     system-install
     validate-config
 

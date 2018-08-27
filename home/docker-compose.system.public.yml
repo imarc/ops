@@ -19,25 +19,15 @@ services:
       --acme.domains='*.php72.${OPS_DOMAIN}'
     env_file:
       - "${OPS_HOME}/config.literal"
-
-
     ports:
       - "80:80"
       - "443:443"
     volumes:
       - ${OPS_HOME}/traefik/traefik.toml:/etc/traefik/traefik.toml
 
-  apache-php56:
+  dashboard:
     labels:
-      - "traefik.frontend.auth.basic=${OPS_SITES_AUTH}"
-
-  apache-php71:
-    labels:
-      - "traefik.frontend.auth.basic=${OPS_SITES_AUTH}"
-
-  apache-php72:
-    labels:
-      - "traefik.frontend.auth.basic=${OPS_SITES_AUTH}"
+      - "traefik.frontend.auth.basic=${OPS_ADMIN_AUTH}"
 
   mailhog:
     labels:

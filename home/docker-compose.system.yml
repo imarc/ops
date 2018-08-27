@@ -15,15 +15,56 @@ services:
       - /var/run/docker.sock:/var/run/docker.sock
       - portainer:/data
 
-  apache-php72:
+  nginx:
+    image: openresty/openresty:1.13.6.2-stretch-fat
+    labels:
+      - "ops.project=ops"
+      - "traefik.enable=true"
+      - "traefik.docker.network=ops_gateway"
+      - "traefik.frontend.rule=HostRegexp:{subdomain:[a-z0-9-]+}.${OPS_DOMAIN}"
+      - "traefik.frontend.priority=1"
+      - "traefik.port=80"
+    environment:
+      - OPS_DOMAIN=${OPS_DOMAIN}
+      - OPS_ENABLED=1
+      - OPS_SITES_DIR=${OPS_SITES_DIR}
+      - OPS_VERSION=${OPS_VERSION}
+      - OPS_DEFAULT_BACKEND=${OPS_DEFAULT_BACKEND}
+      - OPS_DEFAULT_DOCROOT=${OPS_DEFAULT_DOCROOT}
+    networks:
+      - gateway
+      - backend
+    volumes:
+      - ${OPS_HOME}/nginx/nginx.conf:/etc/nginx/conf.d/default.conf
+      - ${OPS_SITES_DIR}:/var/www/html:cached
+
+  dashboard:
     image: imarcagency/ops-apache-php72:${OPS_VERSION}
     labels:
       - "ops.project=ops"
       - "traefik.enable=true"
       - "traefik.docker.network=ops_gateway"
-      - "traefik.frontend.rule=HostRegexp:{subdomain:[a-z0-9-]+}.php72.${OPS_DOMAIN},ops.php72.${OPS_DOMAIN}"
+      - "traefik.frontend.rule=Host:ops.${OPS_DOMAIN},dashboard.ops.${OPS_DOMAIN}"
       - "traefik.frontend.priority=1"
       - "traefik.port=80"
+    environment:
+      - APACHE_UID=${OPS_DOCKER_UID}
+      - APACHE_GID=${OPS_DOCKER_GID}
+      - OPS_DOMAIN=${OPS_DOMAIN}
+      - OPS_ENABLED=1
+      - OPS_SITES_DIR=${OPS_SITES_DIR}
+      - OPS_VERSION=${OPS_VERSION}
+    networks:
+      - gateway
+      - backend
+    volumes:
+      - ${OPS_HOME}/www/dashboard:/var/www/html/dashboard
+      - ${OPS_HOME}/apache/configure:/usr/local/bin/docker-configure
+
+  apache-php72:
+    image: imarcagency/ops-apache-php72:${OPS_VERSION}
+    labels:
+      - "ops.project=ops"
     environment:
       - APACHE_UID=${OPS_DOCKER_UID}
       - APACHE_GID=${OPS_DOCKER_GID}
@@ -46,11 +87,6 @@ services:
     image: imarcagency/ops-apache-php71:${OPS_VERSION}
     labels:
       - "ops.project=ops"
-      - "traefik.enable=true"
-      - "traefik.docker.network=ops_gateway"
-      - "traefik.frontend.rule=HostRegexp:{subdomain:[a-z0-9-]+}.php71.${OPS_DOMAIN},ops.php71.${OPS_DOMAIN},{subdomain:[a-z0-9-]+}.${OPS_DOMAIN}"
-      - "traefik.frontend.priority=1"
-      - "traefik.port=80"
     environment:
       - APACHE_UID=${OPS_DOCKER_UID}
       - APACHE_GID=${OPS_DOCKER_GID}
@@ -72,11 +108,6 @@ services:
     image: imarcagency/ops-apache-php56:${OPS_VERSION}
     labels:
       - "ops.project=ops"
-      - "traefik.enable=true"
-      - "traefik.docker.network=ops_gateway"
-      - "traefik.frontend.rule=HostRegexp:{subdomain:[a-z0-9-]+}.php56.${OPS_DOMAIN},ops.php56.${OPS_DOMAIN}"
-      - "traefik.frontend.priority=1"
-      - "traefik.port=80"
     environment:
       - APACHE_UID=${OPS_DOCKER_UID}
       - APACHE_GID=${OPS_DOCKER_GID}
