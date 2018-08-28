@@ -50,7 +50,7 @@ services:
     environment:
       - APACHE_UID=${OPS_DOCKER_UID}
       - APACHE_GID=${OPS_DOCKER_GID}
-      - APACHE_ROOT="/var/www/html/public"
+      - APACHE_ROOT="/var/www/dashboard/public"
       - OPS_DOMAIN=${OPS_DOMAIN}
       - OPS_ENABLED=1
       - OPS_SITES_DIR=${OPS_SITES_DIR}
@@ -59,7 +59,7 @@ services:
       - gateway
       - backend
     volumes:
-      - ${OPS_HOME}/www/dashboard:/var/www/html
+      - ${OPS_HOME}/www/dashboard:/var/www/dashboard
       - ${OPS_HOME}/apache/configure:/usr/local/bin/docker-configure
       - ${OPS_SITES_DIR}:/var/www/html:cached
 
