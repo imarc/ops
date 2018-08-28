@@ -35,7 +35,7 @@ services:
       - gateway
       - backend
     volumes:
-      - ${OPS_HOME}/nginx/nginx.conf:/etc/nginx/conf.d/default.conf
+      - ${OPS_HOME}/nginx/nginx.conf:/usr/local/openresty/nginx/conf/nginx.conf
       - ${OPS_SITES_DIR}:/var/www/html:cached
 
   dashboard:
