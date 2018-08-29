@@ -62,10 +62,6 @@ $postgresDatabases = $postgres->query('SELECT datname AS name FROM pg_database W
                             !empty($env['OPS_PROJECT_TEMPLATE']) ||
                             file_exists($dir . '/ops-compose.yml')
                         );
-
-                        $phpVersion = isset($env['OPS_PROJECT_PHP_VERSION'])
-                            ? $env['OPS_PROJECT_PHP_VERSION'] . '.'
-                            : '';
                         ?>
 
                         <li>
@@ -88,7 +84,7 @@ $postgresDatabases = $postgres->query('SELECT datname AS name FROM pg_database W
                             } else {
                                 ?>
 
-                                <a class="site" href="https://<?= $site ?>.<?= $phpVersion ?><?= $domain ?>"><?= $site ?></a>
+                                <a class="site" href="https://<?= $site ?>.<?= $domain ?>"><?= $site ?></a>
 
                                 <?php
                             }
@@ -223,10 +219,9 @@ $postgresDatabases = $postgres->query('SELECT datname AS name FROM pg_database W
 
                             <?php
                             echo sprintf(
-                                '<small> / <a href="%s">logs</a> / <a href="%s">console</a> / <a href="%s">info</a> </small>',
+                                '<small> / <a href="%s">logs</a> / <a href="%s">console</a>',
                                 $containers['ops']['apache-php72']['logs_link'],
-                                $containers['ops']['apache-php72']['console_link'],
-                                "https://ops.php72.${domain}/phpinfo.php"
+                                $containers['ops']['apache-php72']['console_link']
                             );
                             ?>
                         </li>
@@ -235,10 +230,9 @@ $postgresDatabases = $postgres->query('SELECT datname AS name FROM pg_database W
 
                             <?php
                             echo sprintf(
-                                '<small> / <a href="%s">logs</a> / <a href="%s">console</a> / <a href="%s">info</a> </small>',
+                                '<small> / <a href="%s">logs</a> / <a href="%s">console</a></small>',
                                 $containers['ops']['apache-php71']['logs_link'],
-                                $containers['ops']['apache-php71']['console_link'],
-                                "https://ops.php71.${domain}/phpinfo.php"
+                                $containers['ops']['apache-php71']['console_link']
                             );
                             ?>
                         </li>
@@ -248,10 +242,9 @@ $postgresDatabases = $postgres->query('SELECT datname AS name FROM pg_database W
 
                             <?php
                             echo sprintf(
-                                '<small> / <a href="%s">logs</a> / <a href="%s">console</a> / <a href="%s">info</a> </small>',
+                                '<small> / <a href="%s">logs</a> / <a href="%s">console</a></small>',
                                 $containers['ops']['apache-php56']['logs_link'],
-                                $containers['ops']['apache-php56']['console_link'],
-                                "https://ops.php56.${domain}/phpinfo.php"
+                                $containers['ops']['apache-php56']['console_link']
                             );
                             ?>
                         </li>

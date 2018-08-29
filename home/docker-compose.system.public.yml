@@ -1,0 +1,36 @@
+version: '3'
+
+services:
+  portainer:
+    labels:
+        - "traefik.frontend.auth.basic=${OPS_ADMIN_AUTH}"
+
+  traefik:
+    command: --docker.domain=${OPS_DOMAIN}
+      --debug
+      --acme.caServer=${OPS_ACME_CA_SERVER}
+      --acme.dnsChallenge.provider=${OPS_ACME_DNS_PROVIDER}
+      --acme.email=${OPS_ACME_EMAIL}
+      --acme.domains='${OPS_DOMAIN}'
+      --acme.domains='*.${OPS_DOMAIN}'
+      --acme.domains='*.ops.${OPS_DOMAIN}'
+    env_file:
+      - "${OPS_HOME}/config.literal"
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ${OPS_HOME}/traefik/traefik.toml:/etc/traefik/traefik.toml
+
+  dashboard:
+    labels:
+      - "traefik.frontend.auth.basic=${OPS_ADMIN_AUTH}"
+
+  mailhog:
+    labels:
+      - "traefik.frontend.auth.basic=${OPS_ADMIN_AUTH}"
+
+  adminer:
+    labels:
+      - "traefik.frontend.auth.basic=${OPS_ADMIN_AUTH}"
+

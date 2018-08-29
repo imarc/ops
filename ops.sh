@@ -23,6 +23,9 @@ if [[ -z "$OS" ]]; then
     exit 1
 fi
 
+OPS_TMP_DIR=$(mktemp -d)
+trap "rm -rf $OPS_TMP_DIR" EXIT
+
 # Find script dir (and resolve symlinks)
 
 OPS_WORKING_DIR=$(pwd)
@@ -60,9 +63,17 @@ OPS_DOCKER_UID=""
 OPS_DOMAIN="imarc.io"
 OPS_MINIO_ACCESS_KEY="minio-access"
 OPS_MINIO_SECRET_KEY="minio-secret"
+OPS_ACME_EMAIL=""
+OPS_ACME_DNS_PROVIDER=""
+OPS_ACME_PRODUCTION=""
+OPS_ADMIN_AUTH=""
+OPS_DEFAULT_BACKEND="apache-php71"
+OPS_DEFAULT_DOCROOT="public"
 OPS_SITES_DIR="$HOME/Sites"
 
 # options that can be overridden by a project
+OPS_PROJECT_BACKEND=""
+OPS_PROJECT_DOCROOT=""
 OPS_PROJECT_PHP_VERSION=${OPS_PROJECT_PHP_VERSION-'php71'}
 OPS_PROJECT_COMPOSE_FILE=${OPS_PROJECT_COMPOSE_FILE-"ops-compose.yml"}
 OPS_PROJECT_TEMPLATE=${OPS_PROJECT_TEMPLATE-""}
@@ -71,10 +82,21 @@ OPS_SHELL_SERVICE=${OPS_SHELL_SERVICE-"apache-$OPS_PROJECT_PHP_VERSION"}
 
 if [[ -f "$OPS_HOME/config" ]]; then
     source $OPS_HOME/config
+
+    # generate a literal (non-quoted) version for docker-compose
+    # https://github.com/docker/compose/issues/3702
+    cat $OPS_HOME/config |
+        sed -e '/^$/d' -e '/^#/d' |
+	xargs -n1 echo > $OPS_HOME/config.literal
 fi
 
 # variables that can't be overriden at all
 OPS_DASHBOARD_URL="https://ops.${OPS_DOMAIN}"
+
+OPS_ACME_CA_SERVER="https://acme-staging-v02.api.letsencrypt.org/directory"
+if [[ $OPS_ACME_PRODUCTION == 1 ]]; then
+    OPS_ACME_CA_SERVER="https://acme-v02.api.letsencrypt.org/directory"
+fi
 
 # Internal helpers
 
@@ -194,6 +216,12 @@ mariadb-import() {
     local db="$1"
     local sqlfile="$2"
 
+    # check for stdin
+    if [[ -z $sqlfile ]] && [[ ! -t 0 ]]; then
+        sqlfile="$OPS_TMP_DIR/$db.$(date +%s).sql"
+        cat - > $sqlfile
+    fi
+
     ops-exec mariadb mysql -e "DROP DATABASE IF EXISTS $db"
     ops-exec mariadb mysql -e "CREATE DATABASE $db"
 
@@ -262,6 +290,12 @@ psql-export() {
 psql-import() {
     local db="$1"
     local sqlfile="$2"
+
+    # check for stdin
+    if [[ -z $sqlfile ]] && [[ ! -t 0 ]]; then
+        sqlfile="$OPS_TMP_DIR/$db.$(date +%s).sql"
+        cat - > $sqlfile
+    fi
 
     psql-cli -c "DROP DATABASE IF EXISTS $db"
     psql-cli -c "CREATE DATABASE $db"
@@ -392,7 +426,7 @@ ops-start() {
 ops-stop() {
     system-stop
 
-    local info=$(docker ps -a --format '{{.ID}} {{.Label "ops.project"}}' --filter="label=ops.project")
+    local info=$(ops docker ps -a --format '{{.ID}} {{.Label "ops.project"}}' --filter="label=ops.project")
 
     IFS=$'\n'
     for container in $info; do
@@ -659,8 +693,20 @@ project-stats() {
 # System Sub-Commands
 
 system-docker-compose() {
+    COMPOSE_FILE="$OPS_HOME/docker-compose.system.yml"
+
+    if [[ ! -z "$OPS_PUBLIC" ]]; then
+	    COMPOSE_FILE="$COMPOSE_FILE:$OPS_HOME/docker-compose.system.public.yml"
+    else
+	    COMPOSE_FILE="$COMPOSE_FILE:$OPS_HOME/docker-compose.system.private.yml"
+    fi
+
     COMPOSE_PROJECT_NAME="ops" \
-    COMPOSE_FILE=$OPS_HOME/docker-compose.system.yml \
+    COMPOSE_FILE=$COMPOSE_FILE \
+    OPS_ADMIN_AUTH="$OPS_ADMIN_AUTH" \
+    OPS_ACME_CA_SERVER=$OPS_ACME_CA_SERVER \
+    OPS_ACME_EMAIL=$OPS_ACME_EMAIL \
+    OPS_ACME_DNS_PROVIDER=$OPS_ACME_DNS_PROVIDER \
     OPS_DOMAIN=$OPS_DOMAIN \
     OPS_HOME=$OPS_HOME \
     OPS_SITES_DIR=$OPS_SITES_DIR \
@@ -670,6 +716,8 @@ system-docker-compose() {
     OPS_MINIO_ACCESS_KEY=$OPS_MINIO_ACCESS_KEY \
     OPS_MINIO_SECRET_KEY=$OPS_MINIO_SECRET_KEY \
     OPS_VERSION=$OPS_VERSION \
+    OPS_DEFAULT_DOCROOT=$OPS_DEFAULT_DOCROOT \
+    OPS_DEFAULT_BACKEND=$OPS_DEFAULT_BACKEND \
     docker-compose "$@"
 }
 
@@ -712,9 +760,17 @@ system-update() {
         return
     fi
 
-    shopt -s extglob
-    cp -rp $OPS_SCRIPT_DIR/home/!(config) $OPS_HOME
-    shopt -u extglob
+    #shopt -s extglob
+    #cp -rp $OPS_SCRIPT_DIR/home/!(config) $OPS_HOME
+    #shopt -u extglob
+
+    rsync -a \
+      --exclude=config \
+      --exclude=acme.json \
+      $OPS_SCRIPT_DIR/home/ \
+      $OPS_HOME
+
+    echo $OPS_VERSION > $OPS_HOME/VERSION
 
     system-refresh-config
     system-refresh-certs
@@ -904,6 +960,12 @@ init-laravel() {
 # Run Main Command
 
 main() {
+    docker ps > /dev/null
+
+    if [[ $? != 0 ]]; then
+        exit
+    fi
+
     system-install
     validate-config
 

@@ -15,15 +15,58 @@ services:
       - /var/run/docker.sock:/var/run/docker.sock
       - portainer:/data
 
-  apache-php72:
+  nginx:
+    image: openresty/openresty:1.13.6.2-stretch-fat
+    labels:
+      - "ops.project=ops"
+      - "traefik.enable=true"
+      - "traefik.docker.network=ops_gateway"
+      - "traefik.frontend.rule=HostRegexp:{subdomain:[a-z0-9-]+}.${OPS_DOMAIN}"
+      - "traefik.frontend.priority=1"
+      - "traefik.port=80"
+    environment:
+      - OPS_DOMAIN=${OPS_DOMAIN}
+      - OPS_ENABLED=1
+      - OPS_SITES_DIR=${OPS_SITES_DIR}
+      - OPS_VERSION=${OPS_VERSION}
+      - OPS_DEFAULT_BACKEND=${OPS_DEFAULT_BACKEND}
+      - OPS_DEFAULT_DOCROOT=${OPS_DEFAULT_DOCROOT}
+    networks:
+      - gateway
+      - backend
+    volumes:
+      - ${OPS_HOME}/nginx/nginx.conf:/usr/local/openresty/nginx/conf/nginx.conf
+      - ${OPS_SITES_DIR}:/var/www/html:cached
+
+  dashboard:
     image: imarcagency/ops-apache-php72:${OPS_VERSION}
     labels:
       - "ops.project=ops"
       - "traefik.enable=true"
       - "traefik.docker.network=ops_gateway"
-      - "traefik.frontend.rule=HostRegexp:{subdomain:[a-z0-9-]+}.php72.${OPS_DOMAIN},ops.php72.${OPS_DOMAIN}"
+      - "traefik.frontend.rule=Host:ops.${OPS_DOMAIN},dashboard.ops.${OPS_DOMAIN}"
       - "traefik.frontend.priority=1"
       - "traefik.port=80"
+    environment:
+      - APACHE_UID=${OPS_DOCKER_UID}
+      - APACHE_GID=${OPS_DOCKER_GID}
+      - APACHE_ROOT="/var/www/dashboard/public"
+      - OPS_DOMAIN=${OPS_DOMAIN}
+      - OPS_ENABLED=1
+      - OPS_SITES_DIR=${OPS_SITES_DIR}
+      - OPS_VERSION=${OPS_VERSION}
+    networks:
+      - gateway
+      - backend
+    volumes:
+      - ${OPS_HOME}/www/dashboard:/var/www/dashboard
+      - ${OPS_HOME}/apache/configure:/usr/local/bin/docker-configure
+      - ${OPS_SITES_DIR}:/var/www/html:cached
+
+  apache-php72:
+    image: imarcagency/ops-apache-php72:${OPS_VERSION}
+    labels:
+      - "ops.project=ops"
     environment:
       - APACHE_UID=${OPS_DOCKER_UID}
       - APACHE_GID=${OPS_DOCKER_GID}
@@ -35,7 +78,6 @@ services:
       - gateway
       - backend
     volumes:
-      - ${OPS_HOME}/www/dashboard:/var/www/dashboard
       - ${OPS_HOME}/apache/apache.conf:/etc/apache2/sites-enabled/000-default.conf
       - ${OPS_HOME}/apache/configure:/usr/local/bin/docker-configure
       - ${OPS_HOME}/apache/set_docroot.lua:/etc/apache2/set_docroot.lua
@@ -46,11 +88,6 @@ services:
     image: imarcagency/ops-apache-php71:${OPS_VERSION}
     labels:
       - "ops.project=ops"
-      - "traefik.enable=true"
-      - "traefik.docker.network=ops_gateway"
-      - "traefik.frontend.rule=HostRegexp:{subdomain:[a-z0-9-]+}.php71.${OPS_DOMAIN},ops.php71.${OPS_DOMAIN},{subdomain:[a-z0-9-]+}.${OPS_DOMAIN}"
-      - "traefik.frontend.priority=1"
-      - "traefik.port=80"
     environment:
       - APACHE_UID=${OPS_DOCKER_UID}
       - APACHE_GID=${OPS_DOCKER_GID}
@@ -62,7 +99,6 @@ services:
       - gateway
       - backend
     volumes:
-      - ${OPS_HOME}/www/dashboard:/var/www/dashboard
       - ${OPS_HOME}/apache/apache.conf:/etc/apache2/sites-enabled/000-default.conf
       - ${OPS_HOME}/apache/configure:/usr/local/bin/docker-configure
       - ${OPS_HOME}/apache/set_docroot.lua:/etc/apache2/set_docroot.lua
@@ -72,11 +108,6 @@ services:
     image: imarcagency/ops-apache-php56:${OPS_VERSION}
     labels:
       - "ops.project=ops"
-      - "traefik.enable=true"
-      - "traefik.docker.network=ops_gateway"
-      - "traefik.frontend.rule=HostRegexp:{subdomain:[a-z0-9-]+}.php56.${OPS_DOMAIN},ops.php56.${OPS_DOMAIN}"
-      - "traefik.frontend.priority=1"
-      - "traefik.port=80"
     environment:
       - APACHE_UID=${OPS_DOCKER_UID}
       - APACHE_GID=${OPS_DOCKER_GID}
@@ -88,24 +119,19 @@ services:
       - gateway
       - backend
     volumes:
-      - ${OPS_HOME}/www/dashboard:/var/www/dashboard
       - ${OPS_HOME}/apache/apache.conf:/etc/apache2/sites-enabled/000-default.conf
       - ${OPS_HOME}/apache/configure:/usr/local/bin/docker-configure
       - ${OPS_HOME}/apache/set_docroot.lua:/etc/apache2/set_docroot.lua
       - ${OPS_SITES_DIR}:/var/www/html:cached
 
   traefik:
-    image: traefik:latest
+    image: traefik:alpine
     command: --docker.domain=${OPS_DOMAIN}
     networks:
       - gateway
     userns_mode: 'host'
     labels:
       - "ops.project=ops"
-    ports:
-      - "127.0.0.1:80:80"
-      - "127.0.0.1:443:443"
-      - "127.0.0.1:8080:8080"
     volumes:
       - /var/run/docker.sock:/var/run/docker.sock
       - ${OPS_HOME}/traefik/traefik.dev.toml:/etc/traefik/traefik.toml
@@ -125,7 +151,7 @@ services:
       - "MINIO_ACCESS_KEY=${OPS_MINIO_ACCESS_KEY}"
       - "MINIO_SECRET_KEY=${OPS_MINIO_SECRET_KEY}"
     ports:
-      - "9000:9000"
+      - "127.0.0.1:9000:9000"
     networks:
       - gateway
       - backend
@@ -146,7 +172,7 @@ services:
   redis:
     image: "redis:3.2"
     ports:
-      - "6379:6379"
+      - "127.0.0.1:6379:6379"
     labels:
       - "ops.project=ops"
     networks:
@@ -155,7 +181,7 @@ services:
   memcached:
     image: "memcached:1.4"
     ports:
-      - "11211:11211"
+      - "127.0.0.1:11211:11211"
     labels:
       - "ops.project=ops"
     networks:
@@ -170,7 +196,7 @@ services:
     labels:
       - "ops.project=ops"
     ports:
-      - "5432:5432"
+      - "127.0.0.1:5432:5432"
     volumes:
       - "postgres:/var/lib/postgresql/data/pgdata"
 
@@ -183,7 +209,7 @@ services:
     labels:
       - "ops.project=ops"
     ports:
-      - "3306:3306"
+      - "127.0.0.1:3306:3306"
     volumes:
       - "mariadb:/var/lib/mysql"
 
