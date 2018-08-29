@@ -1,7 +1,6 @@
 #!/bin/bash
 shopt -s extglob
 
-
 # Determine OS
 
 OS=""
@@ -28,75 +27,19 @@ trap "rm -rf $OPS_TMP_DIR" EXIT
 
 # Find script dir (and resolve symlinks)
 
-OPS_WORKING_DIR=$(pwd)
+declare -rx OPS_WORKING_DIR=$(pwd)
 cd $(dirname $0)
 cd $(dirname $(ls -l $0 | awk '{print $NF}'))
-OPS_SCRIPT_DIR=$(pwd)
+declare -rx OPS_SCRIPT_DIR=$(pwd)
 cd $OPS_WORKING_DIR
 
 # get version from package.json
 
-OPS_VERSION=$(cat $OPS_SCRIPT_DIR/package.json | awk '/"version":/ { gsub(/[",]/, ""); print $2 }')
+declare -rx OPS_VERSION=$(cat $OPS_SCRIPT_DIR/package.json | awk '/"version":/ { gsub(/[",]/, ""); print $2 }')
 
 # Include cmd helpers
 
 source $OPS_SCRIPT_DIR/cmd.sh
-
-# Load config
-
-if [[ -f '.env' ]]; then
-    source '.env'
-fi
-
-if [[ -f 'ops-commands.sh' ]]; then
-    source 'ops-commands.sh'
-fi
-
-# options that can't be overidden by a project
-
-OPS_HOME=${OPS_HOME-"$HOME/.ops"}
-OPS_DOCKER_UTILS_IMAGE="ops-utils:$OPS_VERSION"
-OPS_DOCKER_COMPOSER_IMAGE="imarcagency/ops-php71:latest"
-OPS_DOCKER_NODE_IMAGE="node:8.9.4"
-OPS_DOCKER_GID=""
-OPS_DOCKER_UID=""
-OPS_DOMAIN="imarc.io"
-OPS_MINIO_ACCESS_KEY="minio-access"
-OPS_MINIO_SECRET_KEY="minio-secret"
-OPS_ACME_EMAIL=""
-OPS_ACME_DNS_PROVIDER=""
-OPS_ACME_PRODUCTION=""
-OPS_ADMIN_AUTH=""
-OPS_DEFAULT_BACKEND="apache-php71"
-OPS_DEFAULT_DOCROOT="public"
-OPS_SITES_DIR="$HOME/Sites"
-
-# options that can be overridden by a project
-OPS_PROJECT_BACKEND=""
-OPS_PROJECT_DOCROOT=""
-OPS_PROJECT_PHP_VERSION=${OPS_PROJECT_PHP_VERSION-'php71'}
-OPS_PROJECT_COMPOSE_FILE=${OPS_PROJECT_COMPOSE_FILE-"ops-compose.yml"}
-OPS_PROJECT_TEMPLATE=${OPS_PROJECT_TEMPLATE-""}
-OPS_SHELL_COMMAND=${OPS_SHELL_COMMAND-"bash"}
-OPS_SHELL_SERVICE=${OPS_SHELL_SERVICE-"apache-$OPS_PROJECT_PHP_VERSION"}
-
-if [[ -f "$OPS_HOME/config" ]]; then
-    source $OPS_HOME/config
-
-    # generate a literal (non-quoted) version for docker-compose
-    # https://github.com/docker/compose/issues/3702
-    cat $OPS_HOME/config |
-        sed -e '/^$/d' -e '/^#/d' |
-	xargs -n1 echo > $OPS_HOME/config.literal
-fi
-
-# variables that can't be overriden at all
-OPS_DASHBOARD_URL="https://ops.${OPS_DOMAIN}"
-
-OPS_ACME_CA_SERVER="https://acme-staging-v02.api.letsencrypt.org/directory"
-if [[ $OPS_ACME_PRODUCTION == 1 ]]; then
-    OPS_ACME_CA_SERVER="https://acme-v02.api.letsencrypt.org/directory"
-fi
 
 # Internal helpers
 
@@ -403,6 +346,7 @@ ops-start() {
 
     local info=$(docker ps -a --format '{{.ID}} {{.Label "ops.project"}}' --filter="label=ops.project")
 
+
     IFS=$'\n'
     for container in $info; do
         IFS=' '
@@ -412,6 +356,7 @@ ops-start() {
 
         if [[ $2 != 'ops' ]] && [[ -e "$OPS_SITES_DIR/$2" ]]; then
             (
+            echo $2
                 cd $OPS_SITES_DIR/$2
                 ops project start
             )
@@ -548,7 +493,7 @@ ops-sync() {
     then
         for sync_dir in $OPS_PROJECT_SYNC_DIRS; do
             echo -e "Syncing filesystem: $sync_dir"
-            echo -e "Syncing directories..."
+            echo -e "Syncing directory structure..."
 
             # sync entire dir structure first
             rsync -a -f"+ */" -f"- *" \
@@ -558,7 +503,7 @@ ops-sync() {
             echo -e "Syncing files..."
 
             # send exclude patterns as stdin, one per line.
-            $(echo "${OPS_PROJECT_SYNC_EXCLUDES// /$'\n'}" | \
+            $(printf %"s\n" $OPS_PROJECT_SYNC_EXCLUDES | \
                 rsync -a --exclude-from=- \
                     --max-size=$OPS_PROJECT_SYNC_MAXSIZE \
                     "$ssh_host:$OPS_PROJECT_REMOTE_PATH/$sync_dir/" \
@@ -612,19 +557,17 @@ _ops-yarn() {
 # Site sub sommands
 
 project-docker-compose() {
-    if [[ ! -f $OPS_PROJECT_COMPOSE_FILE ]] && [[ ! -z "$OPS_PROJECT_TEMPLATE" ]] && [[ -f "$OPS_HOME/templates/$OPS_PROJECT_TEMPLATE.yml" ]]; then
+    if [[ ! -f $(project-name)/$OPS_PROJECT_COMPOSE_FILE ]] && [[ ! -z "$OPS_PROJECT_TEMPLATE" ]] && [[ -f "$OPS_HOME/templates/$OPS_PROJECT_TEMPLATE.yml" ]]; then
         OPS_PROJECT_COMPOSE_FILE="$OPS_HOME/templates/$OPS_PROJECT_TEMPLATE.yml"
         echo "Using template: $OPS_PROJECT_TEMPLATE"
     fi
 
-    OPS_DOCKER_UID=$OPS_DOCKER_UID \
-    OPS_DOCKER_GID=$OPS_DOCKER_GID \
-    OPS_DOMAIN=$OPS_DOMAIN \
-    OPS_PROJECT_NAME="$(basename $PWD)" \
-    OPS_VERSION=$OPS_VERSION \
+    echo 'here'
+
+    OPS_PROJECT_NAME="$(project-name)" \
     COMPOSE_PROJECT_NAME="ops$(basename $PWD)" \
     COMPOSE_FILE="$OPS_PROJECT_COMPOSE_FILE" \
-    docker-compose --project-directory . "$@"
+    docker-compose --project-directory "$OPS_SITE_DIR/$(project-name)" "$@"
 }
 
 project-name() {
@@ -638,7 +581,7 @@ project-name() {
             basename=$(basename $(pwd))
             cd ..
         done
-        echo $basename
+        echo -n $basename
     )
 }
 
@@ -957,8 +900,6 @@ init-laravel() {
     echo
 }
 
-# Run Main Command
-
 main() {
     docker ps > /dev/null
 
@@ -972,5 +913,69 @@ main() {
     cmd-run ops "$@"
     exit
 }
+
+# options that can be overidden by environment
+
+export OPS_HOME=${OPS_HOME-"$HOME/.ops"}
+
+# load config
+
+if [[ -f "$OPS_HOME/config" ]]; then
+    source $OPS_HOME/config
+
+    # generate a literal (non-quoted) version for docker-compose
+    # https://github.com/docker/compose/issues/3702
+    cat $OPS_HOME/config |
+        sed -e '/^$/d' -e '/^#/d' |
+	xargs -n1 echo > $OPS_HOME/config.literal
+fi
+
+
+# options that can be overridden by global config
+
+declare -rx OPS_DOCKER_UTILS_IMAGE=${OPS_DOCKER_UTILS_IMAGE-"ops-utils:$OPS_VERSION"}
+declare -rx OPS_DOCKER_COMPOSER_IMAGE=${OPS_DOCKER_COMPOSER_IMAGE-"imarcagency/ops-php71:latest"}
+declare -rx OPS_DOCKER_NODE_IMAGE=${OPS_DOCKER_NODE_IMAGE-"node:8.9.4"}
+declare -rx OPS_DOCKER_GID=${OPS_DOCKER_GID-""}
+declare -rx OPS_DOCKER_UID=${OPS_DOCKER_UID-""}
+declare -rx OPS_DOMAIN=${OPS_DOMAIN-"imarc.io"}
+declare -rx OPS_MINIO_ACCESS_KEY=${OPS_MINIO_ACCESS_KEY-"minio-access"}
+declare -rx OPS_MINIO_SECRET_KEY=${OPS_MINIO_SECRET_KEY-"minio-secret"}
+declare -rx OPS_SITES_DIR=${OPS_SITES_DIR-"$HOME/Sites"}
+declare -rx OPS_ACME_EMAIL=${OPS_ACME_EMAIL-""}
+declare -rx OPS_ACME_DNS_PROVIDER=${OPS_ACME_DNS_PROVIDER-""}
+declare -rx OPS_ACME_PRODUCTION=${OPS_ACME_PRODUCTION-""}
+declare -rx OPS_ADMIN_AUTH=${OPS_ADMIN_AUTH-""}
+declare -rx OPS_DEFAULT_BACKEND=${OPS_DEFAULT_BACKEND-"apache-php71"}
+declare -rx OPS_DEFAULT_DOCROOT=${OPS_DEFAULT_DOCROOT-"public"}
+
+declare -rx OPS_DASHBOARD_URL="https://ops.${OPS_DOMAIN}"
+
+# options that can be overridden by a project
+OPS_PROJECT_BACKEND="${OPS_DEFAULT_BACKEND}"
+OPS_PROJECT_DOCROOT="${OPS_DEFAULT_DOCROOT}"
+OPS_PROJECT_COMPOSE_FILE=${OPS_PROJECT_COMPOSE_FILE-"ops-compose.yml"}
+OPS_PROJECT_TEMPLATE=${OPS_PROJECT_TEMPLATE-""}
+OPS_SHELL_COMMAND=${OPS_SHELL_COMMAND-"bash"}
+OPS_SHELL_SERVICE=${OPS_SHELL_SERVICE-"apache-$OPS_PROJECT_PHP_VERSION"}
+
+OPS_ACME_CA_SERVER="https://acme-staging-v02.api.letsencrypt.org/directory"
+if [[ $OPS_ACME_PRODUCTION == 1 ]]; then
+    OPS_ACME_CA_SERVER="https://acme-v02.api.letsencrypt.org/directory"
+fi
+
+# load project config
+
+project_name="$(project-name)"
+
+if [[ -f "$OPS_SITES_DIR/$project_name/.env" ]]; then
+    source "$OPS_SITES_DIR/$project_name/.env"
+fi
+
+# load custom commands
+
+if [[ -f "$OPS_SITES_DIR/$project_name/ops-commands.sh" ]]; then
+    source "$OPS_SITES_DIR/$project_name/ops-commands.sh"
+fi
 
 main "$@"
