@@ -23,6 +23,9 @@ if [[ -z "$OS" ]]; then
     exit 1
 fi
 
+OPS_TMP_DIR=$(mktemp -d)
+trap "rm -rf $OPS_TMP_DIR" EXIT
+
 # Find script dir (and resolve symlinks)
 
 OPS_WORKING_DIR=$(pwd)
@@ -213,6 +216,12 @@ mariadb-import() {
     local db="$1"
     local sqlfile="$2"
 
+    # check for stdin
+    if [[ -z $sqlfile ]] && [[ ! -t 0 ]]; then
+        sqlfile="$OPS_TMP_DIR/$db.$(date +%s).sql"
+        cat - > $sqlfile
+    fi
+
     ops-exec mariadb mysql -e "DROP DATABASE IF EXISTS $db"
     ops-exec mariadb mysql -e "CREATE DATABASE $db"
 
@@ -281,6 +290,12 @@ psql-export() {
 psql-import() {
     local db="$1"
     local sqlfile="$2"
+
+    # check for stdin
+    if [[ -z $sqlfile ]] && [[ ! -t 0 ]]; then
+        sqlfile="$OPS_TMP_DIR/$db.$(date +%s).sql"
+        cat - > $sqlfile
+    fi
 
     psql-cli -c "DROP DATABASE IF EXISTS $db"
     psql-cli -c "CREATE DATABASE $db"
@@ -754,6 +769,8 @@ system-update() {
       --exclude=acme.json \
       $OPS_SCRIPT_DIR/home/ \
       $OPS_HOME
+
+    echo $OPS_VERSION > $OPS_HOME/VERSION
 
     system-refresh-config
     system-refresh-certs
