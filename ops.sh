@@ -1,7 +1,6 @@
 #!/bin/bash
 shopt -s extglob
 
-OPS_VERSION=0.6.1
 
 # Determine OS
 
@@ -32,6 +31,10 @@ cd $(dirname $(ls -l $0 | awk '{print $NF}'))
 OPS_SCRIPT_DIR=$(pwd)
 cd $OPS_WORKING_DIR
 
+# get version from package.json
+
+OPS_VERSION=$(cat $OPS_SCRIPT_DIR/package.json | awk '/"version":/ { gsub(/[",]/, ""); print $2 }')
+
 # Include cmd helpers
 
 source $OPS_SCRIPT_DIR/cmd.sh
@@ -50,22 +53,21 @@ fi
 
 OPS_HOME=${OPS_HOME-"$HOME/.ops"}
 OPS_DOCKER_UTILS_IMAGE="ops-utils:$OPS_VERSION"
-OPS_DOCKER_APACHE_IMAGE="imarcagency/php-apache:2"
-OPS_DOCKER_COMPOSER_IMAGE="imarcagency/php-apache:2"
+OPS_DOCKER_COMPOSER_IMAGE="imarcagency/ops-php71:latest"
 OPS_DOCKER_NODE_IMAGE="node:8.9.4"
 OPS_DOCKER_GID=""
 OPS_DOCKER_UID=""
 OPS_DOMAIN="imarc.io"
 OPS_MINIO_ACCESS_KEY="minio-access"
 OPS_MINIO_SECRET_KEY="minio-secret"
-OPS_SHELL_COMMAND="bash"
-OPS_SHELL_SERVICE="apache"
 OPS_SITES_DIR="$HOME/Sites"
 
 # options that can be overridden by a project
-
+OPS_PROJECT_PHP_VERSION=${OPS_PROJECT_PHP_VERSION-'php71'}
 OPS_PROJECT_COMPOSE_FILE=${OPS_PROJECT_COMPOSE_FILE-"ops-compose.yml"}
 OPS_PROJECT_TEMPLATE=${OPS_PROJECT_TEMPLATE-""}
+OPS_SHELL_COMMAND=${OPS_SHELL_COMMAND-"bash"}
+OPS_SHELL_SERVICE=${OPS_SHELL_SERVICE-"apache-$OPS_PROJECT_PHP_VERSION"}
 
 if [[ -f "$OPS_HOME/config" ]]; then
     source $OPS_HOME/config
@@ -261,7 +263,7 @@ psql-import() {
     local db="$1"
     local sqlfile="$2"
 
-    psql-cli -c "DROP DATABASE $db IF EXISTS"
+    psql-cli -c "DROP DATABASE IF EXISTS $db"
     psql-cli -c "CREATE DATABASE $db"
 
     cat "$sqlfile" | ops-exec postgres psql -U postgres "$db"
@@ -309,7 +311,8 @@ ops-redis() {
 }
 
 ops-restart() {
-    system-docker-compose restart
+    ops-stop
+    ops-start
 }
 
 ops-shell() {
@@ -319,7 +322,6 @@ ops-shell() {
     [[ -z $id ]] && exit
 
     ops docker exec -w "/var/www/html/$project" -u www-data -it $id "$OPS_SHELL_COMMAND"
-    ops docker exec -w "/var/www/html/$project" -u www-data -ti $id "$OPS_SHELL_COMMAND"
 }
 
 ops-link() {
@@ -715,6 +717,7 @@ system-update() {
     shopt -u extglob
 
     system-refresh-config
+    system-refresh-certs
     system-refresh-services
 }
 
