@@ -1,6 +1,6 @@
 {
   "name": "ops-cli",
-  "version": "0.7.3",
+  "version": "0.7.5",
   "bin": {
     "ops": "./ops.sh"
   },
