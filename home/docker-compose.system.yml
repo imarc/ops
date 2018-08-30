@@ -67,6 +67,11 @@ services:
     image: imarcagency/ops-apache-php72:${OPS_VERSION}
     labels:
       - "ops.project=ops"
+      - "traefik.enable=true"
+      - "traefik.docker.network=ops_gateway"
+      - "traefik.frontend.rule=HostRegexp:ops-webgrind-apache-php56.${OPS_DOMAIN}"
+      - "traefik.frontend.priority=1"
+      - "traefik.port=80"
     environment:
       - APACHE_UID=${OPS_DOCKER_UID}
       - APACHE_GID=${OPS_DOCKER_GID}
@@ -88,6 +93,11 @@ services:
     image: imarcagency/ops-apache-php71:${OPS_VERSION}
     labels:
       - "ops.project=ops"
+      - "traefik.enable=true"
+      - "traefik.docker.network=ops_gateway"
+      - "traefik.frontend.rule=HostRegexp:ops-webgrind-apache-php71.${OPS_DOMAIN}"
+      - "traefik.frontend.priority=1"
+      - "traefik.port=80"
     environment:
       - APACHE_UID=${OPS_DOCKER_UID}
       - APACHE_GID=${OPS_DOCKER_GID}
@@ -108,6 +118,11 @@ services:
     image: imarcagency/ops-apache-php56:${OPS_VERSION}
     labels:
       - "ops.project=ops"
+      - "traefik.enable=true"
+      - "traefik.docker.network=ops_gateway"
+      - "traefik.frontend.rule=HostRegexp:ops-webgrind-apache-php56.${OPS_DOMAIN}"
+      - "traefik.frontend.priority=1"
+      - "traefik.port=80"
     environment:
       - APACHE_UID=${OPS_DOCKER_UID}
       - APACHE_GID=${OPS_DOCKER_GID}

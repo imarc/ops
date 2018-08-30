@@ -157,16 +157,13 @@ mariadb-export() {
 
 mariadb-import() {
     local db="$1"
-    local sqlfile="$2"
+    local sqlfile=${2--}
 
-    # check for stdin
-    if [[ -z $sqlfile ]] && [[ ! -t 0 ]]; then
-        sqlfile="$OPS_TMP_DIR/$db.$(date +%s).sql"
-        cat - > $sqlfile
-    fi
-
-    ops-exec mariadb mysql -e "DROP DATABASE IF EXISTS $db"
-    ops-exec mariadb mysql -e "CREATE DATABASE $db"
+    (
+        # don't let these commands grab any stdin
+        ops-exec mariadb mysql -e "DROP DATABASE IF EXISTS $db"
+        ops-exec mariadb mysql -e "CREATE DATABASE $db"
+    ) </dev/null
 
     cat "$sqlfile" | ops-exec mariadb mysql "$db"
 }
@@ -232,16 +229,13 @@ psql-export() {
 
 psql-import() {
     local db="$1"
-    local sqlfile="$2"
+    local sqlfile=${2--}
 
-    # check for stdin
-    if [[ -z $sqlfile ]] && [[ ! -t 0 ]]; then
-        sqlfile="$OPS_TMP_DIR/$db.$(date +%s).sql"
-        cat - > $sqlfile
-    fi
-
-    psql-cli -c "DROP DATABASE IF EXISTS $db"
-    psql-cli -c "CREATE DATABASE $db"
+    (
+        # don't let these commands grab and stdin
+        ops-exec postgres psql -c "DROP DATABASE IF EXISTS $db"
+        ops-exec postgres psql -c "CREATE DATABASE $db"
+    ) </dev/null
 
     cat "$sqlfile" | ops-exec postgres psql -U postgres "$db"
 }
@@ -346,7 +340,6 @@ ops-start() {
 
     local info=$(docker ps -a --format '{{.ID}} {{.Label "ops.project"}}' --filter="label=ops.project")
 
-
     IFS=$'\n'
     for container in $info; do
         IFS=' '
@@ -356,9 +349,8 @@ ops-start() {
 
         if [[ $2 != 'ops' ]] && [[ -e "$OPS_SITES_DIR/$2" ]]; then
             (
-            echo $2
                 cd $OPS_SITES_DIR/$2
-                ops project start
+                project-start
             )
         fi
     done
@@ -557,17 +549,11 @@ _ops-yarn() {
 # Site sub sommands
 
 project-docker-compose() {
-    if [[ ! -f $(project-name)/$OPS_PROJECT_COMPOSE_FILE ]] && [[ ! -z "$OPS_PROJECT_TEMPLATE" ]] && [[ -f "$OPS_HOME/templates/$OPS_PROJECT_TEMPLATE.yml" ]]; then
-        OPS_PROJECT_COMPOSE_FILE="$OPS_HOME/templates/$OPS_PROJECT_TEMPLATE.yml"
-        echo "Using template: $OPS_PROJECT_TEMPLATE"
-    fi
-
-    echo 'here'
-
-    OPS_PROJECT_NAME="$(project-name)" \
-    COMPOSE_PROJECT_NAME="ops$(basename $PWD)" \
+    local project_name=$(project-name)
+    OPS_PROJECT_NAME="$project_name" \
+    COMPOSE_PROJECT_NAME="ops-$project_name" \
     COMPOSE_FILE="$OPS_PROJECT_COMPOSE_FILE" \
-    docker-compose --project-directory "$OPS_SITE_DIR/$(project-name)" "$@"
+    docker-compose --project-directory "$OPS_SITES_DIR/$project_name" "$@"
 }
 
 project-name() {
@@ -646,21 +632,6 @@ system-docker-compose() {
 
     COMPOSE_PROJECT_NAME="ops" \
     COMPOSE_FILE=$COMPOSE_FILE \
-    OPS_ADMIN_AUTH="$OPS_ADMIN_AUTH" \
-    OPS_ACME_CA_SERVER=$OPS_ACME_CA_SERVER \
-    OPS_ACME_EMAIL=$OPS_ACME_EMAIL \
-    OPS_ACME_DNS_PROVIDER=$OPS_ACME_DNS_PROVIDER \
-    OPS_DOMAIN=$OPS_DOMAIN \
-    OPS_HOME=$OPS_HOME \
-    OPS_SITES_DIR=$OPS_SITES_DIR \
-    OPS_DOCKER_UID=$OPS_DOCKER_UID \
-    OPS_DOCKER_GID=$OPS_DOCKER_GID \
-    OPS_DOCKER_APACHE_IMAGE=$OPS_DOCKER_APACHE_IMAGE \
-    OPS_MINIO_ACCESS_KEY=$OPS_MINIO_ACCESS_KEY \
-    OPS_MINIO_SECRET_KEY=$OPS_MINIO_SECRET_KEY \
-    OPS_VERSION=$OPS_VERSION \
-    OPS_DEFAULT_DOCROOT=$OPS_DEFAULT_DOCROOT \
-    OPS_DEFAULT_BACKEND=$OPS_DEFAULT_BACKEND \
     docker-compose "$@"
 }
 
@@ -933,6 +904,7 @@ fi
 
 # options that can be overridden by global config
 
+declare -rx OPS_ENV="dev"
 declare -rx OPS_DOCKER_UTILS_IMAGE=${OPS_DOCKER_UTILS_IMAGE-"ops-utils:$OPS_VERSION"}
 declare -rx OPS_DOCKER_COMPOSER_IMAGE=${OPS_DOCKER_COMPOSER_IMAGE-"imarcagency/ops-php71:latest"}
 declare -rx OPS_DOCKER_NODE_IMAGE=${OPS_DOCKER_NODE_IMAGE-"node:8.9.4"}

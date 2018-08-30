@@ -89,7 +89,8 @@ RUN docker-php-ext-install \
     xml \
     xmlreader \
     xmlwriter \
-    xsl
+    xsl \
+    zip
 
 RUN pecl install \
     imagick \
@@ -128,6 +129,10 @@ COPY php.ini /usr/local/etc/php/conf.d
 
 # copy apache config
 COPY 000-default.conf /etc/apache2/sites-enabled/000-default.conf
+
+WORKDIR /tmp
+RUN git clone https://github.com/jokkedk/webgrind
+RUN mv /tmp/webgrind /var/www/webgrind
 
 # set working directory
 WORKDIR /var/www
