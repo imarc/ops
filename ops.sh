@@ -936,6 +936,8 @@ if [[ $OPS_ACME_PRODUCTION == 1 ]]; then
     OPS_ACME_CA_SERVER="https://acme-v02.api.letsencrypt.org/directory"
 fi
 
+declare -rx OPS_ACME_CA_SERVER
+
 # load project config
 
 project_name="$(project-name)"
