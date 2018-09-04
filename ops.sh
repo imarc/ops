@@ -594,9 +594,13 @@ project-docker-compose() {
 }
 
 project-name() {
-    if [[ "$(pwd)" != $OPS_SITES_DIR/* ]]; then
-        exit 1
-    fi
+    (
+        shopt -s nocasematch
+        if [[ "$(pwd)" != $OPS_SITES_DIR/* ]]; then
+            exit 1
+        fi
+        shopt -u nocasematch
+    )
 
     echo $(
         local basename="$(basename $(pwd))"
