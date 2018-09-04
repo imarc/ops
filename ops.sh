@@ -600,10 +600,12 @@ project-name() {
 
     echo $(
         local basename="$(basename $(pwd))"
+        shopt -s nocasematch
         while [[ "$(pwd)" != $OPS_SITES_DIR ]] && [[ "$(pwd)" != '/' ]]; do
             basename=$(basename $(pwd))
             cd ..
         done
+        shopt -u nocasematch
         echo $basename
     )
 }
