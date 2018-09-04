@@ -22,9 +22,6 @@ if [[ -z "$OS" ]]; then
     exit 1
 fi
 
-OPS_TMP_DIR=$(mktemp -d)
-trap "rm -rf $OPS_TMP_DIR" EXIT
-
 # Find script dir (and resolve symlinks)
 
 declare -rx OPS_WORKING_DIR=$(pwd)
@@ -59,12 +56,23 @@ validate-config() {
         errors+=("OPS_DOMAIN config is not set")
     fi
 
+    if [[ -f $OPS_HOME/VERSION ]] && version-greater-than $OPS_VERSION $(cat $OPS_HOME/VERSION); then
+        echo 'here'
+    fi
+
+    exit
+
     if [[ -n $errors ]]; then
         echo "The following items need to be addressed:"
         echo
         printf "%s\n" "${errors}"
         exit 1
     fi
+}
+
+# version-greater-than v1 v2
+version-greater-than() {
+    test "$(printf '%s\n' "$@" | sort -V | head -n 1)" != "$1";
 }
 
 # Main Commands
@@ -287,7 +295,7 @@ ops-restart() {
 }
 
 ops-shell() {
-    local id=$(system-docker-compose ps -q $OPS_SHELL_SERVICE)
+    local id=$(system-docker-compose ps -q $OPS_SHELL_BACKEND)
     local project=$(project-name)
 
     [[ -z $id ]] && exit
@@ -916,20 +924,12 @@ declare -rx OPS_MINIO_SECRET_KEY=${OPS_MINIO_SECRET_KEY-"minio-secret"}
 declare -rx OPS_SITES_DIR=${OPS_SITES_DIR-"$HOME/Sites"}
 declare -rx OPS_ACME_EMAIL=${OPS_ACME_EMAIL-""}
 declare -rx OPS_ACME_DNS_PROVIDER=${OPS_ACME_DNS_PROVIDER-""}
-declare -rx OPS_ACME_PRODUCTION=${OPS_ACME_PRODUCTION-""}
+declare -rx OPS_ACME_PRODUCTION=${OPS_ACME_PRODUCTION-"0"}
 declare -rx OPS_ADMIN_AUTH=${OPS_ADMIN_AUTH-""}
 declare -rx OPS_DEFAULT_BACKEND=${OPS_DEFAULT_BACKEND-"apache-php71"}
 declare -rx OPS_DEFAULT_DOCROOT=${OPS_DEFAULT_DOCROOT-"public"}
 
 declare -rx OPS_DASHBOARD_URL="https://ops.${OPS_DOMAIN}"
-
-# options that can be overridden by a project
-OPS_PROJECT_BACKEND="${OPS_DEFAULT_BACKEND}"
-OPS_PROJECT_DOCROOT="${OPS_DEFAULT_DOCROOT}"
-OPS_PROJECT_COMPOSE_FILE=${OPS_PROJECT_COMPOSE_FILE-"ops-compose.yml"}
-OPS_PROJECT_TEMPLATE=${OPS_PROJECT_TEMPLATE-""}
-OPS_SHELL_COMMAND=${OPS_SHELL_COMMAND-"bash"}
-OPS_SHELL_SERVICE=${OPS_SHELL_SERVICE-"apache-$OPS_PROJECT_PHP_VERSION"}
 
 OPS_ACME_CA_SERVER="https://acme-staging-v02.api.letsencrypt.org/directory"
 if [[ $OPS_ACME_PRODUCTION == 1 ]]; then
@@ -938,6 +938,13 @@ fi
 
 declare -rx OPS_ACME_CA_SERVER
 
+# options that can be overridden by a project
+OPS_PROJECT_BACKEND="${OPS_DEFAULT_BACKEND}"
+OPS_PROJECT_DOCROOT="${OPS_DEFAULT_DOCROOT}"
+OPS_PROJECT_COMPOSE_FILE=${OPS_PROJECT_COMPOSE_FILE-"ops-compose.yml"}
+OPS_PROJECT_TEMPLATE=${OPS_PROJECT_TEMPLATE-""}
+OPS_SHELL_COMMAND=${OPS_SHELL_COMMAND-"bash"}
+
 # load project config
 
 project_name="$(project-name)"
@@ -945,6 +952,8 @@ project_name="$(project-name)"
 if [[ -f "$OPS_SITES_DIR/$project_name/.env" ]]; then
     source "$OPS_SITES_DIR/$project_name/.env"
 fi
+
+OPS_SHELL_BACKEND=${OPS_SHELL_BACKEND-$OPS_PROJECT_BACKEND}
 
 # load custom commands
 
