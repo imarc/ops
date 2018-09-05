@@ -595,21 +595,17 @@ project-docker-compose() {
 
 project-name() {
     (
-        shopt -s nocasematch
         if [[ "$(pwd)" != $OPS_SITES_DIR/* ]]; then
             exit 1
         fi
-        shopt -u nocasematch
     )
 
     echo $(
         local basename="$(basename $(pwd))"
-        shopt -s nocasematch
         while [[ "$(pwd)" != $OPS_SITES_DIR ]] && [[ "$(pwd)" != '/' ]]; do
             basename=$(basename $(pwd))
             cd ..
         done
-        shopt -u nocasematch
         echo $basename
     )
 }
