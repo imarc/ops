@@ -150,8 +150,7 @@ services:
     volumes:
       - /var/run/docker.sock:/var/run/docker.sock
       - ${OPS_HOME}/traefik/traefik.dev.toml:/etc/traefik/traefik.toml
-      - ${OPS_HOME}/certs/self-signed-cert.crt:/etc/traefik/self-signed-cert.crt
-      - ${OPS_HOME}/certs/self-signed-cert.key:/etc/traefik/self-signed-cert.key
+      - ${OPS_HOME}/certs/:/etc/traefik-certs
       - ${OPS_HOME}/traefik/acme.json:/etc/traefik/acme/acme.json
 
   minio:

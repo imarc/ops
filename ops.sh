@@ -687,6 +687,8 @@ system-update() {
     #shopt -u extglob
 
     rsync -a \
+      --exclude=bin \
+      --exclude=certs \
       --exclude=config \
       --exclude=acme.json \
       $OPS_SCRIPT_DIR/home/ \
@@ -694,8 +696,8 @@ system-update() {
 
     echo $OPS_VERSION > $OPS_HOME/VERSION
 
+    system-install-mkcert
     system-refresh-config
-    system-refresh-certs
     system-refresh-services
 }
 
@@ -717,81 +719,63 @@ system-install() {
 
     source $OPS_HOME/config
 
+    system-install-mkcert
     system-refresh-config
-    system-refresh-certs
     system-refresh-services
 }
 
+system-install-mkcert() {
+    if [[ ! -d $OPS_HOME ]]; then
+        return
+    fi
+
+    if [[ -f $OPS_HOME/bin/mkcert-$OPS_MKCERT_VERSION ]]; then
+        return
+    fi
+
+    rm -f $OPS_HOME/bin/mkcert-*
+
+    if [[ "$OS" == linux ]]; then
+        MKCERT_URL="https://github.com/FiloSottile/mkcert/releases/download/v$OPS_MKCERT_VERSION/mkcert-v$OPS_MKCERT_VERSION-linux-amd64"
+    elif [[ "$OS" == mac ]]; then
+        MKCERT_URL="https://github.com/FiloSottile/mkcert/releases/download/v$OPS_MKCERT_VERSION/mkcert-v$OPS_MKCERT_VERSION-darwin-amd64"
+    fi
+
+    echo "Downloading mkcert v$OPS_MKCERT_VERSION"
+    wget --quiet -O $OPS_HOME/bin/mkcert-$OPS_MKCERT_VERSION $MKCERT_URL
+    chmod 744 $OPS_HOME/bin/mkcert-$OPS_MKCERT_VERSION
+}
+
 system-refresh-certs() {
-    #
-    # Clear out old cert
-    #
+    sudo --non-interactive echo 2> /dev/null
+    if [[ $? == 1 ]]; then
+        echo
+        echo 'Installing self-signed certs for valid HTTPS support.'
+        sudo --prompt="Enter your system/sudo password: " echo
 
-    if [[ "$OS" == linux ]]; then
-
-        # system certs
-        sudo rm /usr/local/share/ca-certificates/ops-local-dev.crt 2>/dev/null
-        sudo update-ca-certificates
-
-        # chrome certs
-        mkdir -p $HOME/.pki/nssdb
-        certutil -d sql:$HOME/.pki/nssdb -D -n ops-local-dev 2>/dev/null
-
-        # other certs
-        # ???
-
-    elif [[ "$OS" == mac ]]; then
-
-        sudo security delete-certificate -c "ops-local-dev"
-
+        if [[ $? == 1 ]]; then
+            echo 'Invalid password. Certs were not generated :('
+            echo
+            return
+        fi
     fi
 
-    #
-    # Generate cert
-    #
+    (
+        cd $OPS_HOME/certs
 
-    ops docker run --rm \
-        -v $OPS_HOME:/ops-home \
-        -i $OPS_DOCKER_UTILS_IMAGE \
-        openssl genrsa -out /ops-home/certs/self-signed-cert.key 2048
+        CAROOT=$OPS_HOME/certs \
+        $OPS_HOME/bin/mkcert -install
 
-    ops docker run --rm \
-        -v $OPS_HOME:/ops-home \
-        -i $OPS_DOCKER_UTILS_IMAGE \
-        openssl req -new -batch -passin pass: \
-        -key /ops-home/certs/self-signed-cert.key \
-        -out /ops-home/certs/self-signed-cert.csr \
-        -config /ops-home/certs/ssl.conf
+        CAROOT=$OPS_HOME/certs \
+        $OPS_HOME/bin/mkcert \
+            "*.$OPS_DOMAIN" \
+            "*.ops.$OPS_DOMAIN" \
+            "$OPS_DOMAIN" \
+            localhost
 
-    ops docker run --rm \
-        -v $OPS_HOME:/ops-home \
-        -i $OPS_DOCKER_UTILS_IMAGE \
-        openssl x509 -req -sha256 -days 3650 \
-        -in /ops-home/certs/self-signed-cert.csr \
-        -signkey /ops-home/certs/self-signed-cert.key \
-        -out /ops-home/certs/self-signed-cert.crt \
-        -extensions v3_req \
-        -extfile /ops-home/certs/ssl.conf
-
-    #
-    # Install Cert
-    #
-
-    if [[ "$OS" == linux ]]; then
-        # system certs
-        sudo cp $OPS_HOME/certs/self-signed-cert.crt /usr/local/share/ca-certificates/ops-local-dev.crt
-        sudo update-ca-certificates
-
-        # chrome certs
-        certutil -d sql:$HOME/.pki/nssdb -A -t "P,," -n ops-local-dev -i $HOME/.ops/certs/self-signed-cert.crt
-
-    elif [[ "$OS" == mac ]]; then
-
-        sudo security add-trusted-cert -d -r trustRoot -k /Library/Keychains/System.keychain $OPS_HOME/certs/self-signed-cert.crt
-
-    fi
-
-
+        mv "_wildcard.$OPS_DOMAIN+3-key.pem" self-signed-cert.key
+        mv "_wildcard.$OPS_DOMAIN+3.pem" self-signed-cert.crt
+    )
 }
 
 system-refresh-config() {
@@ -800,15 +784,11 @@ system-refresh-config() {
     #
 
     sed "s/OPS_DOMAIN/$OPS_DOMAIN/" $OPS_HOME/dnsmasq/dnsmasq.conf.tmpl > $OPS_HOME/dnsmasq/dnsmasq.conf
-    sed "s/OPS_DOMAIN/$OPS_DOMAIN/" $OPS_HOME/certs/ssl.conf.tmpl > $OPS_HOME/certs/ssl.conf
 
     sed \
         -e "s/OPS_MINIO_ACCESS_KEY/$OPS_MINIO_ACCESS_KEY/" \
         -e "s/OPS_MINIO_SECRET_KEY/$OPS_MINIO_SECRET_KEY/" \
         $OPS_HOME/minio/config.json.tmpl > $OPS_HOME/minio/config.json
-
-    ops docker build -t ops-node:$OPS_VERSION $OPS_HOME/node
-    ops docker build -t ops-utils:$OPS_VERSION $OPS_HOME/utils
 }
 
 system-refresh-services() {
