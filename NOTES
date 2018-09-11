@@ -82,3 +82,8 @@ if php version (or any other special backend) doesn't exist, spin it up with doc
 
 
 
+# wget for mkcert
+wget --quiet -O OUTPUTFILE URL
+
+# version with npm
+npm --no-git-tag-version version -f from-git
