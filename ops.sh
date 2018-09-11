@@ -30,9 +30,9 @@ cd $(dirname $(ls -l $0 | awk '{print $NF}'))
 declare -rx OPS_SCRIPT_DIR=$(pwd)
 cd $OPS_WORKING_DIR
 
-# get version from package.json
+# get version from VERSION file
 
-declare -rx OPS_VERSION=$(cat $OPS_SCRIPT_DIR/package.json | awk '/"version":/ { gsub(/[",]/, ""); print $2 }')
+declare -rx OPS_VERSION=$(cat $OPS_SCRIPT_DIR/VERSION)
 
 # Include cmd helpers
 
@@ -44,34 +44,41 @@ validate-config() {
     errors=()
 
     if [[ ! -d $OPS_HOME ]]; then
+        echo
         echo "Ops not installed. Please run: ops system install"
+        echo
         exit 1
+    fi
+
+    if [[ -f $OPS_HOME/VERSION ]] && version-greater-than $OPS_VERSION $(cat $OPS_HOME/VERSION); then
+        system-update
     fi
 
     if [[ -z $OPS_SITES_DIR ]]; then
         errors+=("OPS_SITES_DIR config is not set")
     fi
 
+    if [[ ! -d $OPS_SITES_DIR ]]; then
+        errors+=("OPS_SITES_DIR $OPS_SITES_DIR doesn't exist")
+    fi
+
     if [[ -z $OPS_DOMAIN ]]; then
         errors+=("OPS_DOMAIN config is not set")
     fi
 
-    if [[ -f $OPS_HOME/VERSION ]] && version-greater-than $OPS_VERSION $(cat $OPS_HOME/VERSION); then
-        echo 'here'
-    fi
-
-    exit
 
     if [[ -n $errors ]]; then
-        echo "The following items need to be addressed:"
+        echo
+        echo "Whoops! The following items need to be addressed:"
         echo
         printf "%s\n" "${errors}"
+        echo
         exit 1
     fi
 }
 
-# version-greater-than v1 v2
 version-greater-than() {
+    # version-greater-than v1 v2
     test "$(printf '%s\n' "$@" | sort -V | head -n 1)" != "$1";
 }
 
@@ -168,7 +175,7 @@ mariadb-import() {
     local sqlfile=${2--}
 
     (
-        # don't let these commands grab any stdin
+        # don't let these commands grab stdin
         ops-exec mariadb mysql -e "DROP DATABASE IF EXISTS $db"
         ops-exec mariadb mysql -e "CREATE DATABASE $db"
     ) </dev/null
@@ -240,7 +247,7 @@ psql-import() {
     local sqlfile=${2--}
 
     (
-        # don't let these commands grab and stdin
+        # don't let these commands grab stdin
         ops-exec postgres psql -c "DROP DATABASE IF EXISTS $db"
         ops-exec postgres psql -c "CREATE DATABASE $db"
     ) </dev/null
@@ -257,7 +264,7 @@ ops-psql() {
     cmd-run psql "$@"
 }
 
-ops-lt() {
+_ops-lt() {
     local project="$(ops project name)"
 
     echo "$project.$OPS_DOMAIN"
@@ -414,64 +421,42 @@ ops-sync() {
 
     (
 
-    OPS_PROJECT_NAME="$(ops project name)"
+    if [[ -z "$OPS_PROJECT_NAME" ]]; then
+        echo "sync must be run from a project directory"
+    fi
 
     cd "$OPS_SITES_DIR/$OPS_PROJECT_NAME"
-    source ".env"
-
-    OPS_PROJECT_DB_TYPE="${OPS_PROJECT_DB_TYPE}"
-    OPS_PROJECT_DB_NAME="${OPS_PROJECT_DB_NAME-$OPS_PROJECT_NAME}"
-
-    OPS_PROJECT_SYNC_DIRS="${OPS_PROJECT_SYNC_DIRS}"
-    OPS_PROJECT_SYNC_NODB="${OPS_PROJECT_SYNC_NODB-0}"
-    OPS_PROJECT_SYNC_EXCLUDES="${OPS_PROJECT_SYNC_EXCLUDES}"
-    OPS_PROJECT_SYNC_MAXSIZE="${OPS_PROJECT_SYNC_MAXSIZE:-500M}"
-
-    OPS_PROJECT_REMOTE_USER="${OPS_PROJECT_REMOTE_USER}"
-    OPS_PROJECT_REMOTE_HOST="${OPS_PROJECT_REMOTE_HOST-$OPS_PROJECT_NAME}"
-    OPS_PROJECT_REMOTE_PATH="${OPS_PROJECT_REMOTE_PATH}"
-    OPS_PROJECT_REMOTE_DB_HOST="${OPS_PROJECT_REMOTE_DB_HOST:-127.0.0.1}"
-    OPS_PROJECT_REMOTE_DB_TYPE="${OPS_PROJECT_DB_TYPE-$OPS_PROJECT_DB_TYPE}"
-    OPS_PROJECT_REMOTE_DB_NAME="${OPS_PROJECT_REMOTE_DB_NAME-$OPS_PROJECT_DB_NAME}"
-    OPS_PROJECT_REMOTE_DB_USER="${OPS_PROJECT_REMOTE_DB_USER-$OPS_PROJECT_REMOTE_USER}"
-    OPS_PROJECT_REMOTE_DB_PASSWORD="${OPS_PROJECT_REMOTE_DB_PASSWORD}"
-    OPS_PROJECT_REMOTE_DB_PORT="${OPS_PROJECT_REMOTE_DB_PORT}"
+        #source ".env"
 
     # best debugging helper
     # ( set -o posix ; set ) | grep -E '^OPS_'
 
     local ssh_host="$([[ ! -z $OPS_PROJECT_REMOTE_USER ]] && echo "$OPS_PROJECT_REMOTE_USER@")"
     local ssh_host="$ssh_host$OPS_PROJECT_REMOTE_HOST"
-    local timestamp="$(date '+%Y%m%d')"
-    local dumpfile="$OPS_PROJECT_NAME-$timestamp.sql"
 
     # sync database
-
     if \
         [[ $OPS_PROJECT_SYNC_NODB == 0 ]] && \
         [[ ! -z "$OPS_PROJECT_DB_NAME" ]] && \
         [[ ! -z "$OPS_PROJECT_DB_TYPE" ]] && \
         [[ ! -z "$OPS_PROJECT_REMOTE_DB_TYPE" ]] && \
-        [[ ! -z "$OPS_PROJECT_REMOTE_DB_HOST" ]] && \
-        [[ ! -z "$OPS_PROJECT_REMOTE_DB_NAME" ]] && \
-        [[ ! -z "$OPS_PROJECT_REMOTE_DB_USER" ]]
+        [[ ! -z "$OPS_PROJECT_REMOTE_DB_NAME" ]]
     then
         if [[ "$OPS_PROJECT_REMOTE_DB_TYPE" = "mariadb" ]]; then
-            echo "Syncing remote mariadb database '$OPS_PROJECT_REMOTE_DB_NAME' to $dumpfile"
-
-            OPS_PROJECT_REMOTE_DB_PORT="${OPS_PROJECT_REMOTE_DB_PORT:-"3306"}"
+            echo "Syncing remote mariadb '$OPS_PROJECT_REMOTE_DB_NAME' to local '$OPS_PROJECT_DB_NAME'"
 
             local mysqldump_password="$([[ ! -z $OPS_PROJECT_REMOTE_DB_PASSWORD ]] && echo "-p$OPS_PROJECT_REMOTE_DB_PASSWORD")"
+            local mysqldump_host="$([[ ! -z $OPS_PROJECT_REMOTE_DB_HOST ]] && echo "-h $OPS_PROJECT_REMOTE_DB_HOST")"
+            local mysqldump_port="$([[ ! -z $OPS_PROJECT_REMOTE_DB_PORT ]] && echo "-P $OPS_PROJECT_REMOTE_DB_PORT")"
+            local mysqldump_user="$([[ ! -z $OPS_PROJECT_REMOTE_DB_USER ]] && echo "-u $OPS_PROJECT_REMOTE_DB_USER")"
 
-            ssh -TC "$ssh_host" "mysqldump --single-transaction \
-                -P $OPS_PROJECT_REMOTE_DB_PORT \
-                -h $OPS_PROJECT_REMOTE_DB_HOST \
-                -u $OPS_PROJECT_REMOTE_DB_USER \
+            ssh -C "$ssh_host" "mysqldump --single-transaction \
+                $mysqldump_port \
+                $mysqldump_host \
+                $mysqldump_user \
                 $mysqldump_password \
-                $OPS_PROJECT_REMOTE_DB_NAME" > $dumpfile
-
-            echo "Importing $dumpfile to '$OPS_PROJECT_DB_NAME' mariadb database"
-            mariadb-import "$OPS_PROJECT_DB_NAME" $dumpfile
+                $OPS_PROJECT_REMOTE_DB_NAME" 2>/dev/null | \
+                    mariadb-import "$OPS_PROJECT_DB_NAME"
 
         elif [[ "$OPS_PROJECT_REMOTE_DB_TYPE" = "pgsql" ]]; then
             echo "Syncing remote pgsql database '$OPS_PROJECT_REMOTE_DB_NAME' to $dumpfile"
@@ -498,7 +483,7 @@ ops-sync() {
             # sync entire dir structure first
             rsync -a -f"+ */" -f"- *" \
                 "$ssh_host:$OPS_PROJECT_REMOTE_PATH/$sync_dir/" \
-                "$sync_dir"
+                "$sync_dir" 2>/dev/null
 
             echo -e "Syncing files..."
 
@@ -507,7 +492,7 @@ ops-sync() {
                 rsync -a --exclude-from=- \
                     --max-size=$OPS_PROJECT_SYNC_MAXSIZE \
                     "$ssh_host:$OPS_PROJECT_REMOTE_PATH/$sync_dir/" \
-                    "$sync_dir")
+                    "$sync_dir" 2>/dev/null)
         done
     fi
 
@@ -558,6 +543,7 @@ _ops-yarn() {
 
 project-docker-compose() {
     local project_name=$(project-name)
+
     OPS_PROJECT_NAME="$project_name" \
     COMPOSE_PROJECT_NAME="ops-$project_name" \
     COMPOSE_FILE="$OPS_PROJECT_COMPOSE_FILE" \
@@ -808,10 +794,12 @@ system-refresh-services() {
 }
 
 system-start() {
-    # removing apache is a hacky mod_lua crash fix. this issue seems to happen
-    # when containers are left running on a restart with docker for mac. if not
-    # remedied, the apache container refuses to start up again.
-    system-docker-compose rm -fs apache &> /dev/null
+    # Temporary hack to fix weird apache/mod_lua state issue. This seems to happen intermittently
+    # with Docker for Mac when containers are left running during a sleep/wakeup If not
+    # remedied, the apache containers refuses to start up again.
+    system-docker-compose rm -fs apache-php56 &> /dev/null
+    system-docker-compose rm -fs apache-php71 &> /dev/null
+    system-docker-compose rm -fs apache-php72 &> /dev/null
 
     system-docker-compose up -d --remove-orphans
 }
@@ -893,9 +881,9 @@ fi
 # options that can be overridden by global config
 
 declare -rx OPS_ENV="dev"
-declare -rx OPS_DOCKER_UTILS_IMAGE=${OPS_DOCKER_UTILS_IMAGE-"ops-utils:$OPS_VERSION"}
 declare -rx OPS_DOCKER_COMPOSER_IMAGE=${OPS_DOCKER_COMPOSER_IMAGE-"imarcagency/ops-php71:latest"}
-declare -rx OPS_DOCKER_NODE_IMAGE=${OPS_DOCKER_NODE_IMAGE-"node:8.9.4"}
+declare -rx OPS_DOCKER_NODE_IMAGE=${OPS_DOCKER_NODE_IMAGE-"imarcagency/ops-node:$OPS_VERSION"}
+declare -rx OPS_DOCKER_UTILS_IMAGE=${OPS_DOCKER_UTILS_IMAGE-"imarcagency/ops-utils:$OPS_VERSION"}
 declare -rx OPS_DOCKER_GID=${OPS_DOCKER_GID-""}
 declare -rx OPS_DOCKER_UID=${OPS_DOCKER_UID-""}
 declare -rx OPS_DOMAIN=${OPS_DOMAIN-"imarc.io"}
@@ -908,37 +896,52 @@ declare -rx OPS_ACME_PRODUCTION=${OPS_ACME_PRODUCTION-"0"}
 declare -rx OPS_ADMIN_AUTH=${OPS_ADMIN_AUTH-""}
 declare -rx OPS_DEFAULT_BACKEND=${OPS_DEFAULT_BACKEND-"apache-php71"}
 declare -rx OPS_DEFAULT_DOCROOT=${OPS_DEFAULT_DOCROOT-"public"}
-
 declare -rx OPS_DASHBOARD_URL="https://ops.${OPS_DOMAIN}"
+declare -rx OPS_MKCERT_VERSION="1.1.2"
 
 OPS_ACME_CA_SERVER="https://acme-staging-v02.api.letsencrypt.org/directory"
 if [[ $OPS_ACME_PRODUCTION == 1 ]]; then
     OPS_ACME_CA_SERVER="https://acme-v02.api.letsencrypt.org/directory"
 fi
-
 declare -rx OPS_ACME_CA_SERVER
 
 # options that can be overridden by a project
-OPS_PROJECT_BACKEND="${OPS_DEFAULT_BACKEND}"
-OPS_PROJECT_DOCROOT="${OPS_DEFAULT_DOCROOT}"
-OPS_PROJECT_COMPOSE_FILE=${OPS_PROJECT_COMPOSE_FILE-"ops-compose.yml"}
-OPS_PROJECT_TEMPLATE=${OPS_PROJECT_TEMPLATE-""}
-OPS_SHELL_COMMAND=${OPS_SHELL_COMMAND-"bash"}
+
+declare -x OPS_PROJECT_NAME="$(project-name)"
+declare -x OPS_PROJECT_BACKEND="${OPS_DEFAULT_BACKEND}"
+declare -x OPS_PROJECT_DOCROOT="${OPS_DEFAULT_DOCROOT}"
 
 # load project config
 
-project_name="$(project-name)"
-
-if [[ -f "$OPS_SITES_DIR/$project_name/.env" ]]; then
-    source "$OPS_SITES_DIR/$project_name/.env"
+if [[ -f "$OPS_SITES_DIR/$OPS_PROJECT_NAME/.env" ]]; then
+    source "$OPS_SITES_DIR/$OPS_PROJECT_NAME/.env"
 fi
 
-OPS_SHELL_BACKEND=${OPS_SHELL_BACKEND-$OPS_PROJECT_BACKEND}
+declare -x OPS_PROJECT_COMPOSE_FILE=${OPS_PROJECT_COMPOSE_FILE-"ops-compose.yml"}
+declare -x OPS_PROJECT_TEMPLATE=${OPS_PROJECT_TEMPLATE-""}
+declare -x OPS_PROJECT_DB_TYPE="${OPS_PROJECT_DB_TYPE}"
+declare -x OPS_PROJECT_DB_NAME="${OPS_PROJECT_DB_NAME-$OPS_PROJECT_NAME}"
+declare -x OPS_PROJECT_SYNC_DIRS="${OPS_PROJECT_SYNC_DIRS}"
+declare -x OPS_PROJECT_SYNC_NODB="${OPS_PROJECT_SYNC_NODB-0}"
+declare -x OPS_PROJECT_SYNC_EXCLUDES="${OPS_PROJECT_SYNC_EXCLUDES}"
+declare -x OPS_PROJECT_SYNC_MAXSIZE="${OPS_PROJECT_SYNC_MAXSIZE:-500M}"
+declare -x OPS_PROJECT_REMOTE_USER="${OPS_PROJECT_REMOTE_USER}"
+declare -x OPS_PROJECT_REMOTE_HOST="${OPS_PROJECT_REMOTE_HOST}"
+declare -x OPS_PROJECT_REMOTE_PATH="${OPS_PROJECT_REMOTE_PATH}"
+declare -x OPS_PROJECT_REMOTE_DB_HOST="${OPS_PROJECT_REMOTE_DB_HOST}"
+declare -x OPS_PROJECT_REMOTE_DB_TYPE="${OPS_PROJECT_DB_TYPE}"
+declare -x OPS_PROJECT_REMOTE_DB_NAME="${OPS_PROJECT_REMOTE_DB_NAME}"
+declare -x OPS_PROJECT_REMOTE_DB_USER="${OPS_PROJECT_REMOTE_DB_USER}"
+declare -x OPS_PROJECT_REMOTE_DB_PASSWORD="${OPS_PROJECT_REMOTE_DB_PASSWORD}"
+declare -x OPS_PROJECT_REMOTE_DB_PORT="${OPS_PROJECT_REMOTE_DB_PORT}"
+declare -x OPS_SHELL_BACKEND=${OPS_SHELL_BACKEND-$OPS_PROJECT_BACKEND}
+declare -x OPS_SHELL_COMMAND=${OPS_SHELL_COMMAND-"bash"}
 
 # load custom commands
 
-if [[ -f "$OPS_SITES_DIR/$project_name/ops-commands.sh" ]]; then
-    source "$OPS_SITES_DIR/$project_name/ops-commands.sh"
+if [[ -f "$OPS_SITES_DIR/$OPS_PROJECT_NAME/ops-commands.sh" ]]; then
+    source "$OPS_SITES_DIR/$OPS_PROJECT_NAME/ops-commands.sh"
 fi
 
 main "$@"
+

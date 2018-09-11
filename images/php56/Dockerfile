@@ -1,5 +1,6 @@
 FROM php:5.6.37-apache-stretch
 
+MAINTAINER Imarc <info@imarc.com>
 # install supporting packages
 RUN apt-get update && apt-get install -y --fix-missing \
     autoconf \
