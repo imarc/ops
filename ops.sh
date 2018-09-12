@@ -813,40 +813,6 @@ system-help() {
     echo
 }
 
-
-# Project Creation
-
-_ops-init() {
-    cmd-run init "$@"
-}
-
-init-help() {
-    cmd-help "ops init" init
-    echo
-
-}
-
-init-craft2() {
-    local folder=$1
-    local domain=${2-"$1.$OPS_DOMAIN"}
-
-    echo 'Installing Craft'
-
-    ops composer create-project imarc/padstone $folder
-
-}
-init-craft3() {
-    local folder=$1
-
-    echo 'Installing Craft 3'
-    composer create-project craftcms/craft $folder
-
-}
-
-init-laravel() {
-    echo
-}
-
 main() {
     docker ps > /dev/null
 
@@ -944,4 +910,3 @@ if [[ -f "$OPS_SITES_DIR/$OPS_PROJECT_NAME/ops-commands.sh" ]]; then
 fi
 
 main "$@"
-
