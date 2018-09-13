@@ -66,10 +66,8 @@ validate-config() {
         errors+=("OPS_DOMAIN config is not set")
     fi
 
-
     if [[ -n $errors ]]; then
-        echo
-        echo "Whoops! The following items need to be addressed:"
+        echo "The following items need to be addressed:"
         echo
         printf "%s\n" "${errors}"
         echo
@@ -80,6 +78,10 @@ validate-config() {
 version-greater-than() {
     # version-greater-than v1 v2
     test "$(printf '%s\n' "$@" | sort -V | head -n 1)" != "$1";
+}
+
+get-version() {
+    awk 'match($0, /([0-9][0-9\.a-z-]+)/) { print substr($0, RSTART, RLENGTH) }'
 }
 
 # Main Commands
@@ -126,7 +128,7 @@ ops-help() {
 }
 
 ops-logs() {
-    system-docker-compose logs -f "$@"
+    system-docker-compose logs -f --tail="30" "$@"
 }
 
 _ops-mc() {
@@ -642,6 +644,49 @@ system-shell-exec() {
     ops docker exec -it $id "$@"
 }
 
+system-check() {
+    echo -n "docker: "
+    if [[ -z $(which docker) ]]; then
+        echo "not found"
+    elif ! version-greater-than $(docker --version | get-version) $OPS_DOCKER_VERSION; then
+        echo "version must be at least 18.00.0"
+    else
+        echo "found"
+    fi
+
+    echo -n "docker-compose: "
+    if [[ -z $(which docker-compose) ]]; then
+        echo "not found"
+    elif ! version-greater-than $(docker-compose --version | get-version) $OPS_DOCKER_COMPOSE_VERSION; then
+        echo "version must be at least 1.22.0"
+    else
+        echo "found"
+    fi
+
+    echo -n "rsync: "
+    if [[ -z $(which rsync) ]]; then
+        echo "not found"
+    else
+        echo "found"
+    fi
+
+    echo -n "ssh: "
+    if [[ -z $(which ssh) ]]; then
+        echo "not found"
+    else
+        echo "found"
+    fi
+
+    if [[ "$OS" == linux ]]; then
+        echo -n "certutil: "
+        if [[ -z $(which certutil) ]]; then
+            echo "not found"
+        else
+            echo "found"
+        fi
+    fi
+}
+
 system-config() {
     #
     # list: config
@@ -852,6 +897,8 @@ declare -rx OPS_DOCKER_NODE_IMAGE=${OPS_DOCKER_NODE_IMAGE-"imarcagency/ops-node:
 declare -rx OPS_DOCKER_UTILS_IMAGE=${OPS_DOCKER_UTILS_IMAGE-"imarcagency/ops-utils:$OPS_VERSION"}
 declare -rx OPS_DOCKER_GID=${OPS_DOCKER_GID-""}
 declare -rx OPS_DOCKER_UID=${OPS_DOCKER_UID-""}
+declare -rx OPS_DOCKER_VERSION="18"
+declare -rx OPS_DOCKER_COMPOSE_VERSION="1.22"
 declare -rx OPS_DOMAIN=${OPS_DOMAIN-"imarc.io"}
 declare -rx OPS_MINIO_ACCESS_KEY=${OPS_MINIO_ACCESS_KEY-"minio-access"}
 declare -rx OPS_MINIO_SECRET_KEY=${OPS_MINIO_SECRET_KEY-"minio-secret"}

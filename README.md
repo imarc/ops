@@ -11,19 +11,34 @@
 
 ## Prerequisites
 
-Ops supports Linux, Mac, and Windows Subshell Linux (WSL)
+Ops supports Linux, Mac, and *almost supports* Windows Subshell Linux (WSL)
 
-`bash`, `npm`, `docker`, and `docker-compose` are required.
+`bash`, `npm`, `docker`, `docker-compose`, `ssh`, and `rsync` are required.
 
-`ssh` and `rsync` are highly recommended.
+On linux `certutil` is required.
 
 ### Linux Installation Instructions
 
 - [Install Docker CE](https://docs.docker.com/engine/installation/linux/)
 
+Install `certutil`
+
+    # Ubuntu/Debian
+    sudo apt install libnss3-tools
+
+    # CentOS/Redhat
+    sudo yum install nss-tools
+
+    # Arch
+    sudo pacman -S nss
+
 ### Mac Installation Instructions
 
 - [Install Docker for Mac](https://docs.docker.com/docker-for-mac/install/)
+
+If you use Firefox, you should install `nss`.
+
+    brew install nss
 
 ### Windows Subshell for Linux
 
@@ -51,12 +66,13 @@ Update/Upgrade ops:
 
 ## Create Your First Project
 
-
 To start ops services, run `ops start`
 
 To add a new project, create a directory within $HOME/Sites. Your local project will then be available at `https://{directory}.imarc.io`.
 
-The project directory name can only contain letters, numbers, and dashes ([A-Za-z0-9-]+). If one of the following directories is found within a project, it will be used as the document root: `public`, `web`, `public_html`, `htdocs`, or `docroot`.
+The project directory name can only contain letters, numbers, and dashes ([A-Za-z0-9-]+).
+
+By default the document root is set to a `public` directory within your project.
 
 To stop ops, run `ops stop`
 
@@ -64,17 +80,20 @@ To stop ops, run `ops stop`
 
 The dashboard ([https://ops.imarc.io](https://ops.imarc.io)) will show you all projects and let you manage services.
 
-## Different PHP versions
+## Project Configuration
 
-Sites at the base ops domain (`https://{directory}.imarc.io`) currently run **PHP 7.1**
+Within your project's .env file you can set the following options:
 
-Explicitly use different PHP versions with the following urls:
+    # set the application backend
+    # values: apache-php56, apache-php71, apache-php72
+    # default: apache-php71
+    OPS_PROJECT_BACKEND="apache-php71"
 
-- **PHP 5.6** `https://{directory}.php56.imarc.io`
-- **PHP 7.1** `https://{directory}.php71.imarc.io`
-- **PHP 7.2** `https://{directory}.php72.imarc.io`
+    # set the project document root
+    # default: public
+    #OPS_PROJECT_DOCROOT="public"
 
-## The Services
+## Connect to Services
 
 You can connect your app to the following shared services:
 
