@@ -116,12 +116,6 @@ secret key: minio-secret<br>
 hostname: mailhog<br>
 port: 1025
 
-## External Dependencies
-
-Out of the box, the main/shared PHP container relies on the imarcagency/php-apache image.
-
-This is a separate project and can be viewed on [Github](https://github.com/imarc/docker-php-apache) or [Docker Hub](https://hub.docker.com/r/imarcagency/php-apache/)
-
 ## Remote to Local Syncing
 
 With a few settings in a project's `.env` file, you can sync the project's database and filesystem storage
@@ -130,10 +124,7 @@ from a remote server. Ideally, these settings should be checked into version con
 Currently `ops sync` assumes the following:
 
 - SSH access is enabled to the remote web and/or DB servers
-- DB servers make their tools available to the SSH user: mysqldump, pg_dump, etc.
-- the DB user has passwordless access to databases from localhost
-
-**Pro-tip:** If you are brave, there is an undocumented way to completely overload the sync command for a custom setup.
+- remote server has the following database tools available to the SSH user: mysqldump, pg_dump.
 
 The following settings can be placed in the project's `.env`
 

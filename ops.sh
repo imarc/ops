@@ -767,7 +767,7 @@ system-install-mkcert() {
     fi
 
     echo "Downloading mkcert v$OPS_MKCERT_VERSION"
-    wget --quiet -O $OPS_HOME/bin/mkcert-$OPS_MKCERT_VERSION $MKCERT_URL
+    curl $MKCERT_URL > $OPS_HOME/bin/mkcert-$OPS_MKCERT_VERSION 2>/dev/null
     chmod 744 $OPS_HOME/bin/mkcert-$OPS_MKCERT_VERSION
 }
 
@@ -890,26 +890,26 @@ fi
 
 # options that can be overridden by global config
 
-declare -rx OPS_ENV="dev"
-declare -rx OPS_DOCKER_COMPOSER_IMAGE=${OPS_DOCKER_COMPOSER_IMAGE-"imarcagency/ops-php71:latest"}
-declare -rx OPS_DOCKER_NODE_IMAGE=${OPS_DOCKER_NODE_IMAGE-"imarcagency/ops-node:$OPS_VERSION"}
-declare -rx OPS_DOCKER_UTILS_IMAGE=${OPS_DOCKER_UTILS_IMAGE-"imarcagency/ops-utils:$OPS_VERSION"}
-declare -rx OPS_DOCKER_GID=${OPS_DOCKER_GID-""}
-declare -rx OPS_DOCKER_UID=${OPS_DOCKER_UID-""}
-declare -rx OPS_DOCKER_VERSION="18"
-declare -rx OPS_DOCKER_COMPOSE_VERSION="1.22"
-declare -rx OPS_DOMAIN=${OPS_DOMAIN-"imarc.io"}
-declare -rx OPS_MINIO_ACCESS_KEY=${OPS_MINIO_ACCESS_KEY-"minio-access"}
-declare -rx OPS_MINIO_SECRET_KEY=${OPS_MINIO_SECRET_KEY-"minio-secret"}
-declare -rx OPS_SITES_DIR=${OPS_SITES_DIR-"$HOME/Sites"}
-declare -rx OPS_ACME_EMAIL=${OPS_ACME_EMAIL-""}
-declare -rx OPS_ACME_DNS_PROVIDER=${OPS_ACME_DNS_PROVIDER-""}
-declare -rx OPS_ACME_PRODUCTION=${OPS_ACME_PRODUCTION-"0"}
-declare -rx OPS_ADMIN_AUTH=${OPS_ADMIN_AUTH-""}
-declare -rx OPS_DEFAULT_BACKEND=${OPS_DEFAULT_BACKEND-"apache-php71"}
-declare -rx OPS_DEFAULT_DOCROOT=${OPS_DEFAULT_DOCROOT-"public"}
-declare -rx OPS_DASHBOARD_URL="https://ops.${OPS_DOMAIN}"
-declare -rx OPS_MKCERT_VERSION="1.1.2"
+declare -x OPS_ENV="dev"
+declare -x OPS_DOCKER_COMPOSER_IMAGE=${OPS_DOCKER_COMPOSER_IMAGE-"imarcagency/ops-php71:latest"}
+declare -x OPS_DOCKER_NODE_IMAGE=${OPS_DOCKER_NODE_IMAGE-"imarcagency/ops-node:$OPS_VERSION"}
+declare -x OPS_DOCKER_UTILS_IMAGE=${OPS_DOCKER_UTILS_IMAGE-"imarcagency/ops-utils:$OPS_VERSION"}
+declare -x OPS_DOCKER_GID=${OPS_DOCKER_GID-""}
+declare -x OPS_DOCKER_UID=${OPS_DOCKER_UID-""}
+declare -x OPS_DOCKER_VERSION="18"
+declare -x OPS_DOCKER_COMPOSE_VERSION="1.22"
+declare -x OPS_DOMAIN=${OPS_DOMAIN-"imarc.io"}
+declare -x OPS_MINIO_ACCESS_KEY=${OPS_MINIO_ACCESS_KEY-"minio-access"}
+declare -x OPS_MINIO_SECRET_KEY=${OPS_MINIO_SECRET_KEY-"minio-secret"}
+declare -x OPS_SITES_DIR=${OPS_SITES_DIR-"$HOME/Sites"}
+declare -x OPS_ACME_EMAIL=${OPS_ACME_EMAIL-""}
+declare -x OPS_ACME_DNS_PROVIDER=${OPS_ACME_DNS_PROVIDER-""}
+declare -x OPS_ACME_PRODUCTION=${OPS_ACME_PRODUCTION-"0"}
+declare -x OPS_ADMIN_AUTH=${OPS_ADMIN_AUTH-""}
+declare -x OPS_DEFAULT_BACKEND=${OPS_DEFAULT_BACKEND-"apache-php71"}
+declare -x OPS_DEFAULT_DOCROOT=${OPS_DEFAULT_DOCROOT-"public"}
+declare -x OPS_DASHBOARD_URL="https://ops.${OPS_DOMAIN}"
+declare -x OPS_MKCERT_VERSION="1.1.2"
 
 OPS_ACME_CA_SERVER="https://acme-staging-v02.api.letsencrypt.org/directory"
 if [[ $OPS_ACME_PRODUCTION == 1 ]]; then
