@@ -927,6 +927,8 @@ if [[ -f "$OPS_SITES_DIR/$OPS_PROJECT_NAME/.env" ]]; then
     source "$OPS_SITES_DIR/$OPS_PROJECT_NAME/.env"
 fi
 
+declare -x OPS_PROJECT_BASIC_AUTH=""
+declare -x OPS_PROJECT_BASIC_AUTH_FILE=".htpasswd"
 declare -x OPS_PROJECT_COMPOSE_FILE=${OPS_PROJECT_COMPOSE_FILE-"ops-compose.yml"}
 declare -x OPS_PROJECT_TEMPLATE=${OPS_PROJECT_TEMPLATE-""}
 declare -x OPS_PROJECT_DB_TYPE="${OPS_PROJECT_DB_TYPE}"

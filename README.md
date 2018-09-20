@@ -34,35 +34,24 @@ Install `certutil`
 
 ### Mac Installation Instructions
 
-- [Install Docker for Mac](https://docs.docker.com/docker-for-mac/install/)
+- [Install Docker Desktop](https://docs.docker.com/docker-for-mac/install/)
 
-If you use Firefox, you should install `nss`.
+If you use Firefox, you should install `nss` with homebrew.
 
     brew install nss
 
 ### Windows Subshell for Linux
 
-- [Install Docker for Windows](https://docs.docker.com/docker-for-windows/install/)
+- [Install Docker Desktop](https://docs.docker.com/docker-for-windows/install/)
 - [Install Docker Client](https://medium.com/@sebagomez/installing-the-docker-client-on-ubuntus-windows-subsystem-for-linux-612b392a44c4)
 
 ## How To Install
 
-Install ops:
+Install/Update ops:
 
     npm install -g git+ssh://git@gitlab.imarc.net:imarc/ops.git
 
-    # Then run the following.
-    # You will be asked your password in order to trust the generated self-signed certs for HTTPS support
-    ops system install
-
-Update/Upgrade ops:
-
-    npm update -g git+ssh://git@gitlab.imarc.net:imarc/ops.git
-
-    # Then run the following.
-    # You will be asked your password in order to trust the generated self-signed certs for HTTPS support
-    ops system update
-
+ **On first install, You will be asked for your sudo/system password in order to install the self-signed certs for HTTPS support**
 
 ## Create Your First Project
 
@@ -186,7 +175,7 @@ The following settings can be placed in the project's `.env`
 
     # the remote hostname for the database sync
     # default: the remote hostname for the filesystem sync
-    OPS_PROJECT_REMOTE_DB_HOST="${OPS_PROJECT_REMOTE_HOST}"
+    OPS_PROJECT_REMOTE_DB_HOST=""
 
     # the remote database type
     # default: the local database type
@@ -239,7 +228,7 @@ Here is a generic ops-compose.yml file:
 
     services:
       craft:
-        image: imarcagency/php-apache:2
+        image: imarcagency/ops-apache-php72:${OPS_VERSION}
 
         labels:
           - "ops.project=${OPS_PROJECT_NAME}"
@@ -268,8 +257,6 @@ Here is a generic ops-compose.yml file:
 The most important things are the labels and the networks.
 Those settings are required for the proxy to function or for your app to conenct to shared services.
 Everything else can be customized to whatever your app requires.
-
-See all the variables that get injected into this file [here](https://gitlab.imarc.net/imarc/ops/blob/master/ops.sh#L337)
 
 ## Contributing
 
