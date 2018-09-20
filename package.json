@@ -1,8 +1,12 @@
 {
-  "name": "ops-cli",
-  "version": "0.7.8",
+  "name": "@imarc/ops",
+  "version": "0.8.0",
+  "private": true,
   "bin": {
     "ops": "./ops.sh"
   },
-  "private": true
+  "scripts": {
+    "version": "bash build.sh",
+    "postinstall": "bash ops.sh system install"
+  }
 }

@@ -1,5 +1,5 @@
 defaultEntryPoints = ["https","http"]
-logLevel = "DEBUG"
+logLevel = "INFO"
 
 [entryPoints]
   [entryPoints.http]
@@ -12,19 +12,11 @@ logLevel = "DEBUG"
 
 [retry]
 
-[web]
-readOnly = true
-users = ["admin:$apr1$vtw10abf$o.4QTNi9t2qXOV6GazY3U."]
-
 [docker]
 endpoint = "unix:///var/run/docker.sock"
-domain = "jukebot.live"
 watch = true
 exposedbydefault = false
 
 [acme]
-email = "jeff.turcott@gmail.com"
 storage = "/etc/traefik/acme/acme.json"
 entryPoint = "https"
-onDemand = false
-OnHostRule = true

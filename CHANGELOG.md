@@ -5,6 +5,30 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/)
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.8.0] - 2018-09-19
+
+### Removed
+- PHP Version URLs. Use `OPS_PROJECT_BACKEND` dotenv var
+- `OPS_PROJECT_PHP_VERSION` dotenv var
+- Custom self signed cert generator
+
+### Added
+- "Remote" mode with Let's Encypt DNS challenge support
+- nginx/openresty proxy for reading dotenv
+- `OPS_DEFAULT_DOCROOT` global config option
+- `OPS_DEFAULT_BACKEND` global config option
+- `OPS_ADMIN_AUTH` global config option for remote mode
+- `OPS_PROJECT_BACKEND` project config option
+- `OPS_PROJECT_DOCROOT` project config option
+- `OPS_PROJECT_BASIC_AUTH` project config option
+- `OPS_PROJECT_BASIC_AUTH_FILE` project config option
+- Version tracking through ~/.ops/VERSION file
+
+### Fixed
+- `mariadb import` and `psql import` STDIN handling
+- Big refactor of script variables
+- `ops sync` db vars now optional (host, name, port, pass)
+
 ## [0.7.5] - 2018-08-30
 
 ### Added
@@ -74,8 +98,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - `ops mariadb` is now `ops mariadb cli`
 - `ops mariadb-import` is now `ops mariadb import`
 - `ops mariadb-export` is now `ops mariadb export`
-
-
 
 ## [0.5.0] - 2018-05-24
 

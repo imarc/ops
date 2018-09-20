@@ -11,52 +11,57 @@
 
 ## Prerequisites
 
-Ops supports Linux, Mac, and Windows Subshell Linux (WSL)
+Ops supports Linux, Mac, and *almost supports* Windows Subshell Linux (WSL)
 
-`bash`, `npm`, `docker`, and `docker-compose` are required.
+`bash`, `npm`, `docker`, `docker-compose`, `ssh`, and `rsync` are required.
 
-`ssh` and `rsync` are highly recommended.
+On linux `certutil` is required.
 
 ### Linux Installation Instructions
 
 - [Install Docker CE](https://docs.docker.com/engine/installation/linux/)
 
+Install `certutil`
+
+    # Ubuntu/Debian
+    sudo apt install libnss3-tools
+
+    # CentOS/Redhat
+    sudo yum install nss-tools
+
+    # Arch
+    sudo pacman -S nss
+
 ### Mac Installation Instructions
 
-- [Install Docker for Mac](https://docs.docker.com/docker-for-mac/install/)
+- [Install Docker Desktop](https://docs.docker.com/docker-for-mac/install/)
+
+If you use Firefox, you should install `nss` with homebrew.
+
+    brew install nss
 
 ### Windows Subshell for Linux
 
-- [Install Docker for Windows](https://docs.docker.com/docker-for-windows/install/)
+- [Install Docker Desktop](https://docs.docker.com/docker-for-windows/install/)
 - [Install Docker Client](https://medium.com/@sebagomez/installing-the-docker-client-on-ubuntus-windows-subsystem-for-linux-612b392a44c4)
 
 ## How To Install
 
-Install ops:
+Install/Update ops:
 
     npm install -g git+ssh://git@gitlab.imarc.net:imarc/ops.git
 
-    # Then run the following.
-    # You will be asked your password in order to trust the generated self-signed certs for HTTPS support
-    ops system install
-
-Update/Upgrade ops:
-
-    npm update -g git+ssh://git@gitlab.imarc.net:imarc/ops.git
-
-    # Then run the following.
-    # You will be asked your password in order to trust the generated self-signed certs for HTTPS support
-    ops system update
-
+ **On first install, You will be asked for your sudo/system password in order to install the self-signed certs for HTTPS support**
 
 ## Create Your First Project
-
 
 To start ops services, run `ops start`
 
 To add a new project, create a directory within $HOME/Sites. Your local project will then be available at `https://{directory}.imarc.io`.
 
-The project directory name can only contain letters, numbers, and dashes ([A-Za-z0-9-]+). If one of the following directories is found within a project, it will be used as the document root: `public`, `web`, `public_html`, `htdocs`, or `docroot`.
+The project directory name can only contain letters, numbers, and dashes ([A-Za-z0-9-]+).
+
+By default the document root is set to a `public` directory within your project.
 
 To stop ops, run `ops stop`
 
@@ -64,17 +69,20 @@ To stop ops, run `ops stop`
 
 The dashboard ([https://ops.imarc.io](https://ops.imarc.io)) will show you all projects and let you manage services.
 
-## Different PHP versions
+## Project Configuration
 
-Sites at the base ops domain (`https://{directory}.imarc.io`) currently run **PHP 7.1**
+Within your project's .env file you can set the following options:
 
-Explicitly use different PHP versions with the following urls:
+    # set the application backend
+    # values: apache-php56, apache-php71, apache-php72
+    # default: apache-php71
+    OPS_PROJECT_BACKEND="apache-php71"
 
-- **PHP 5.6** `https://{directory}.php56.imarc.io`
-- **PHP 7.1** `https://{directory}.php71.imarc.io`
-- **PHP 7.2** `https://{directory}.php72.imarc.io`
+    # set the project document root
+    # default: public
+    #OPS_PROJECT_DOCROOT="public"
 
-## The Services
+## Connect to Services
 
 You can connect your app to the following shared services:
 
@@ -167,7 +175,7 @@ The following settings can be placed in the project's `.env`
 
     # the remote hostname for the database sync
     # default: the remote hostname for the filesystem sync
-    OPS_PROJECT_REMOTE_DB_HOST="${OPS_PROJECT_REMOTE_HOST}"
+    OPS_PROJECT_REMOTE_DB_HOST=""
 
     # the remote database type
     # default: the local database type
@@ -183,9 +191,9 @@ The following settings can be placed in the project's `.env`
 
     # the remote database password
     #
-    # !!! best practice is to not use this and place a .my.cnf file
-    # !!! in your remote home directory. that is more secure as it
-    # !!! won't leak your password in cli history or process lists
+    # !!! best practice is to not use this and instead place a .my.cnf file
+    # !!! in your remote home directory. that is more secure as it won't
+    # !!! leak your password in cli history or process lists
     #
     # default: none
     OPS_PROJECT_REMOTE_DB_PASSWORD=""
@@ -193,7 +201,6 @@ The following settings can be placed in the project's `.env`
     # the remote database port
     # default: 3306 for mariadb, 5432 for psql
     OPS_PROJECT_REMOTE_DB_PORT=""
-
 
 
 ## Custom Project Container
@@ -221,7 +228,7 @@ Here is a generic ops-compose.yml file:
 
     services:
       craft:
-        image: imarcagency/php-apache:2
+        image: imarcagency/ops-apache-php72:${OPS_VERSION}
 
         labels:
           - "ops.project=${OPS_PROJECT_NAME}"
@@ -250,8 +257,6 @@ Here is a generic ops-compose.yml file:
 The most important things are the labels and the networks.
 Those settings are required for the proxy to function or for your app to conenct to shared services.
 Everything else can be customized to whatever your app requires.
-
-See all the variables that get injected into this file [here](https://gitlab.imarc.net/imarc/ops/blob/master/ops.sh#L337)
 
 ## Contributing
 

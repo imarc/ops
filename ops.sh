@@ -1,7 +1,6 @@
 #!/bin/bash
 shopt -s extglob
 
-
 # Determine OS
 
 OS=""
@@ -25,56 +24,19 @@ fi
 
 # Find script dir (and resolve symlinks)
 
-OPS_WORKING_DIR=$(pwd)
+declare -rx OPS_WORKING_DIR=$(pwd)
 cd $(dirname $0)
 cd $(dirname $(ls -l $0 | awk '{print $NF}'))
-OPS_SCRIPT_DIR=$(pwd)
+declare -rx OPS_SCRIPT_DIR=$(pwd)
 cd $OPS_WORKING_DIR
 
-# get version from package.json
+# get version from VERSION file
 
-OPS_VERSION=$(cat $OPS_SCRIPT_DIR/package.json | awk '/"version":/ { gsub(/[",]/, ""); print $2 }')
+declare -rx OPS_VERSION=$(cat $OPS_SCRIPT_DIR/VERSION)
 
 # Include cmd helpers
 
 source $OPS_SCRIPT_DIR/cmd.sh
-
-# Load config
-
-if [[ -f '.env' ]]; then
-    source '.env'
-fi
-
-if [[ -f 'ops-commands.sh' ]]; then
-    source 'ops-commands.sh'
-fi
-
-# options that can't be overidden by a project
-
-OPS_HOME=${OPS_HOME-"$HOME/.ops"}
-OPS_DOCKER_UTILS_IMAGE="ops-utils:$OPS_VERSION"
-OPS_DOCKER_COMPOSER_IMAGE="imarcagency/ops-php71:latest"
-OPS_DOCKER_NODE_IMAGE="node:8.9.4"
-OPS_DOCKER_GID=""
-OPS_DOCKER_UID=""
-OPS_DOMAIN="imarc.io"
-OPS_MINIO_ACCESS_KEY="minio-access"
-OPS_MINIO_SECRET_KEY="minio-secret"
-OPS_SITES_DIR="$HOME/Sites"
-
-# options that can be overridden by a project
-OPS_PROJECT_PHP_VERSION=${OPS_PROJECT_PHP_VERSION-'php71'}
-OPS_PROJECT_COMPOSE_FILE=${OPS_PROJECT_COMPOSE_FILE-"ops-compose.yml"}
-OPS_PROJECT_TEMPLATE=${OPS_PROJECT_TEMPLATE-""}
-OPS_SHELL_COMMAND=${OPS_SHELL_COMMAND-"bash"}
-OPS_SHELL_SERVICE=${OPS_SHELL_SERVICE-"apache-$OPS_PROJECT_PHP_VERSION"}
-
-if [[ -f "$OPS_HOME/config" ]]; then
-    source $OPS_HOME/config
-fi
-
-# variables that can't be overriden at all
-OPS_DASHBOARD_URL="https://ops.${OPS_DOMAIN}"
 
 # Internal helpers
 
@@ -82,12 +44,18 @@ validate-config() {
     errors=()
 
     if [[ ! -d $OPS_HOME ]]; then
+        echo
         echo "Ops not installed. Please run: ops system install"
+        echo
         exit 1
     fi
 
     if [[ -z $OPS_SITES_DIR ]]; then
         errors+=("OPS_SITES_DIR config is not set")
+    fi
+
+    if [[ ! -d $OPS_SITES_DIR ]]; then
+        errors+=("OPS_SITES_DIR $OPS_SITES_DIR doesn't exist")
     fi
 
     if [[ -z $OPS_DOMAIN ]]; then
@@ -98,8 +66,25 @@ validate-config() {
         echo "The following items need to be addressed:"
         echo
         printf "%s\n" "${errors}"
+        echo
         exit 1
     fi
+
+
+    #if [[ -f $OPS_HOME/VERSION ]] && version-greater-than $OPS_VERSION $(cat $OPS_HOME/VERSION); then
+    #    echo "Ops needs to update"
+    #    system-install
+    #fi
+
+}
+
+version-greater-than() {
+    # version-greater-than v1 v2
+    test "$(printf '%s\n' "$@" | sort -V | head -n 1)" != "$1";
+}
+
+get-version() {
+    awk 'match($0, /([0-9][0-9\.a-z-]+)/) { print substr($0, RSTART, RLENGTH) }'
 }
 
 # Main Commands
@@ -146,7 +131,7 @@ ops-help() {
 }
 
 ops-logs() {
-    system-docker-compose logs -f "$@"
+    system-docker-compose logs -f --tail="30" "$@"
 }
 
 _ops-mc() {
@@ -192,10 +177,13 @@ mariadb-export() {
 
 mariadb-import() {
     local db="$1"
-    local sqlfile="$2"
+    local sqlfile=${2--}
 
-    ops-exec mariadb mysql -e "DROP DATABASE IF EXISTS $db"
-    ops-exec mariadb mysql -e "CREATE DATABASE $db"
+    (
+        # don't let these commands grab stdin
+        ops-exec mariadb mysql -e "DROP DATABASE IF EXISTS $db"
+        ops-exec mariadb mysql -e "CREATE DATABASE $db"
+    ) </dev/null
 
     cat "$sqlfile" | ops-exec mariadb mysql "$db"
 }
@@ -261,10 +249,13 @@ psql-export() {
 
 psql-import() {
     local db="$1"
-    local sqlfile="$2"
+    local sqlfile=${2--}
 
-    psql-cli -c "DROP DATABASE IF EXISTS $db"
-    psql-cli -c "CREATE DATABASE $db"
+    (
+        # don't let these commands grab stdin
+        ops-exec postgres psql -c "DROP DATABASE IF EXISTS $db"
+        ops-exec postgres psql -c "CREATE DATABASE $db"
+    ) </dev/null
 
     cat "$sqlfile" | ops-exec postgres psql -U postgres "$db"
 }
@@ -278,7 +269,7 @@ ops-psql() {
     cmd-run psql "$@"
 }
 
-ops-lt() {
+_ops-lt() {
     local project="$(ops project name)"
 
     echo "$project.$OPS_DOMAIN"
@@ -316,7 +307,7 @@ ops-restart() {
 }
 
 ops-shell() {
-    local id=$(system-docker-compose ps -q $OPS_SHELL_SERVICE)
+    local id=$(system-docker-compose ps -q $OPS_SHELL_BACKEND)
     local project=$(project-name)
 
     [[ -z $id ]] && exit
@@ -379,7 +370,7 @@ ops-start() {
         if [[ $2 != 'ops' ]] && [[ -e "$OPS_SITES_DIR/$2" ]]; then
             (
                 cd $OPS_SITES_DIR/$2
-                ops project start
+                project-start
             )
         fi
     done
@@ -392,7 +383,7 @@ ops-start() {
 ops-stop() {
     system-stop
 
-    local info=$(docker ps -a --format '{{.ID}} {{.Label "ops.project"}}' --filter="label=ops.project")
+    local info=$(ops docker ps -a --format '{{.ID}} {{.Label "ops.project"}}' --filter="label=ops.project")
 
     IFS=$'\n'
     for container in $info; do
@@ -435,64 +426,42 @@ ops-sync() {
 
     (
 
-    OPS_PROJECT_NAME="$(ops project name)"
+    if [[ -z "$OPS_PROJECT_NAME" ]]; then
+        echo "sync must be run from a project directory"
+    fi
 
     cd "$OPS_SITES_DIR/$OPS_PROJECT_NAME"
-    source ".env"
-
-    OPS_PROJECT_DB_TYPE="${OPS_PROJECT_DB_TYPE}"
-    OPS_PROJECT_DB_NAME="${OPS_PROJECT_DB_NAME-$OPS_PROJECT_NAME}"
-
-    OPS_PROJECT_SYNC_DIRS="${OPS_PROJECT_SYNC_DIRS}"
-    OPS_PROJECT_SYNC_NODB="${OPS_PROJECT_SYNC_NODB-0}"
-    OPS_PROJECT_SYNC_EXCLUDES="${OPS_PROJECT_SYNC_EXCLUDES}"
-    OPS_PROJECT_SYNC_MAXSIZE="${OPS_PROJECT_SYNC_MAXSIZE:-500M}"
-
-    OPS_PROJECT_REMOTE_USER="${OPS_PROJECT_REMOTE_USER}"
-    OPS_PROJECT_REMOTE_HOST="${OPS_PROJECT_REMOTE_HOST-$OPS_PROJECT_NAME}"
-    OPS_PROJECT_REMOTE_PATH="${OPS_PROJECT_REMOTE_PATH}"
-    OPS_PROJECT_REMOTE_DB_HOST="${OPS_PROJECT_REMOTE_DB_HOST:-127.0.0.1}"
-    OPS_PROJECT_REMOTE_DB_TYPE="${OPS_PROJECT_DB_TYPE-$OPS_PROJECT_DB_TYPE}"
-    OPS_PROJECT_REMOTE_DB_NAME="${OPS_PROJECT_REMOTE_DB_NAME-$OPS_PROJECT_DB_NAME}"
-    OPS_PROJECT_REMOTE_DB_USER="${OPS_PROJECT_REMOTE_DB_USER-$OPS_PROJECT_REMOTE_USER}"
-    OPS_PROJECT_REMOTE_DB_PASSWORD="${OPS_PROJECT_REMOTE_DB_PASSWORD}"
-    OPS_PROJECT_REMOTE_DB_PORT="${OPS_PROJECT_REMOTE_DB_PORT}"
+        #source ".env"
 
     # best debugging helper
     # ( set -o posix ; set ) | grep -E '^OPS_'
 
     local ssh_host="$([[ ! -z $OPS_PROJECT_REMOTE_USER ]] && echo "$OPS_PROJECT_REMOTE_USER@")"
     local ssh_host="$ssh_host$OPS_PROJECT_REMOTE_HOST"
-    local timestamp="$(date '+%Y%m%d')"
-    local dumpfile="$OPS_PROJECT_NAME-$timestamp.sql"
 
     # sync database
-
     if \
         [[ $OPS_PROJECT_SYNC_NODB == 0 ]] && \
         [[ ! -z "$OPS_PROJECT_DB_NAME" ]] && \
         [[ ! -z "$OPS_PROJECT_DB_TYPE" ]] && \
         [[ ! -z "$OPS_PROJECT_REMOTE_DB_TYPE" ]] && \
-        [[ ! -z "$OPS_PROJECT_REMOTE_DB_HOST" ]] && \
-        [[ ! -z "$OPS_PROJECT_REMOTE_DB_NAME" ]] && \
-        [[ ! -z "$OPS_PROJECT_REMOTE_DB_USER" ]]
+        [[ ! -z "$OPS_PROJECT_REMOTE_DB_NAME" ]]
     then
         if [[ "$OPS_PROJECT_REMOTE_DB_TYPE" = "mariadb" ]]; then
-            echo "Syncing remote mariadb database '$OPS_PROJECT_REMOTE_DB_NAME' to $dumpfile"
-
-            OPS_PROJECT_REMOTE_DB_PORT="${OPS_PROJECT_REMOTE_DB_PORT:-"3306"}"
+            echo "Syncing remote mariadb '$OPS_PROJECT_REMOTE_DB_NAME' to local '$OPS_PROJECT_DB_NAME'"
 
             local mysqldump_password="$([[ ! -z $OPS_PROJECT_REMOTE_DB_PASSWORD ]] && echo "-p$OPS_PROJECT_REMOTE_DB_PASSWORD")"
+            local mysqldump_host="$([[ ! -z $OPS_PROJECT_REMOTE_DB_HOST ]] && echo "-h $OPS_PROJECT_REMOTE_DB_HOST")"
+            local mysqldump_port="$([[ ! -z $OPS_PROJECT_REMOTE_DB_PORT ]] && echo "-P $OPS_PROJECT_REMOTE_DB_PORT")"
+            local mysqldump_user="$([[ ! -z $OPS_PROJECT_REMOTE_DB_USER ]] && echo "-u $OPS_PROJECT_REMOTE_DB_USER")"
 
-            ssh -TC "$ssh_host" "mysqldump --single-transaction \
-                -P $OPS_PROJECT_REMOTE_DB_PORT \
-                -h $OPS_PROJECT_REMOTE_DB_HOST \
-                -u $OPS_PROJECT_REMOTE_DB_USER \
+            ssh -C "$ssh_host" "mysqldump --single-transaction \
+                $mysqldump_port \
+                $mysqldump_host \
+                $mysqldump_user \
                 $mysqldump_password \
-                $OPS_PROJECT_REMOTE_DB_NAME" > $dumpfile
-
-            echo "Importing $dumpfile to '$OPS_PROJECT_DB_NAME' mariadb database"
-            mariadb-import "$OPS_PROJECT_DB_NAME" $dumpfile
+                $OPS_PROJECT_REMOTE_DB_NAME" 2>/dev/null | \
+                    mariadb-import "$OPS_PROJECT_DB_NAME"
 
         elif [[ "$OPS_PROJECT_REMOTE_DB_TYPE" = "pgsql" ]]; then
             echo "Syncing remote pgsql database '$OPS_PROJECT_REMOTE_DB_NAME' to $dumpfile"
@@ -514,21 +483,21 @@ ops-sync() {
     then
         for sync_dir in $OPS_PROJECT_SYNC_DIRS; do
             echo -e "Syncing filesystem: $sync_dir"
-            echo -e "Syncing directories..."
+            echo -e "Syncing directory structure..."
 
             # sync entire dir structure first
             rsync -a -f"+ */" -f"- *" \
                 "$ssh_host:$OPS_PROJECT_REMOTE_PATH/$sync_dir/" \
-                "$sync_dir"
+                "$sync_dir" 2>/dev/null
 
             echo -e "Syncing files..."
 
             # send exclude patterns as stdin, one per line.
-            $(echo "${OPS_PROJECT_SYNC_EXCLUDES// /$'\n'}" | \
+            $(printf %"s\n" $OPS_PROJECT_SYNC_EXCLUDES | \
                 rsync -a --exclude-from=- \
                     --max-size=$OPS_PROJECT_SYNC_MAXSIZE \
                     "$ssh_host:$OPS_PROJECT_REMOTE_PATH/$sync_dir/" \
-                    "$sync_dir")
+                    "$sync_dir" 2>/dev/null)
         done
     fi
 
@@ -578,19 +547,12 @@ _ops-yarn() {
 # Site sub sommands
 
 project-docker-compose() {
-    if [[ ! -f $OPS_PROJECT_COMPOSE_FILE ]] && [[ ! -z "$OPS_PROJECT_TEMPLATE" ]] && [[ -f "$OPS_HOME/templates/$OPS_PROJECT_TEMPLATE.yml" ]]; then
-        OPS_PROJECT_COMPOSE_FILE="$OPS_HOME/templates/$OPS_PROJECT_TEMPLATE.yml"
-        echo "Using template: $OPS_PROJECT_TEMPLATE"
-    fi
+    local project_name=$(project-name)
 
-    OPS_DOCKER_UID=$OPS_DOCKER_UID \
-    OPS_DOCKER_GID=$OPS_DOCKER_GID \
-    OPS_DOMAIN=$OPS_DOMAIN \
-    OPS_PROJECT_NAME="$(basename $PWD)" \
-    OPS_VERSION=$OPS_VERSION \
-    COMPOSE_PROJECT_NAME="ops$(basename $PWD)" \
+    OPS_PROJECT_NAME="$project_name" \
+    COMPOSE_PROJECT_NAME="ops-$project_name" \
     COMPOSE_FILE="$OPS_PROJECT_COMPOSE_FILE" \
-    docker-compose --project-directory . "$@"
+    docker-compose --project-directory "$OPS_SITES_DIR/$project_name" "$@"
 }
 
 project-name() {
@@ -606,7 +568,7 @@ project-name() {
             basename=$(basename $(pwd))
             cd ..
         done
-        echo $basename
+        echo -n $basename
     )
 }
 
@@ -661,17 +623,16 @@ project-stats() {
 # System Sub-Commands
 
 system-docker-compose() {
+    COMPOSE_FILE="$OPS_HOME/docker-compose.system.yml"
+
+    if [[ ! -z "$OPS_PUBLIC" ]]; then
+	    COMPOSE_FILE="$COMPOSE_FILE:$OPS_HOME/docker-compose.system.public.yml"
+    else
+	    COMPOSE_FILE="$COMPOSE_FILE:$OPS_HOME/docker-compose.system.private.yml"
+    fi
+
     COMPOSE_PROJECT_NAME="ops" \
-    COMPOSE_FILE=$OPS_HOME/docker-compose.system.yml \
-    OPS_DOMAIN=$OPS_DOMAIN \
-    OPS_HOME=$OPS_HOME \
-    OPS_SITES_DIR=$OPS_SITES_DIR \
-    OPS_DOCKER_UID=$OPS_DOCKER_UID \
-    OPS_DOCKER_GID=$OPS_DOCKER_GID \
-    OPS_DOCKER_APACHE_IMAGE=$OPS_DOCKER_APACHE_IMAGE \
-    OPS_MINIO_ACCESS_KEY=$OPS_MINIO_ACCESS_KEY \
-    OPS_MINIO_SECRET_KEY=$OPS_MINIO_SECRET_KEY \
-    OPS_VERSION=$OPS_VERSION \
+    COMPOSE_FILE=$COMPOSE_FILE \
     docker-compose "$@"
 }
 
@@ -686,6 +647,49 @@ system-shell-exec() {
     fi
 
     ops docker exec -it $id "$@"
+}
+
+system-check() {
+    echo -n "docker: "
+    if [[ -z $(which docker) ]]; then
+        echo "not found"
+    elif ! version-greater-than $(docker --version | get-version) $OPS_DOCKER_VERSION; then
+        echo "version must be at least 18.00.0"
+    else
+        echo "found"
+    fi
+
+    echo -n "docker-compose: "
+    if [[ -z $(which docker-compose) ]]; then
+        echo "not found"
+    elif ! version-greater-than $(docker-compose --version | get-version) $OPS_DOCKER_COMPOSE_VERSION; then
+        echo "version must be at least 1.22.0"
+    else
+        echo "found"
+    fi
+
+    echo -n "rsync: "
+    if [[ -z $(which rsync) ]]; then
+        echo "not found"
+    else
+        echo "found"
+    fi
+
+    echo -n "ssh: "
+    if [[ -z $(which ssh) ]]; then
+        echo "not found"
+    else
+        echo "found"
+    fi
+
+    if [[ "$OS" == linux ]]; then
+        echo -n "certutil: "
+        if [[ -z $(which certutil) ]]; then
+            echo "not found"
+        else
+            echo "found"
+        fi
+    fi
 }
 
 system-config() {
@@ -708,114 +712,99 @@ system-config() {
     fi
 }
 
-system-update() {
+system-install() {
     if [[ ! -d $OPS_HOME ]]; then
-        system-install
-        return
+        cp -rp $OPS_SCRIPT_DIR/home $OPS_HOME
+
+        source $OPS_HOME/config
+
+        if [[ "$OS" == linux ]]; then
+            local whoami="$(whoami)"
+
+            system-config OPS_DOCKER_UID "$(id -u $whoami)"
+            system-config OPS_DOCKER_GID "$(id -g $whoami)"
+        fi
+    else
+        rsync -a \
+          --exclude=bin \
+          --exclude=certs \
+          --exclude=config \
+          --exclude=acme.json \
+          $OPS_SCRIPT_DIR/home/ \
+          $OPS_HOME
     fi
 
-    shopt -s extglob
-    cp -rp $OPS_SCRIPT_DIR/home/!(config) $OPS_HOME
-    shopt -u extglob
 
+    echo $OPS_VERSION > $OPS_HOME/VERSION
+
+    source $OPS_HOME/config
+
+    system-install-mkcert
     system-refresh-config
-    system-refresh-certs
+
+    if [[ ! -f "$OPS_HOME/certs/self-signed-cert.key" ]]; then
+        system-refresh-certs
+    fi
+
     system-refresh-services
 }
 
-system-install() {
-    if [[ -d $OPS_HOME ]]; then
+system-install-mkcert() {
+    if [[ ! -d $OPS_HOME ]]; then
         return
     fi
 
-    cp -rp $OPS_SCRIPT_DIR/home $OPS_HOME
-
-    source $OPS_HOME/config
-
-    if [[ "$OS" == linux ]]; then
-        local whoami="$(whoami)"
-
-        system-config OPS_DOCKER_UID "$(id -u $whoami)"
-        system-config OPS_DOCKER_GID "$(id -g $whoami)"
+    if [[ -f $OPS_HOME/bin/mkcert-$OPS_MKCERT_VERSION ]]; then
+        return
     fi
 
-    source $OPS_HOME/config
+    rm -f $OPS_HOME/bin/mkcert-*
 
-    system-refresh-config
-    system-refresh-certs
-    system-refresh-services
+    if [[ "$OS" == linux ]]; then
+        MKCERT_URL="https://github.com/FiloSottile/mkcert/releases/download/v$OPS_MKCERT_VERSION/mkcert-v$OPS_MKCERT_VERSION-linux-amd64"
+    elif [[ "$OS" == mac ]]; then
+        MKCERT_URL="https://github.com/FiloSottile/mkcert/releases/download/v$OPS_MKCERT_VERSION/mkcert-v$OPS_MKCERT_VERSION-darwin-amd64"
+    fi
+
+    echo "Downloading mkcert v$OPS_MKCERT_VERSION"
+    wget --quiet -O $OPS_HOME/bin/mkcert-$OPS_MKCERT_VERSION $MKCERT_URL
+    chmod 744 $OPS_HOME/bin/mkcert-$OPS_MKCERT_VERSION
 }
 
 system-refresh-certs() {
-    #
-    # Clear out old cert
-    #
+    sudo --non-interactive echo 2> /dev/null
+    if [[ $? == 1 ]]; then
+        echo
+        echo 'Installing self-signed certs for valid HTTPS support.'
+        sudo --prompt="Enter your system/sudo password: " echo
 
-    if [[ "$OS" == linux ]]; then
+        if [[ $? == 1 ]]; then
+            echo 'Invalid password. Certs were not generated :('
+            echo 'Ops could not be installed'
 
-        # system certs
-        sudo rm /usr/local/share/ca-certificates/ops-local-dev.crt 2>/dev/null
-        sudo update-ca-certificates
-
-        # chrome certs
-        mkdir -p $HOME/.pki/nssdb
-        certutil -d sql:$HOME/.pki/nssdb -D -n ops-local-dev 2>/dev/null
-
-        # other certs
-        # ???
-
-    elif [[ "$OS" == mac ]]; then
-
-        sudo security delete-certificate -c "ops-local-dev"
-
+            exit 1
+        fi
     fi
 
-    #
-    # Generate cert
-    #
+    (
+        cd $OPS_HOME/certs
 
-    ops docker run --rm \
-        -v $OPS_HOME:/ops-home \
-        -i $OPS_DOCKER_UTILS_IMAGE \
-        openssl genrsa -out /ops-home/certs/self-signed-cert.key 2048
+        CAROOT=$OPS_HOME/certs \
+        $OPS_HOME/bin/mkcert-$OPS_MKCERT_VERSION -uninstall 2>/dev/null
 
-    ops docker run --rm \
-        -v $OPS_HOME:/ops-home \
-        -i $OPS_DOCKER_UTILS_IMAGE \
-        openssl req -new -batch -passin pass: \
-        -key /ops-home/certs/self-signed-cert.key \
-        -out /ops-home/certs/self-signed-cert.csr \
-        -config /ops-home/certs/ssl.conf
+        CAROOT=$OPS_HOME/certs \
+        $OPS_HOME/bin/mkcert-$OPS_MKCERT_VERSION -install
 
-    ops docker run --rm \
-        -v $OPS_HOME:/ops-home \
-        -i $OPS_DOCKER_UTILS_IMAGE \
-        openssl x509 -req -sha256 -days 3650 \
-        -in /ops-home/certs/self-signed-cert.csr \
-        -signkey /ops-home/certs/self-signed-cert.key \
-        -out /ops-home/certs/self-signed-cert.crt \
-        -extensions v3_req \
-        -extfile /ops-home/certs/ssl.conf
+        CAROOT=$OPS_HOME/certs \
+        $OPS_HOME/bin/mkcert-$OPS_MKCERT_VERSION \
+            "*.$OPS_DOMAIN" \
+            "*.ops.$OPS_DOMAIN" \
+            "$OPS_DOMAIN" \
+            localhost
 
-    #
-    # Install Cert
-    #
-
-    if [[ "$OS" == linux ]]; then
-        # system certs
-        sudo cp $OPS_HOME/certs/self-signed-cert.crt /usr/local/share/ca-certificates/ops-local-dev.crt
-        sudo update-ca-certificates
-
-        # chrome certs
-        certutil -d sql:$HOME/.pki/nssdb -A -t "P,," -n ops-local-dev -i $HOME/.ops/certs/self-signed-cert.crt
-
-    elif [[ "$OS" == mac ]]; then
-
-        sudo security add-trusted-cert -d -r trustRoot -k /Library/Keychains/System.keychain $OPS_HOME/certs/self-signed-cert.crt
-
-    fi
-
-
+        mv "_wildcard.$OPS_DOMAIN+3-key.pem" self-signed-cert.key
+        mv "_wildcard.$OPS_DOMAIN+3.pem" self-signed-cert.crt
+    )
 }
 
 system-refresh-config() {
@@ -824,15 +813,11 @@ system-refresh-config() {
     #
 
     sed "s/OPS_DOMAIN/$OPS_DOMAIN/" $OPS_HOME/dnsmasq/dnsmasq.conf.tmpl > $OPS_HOME/dnsmasq/dnsmasq.conf
-    sed "s/OPS_DOMAIN/$OPS_DOMAIN/" $OPS_HOME/certs/ssl.conf.tmpl > $OPS_HOME/certs/ssl.conf
 
     sed \
         -e "s/OPS_MINIO_ACCESS_KEY/$OPS_MINIO_ACCESS_KEY/" \
         -e "s/OPS_MINIO_SECRET_KEY/$OPS_MINIO_SECRET_KEY/" \
         $OPS_HOME/minio/config.json.tmpl > $OPS_HOME/minio/config.json
-
-    ops docker build -t ops-node:$OPS_VERSION $OPS_HOME/node
-    ops docker build -t ops-utils:$OPS_VERSION $OPS_HOME/utils
 }
 
 system-refresh-services() {
@@ -852,10 +837,12 @@ system-refresh-services() {
 }
 
 system-start() {
-    # removing apache is a hacky mod_lua crash fix. this issue seems to happen
-    # when containers are left running on a restart with docker for mac. if not
-    # remedied, the apache container refuses to start up again.
-    system-docker-compose rm -fs apache &> /dev/null
+    # Temporary hack to fix weird apache/mod_lua state issue. This seems to happen intermittently
+    # with Docker for Mac when containers are left running during a sleep/wakeup If not
+    # remedied, the apache containers refuses to start up again.
+    system-docker-compose rm -fs apache-php56 &> /dev/null
+    system-docker-compose rm -fs apache-php71 &> /dev/null
+    system-docker-compose rm -fs apache-php72 &> /dev/null
 
     system-docker-compose up -d --remove-orphans
 }
@@ -869,48 +856,105 @@ system-help() {
     echo
 }
 
-
-# Project Creation
-
-_ops-init() {
-    cmd-run init "$@"
-}
-
-init-help() {
-    cmd-help "ops init" init
-    echo
-
-}
-
-init-craft2() {
-    local folder=$1
-    local domain=${2-"$1.$OPS_DOMAIN"}
-
-    echo 'Installing Craft'
-
-    ops composer create-project imarc/padstone $folder
-
-}
-init-craft3() {
-    local folder=$1
-
-    echo 'Installing Craft 3'
-    composer create-project craftcms/craft $folder
-
-}
-
-init-laravel() {
-    echo
-}
-
-# Run Main Command
-
 main() {
-    system-install
-    validate-config
+    docker ps > /dev/null
+
+    if [[ $? != 0 ]]; then
+        exit
+    fi
+
+    if [[ "$@" != "system install" ]]; then
+        validate-config
+    fi
 
     cmd-run ops "$@"
     exit
 }
+
+# options that can be overidden by environment
+
+export OPS_HOME=${OPS_HOME-"$HOME/.ops"}
+
+# load config
+
+if [[ -f "$OPS_HOME/config" ]]; then
+    source $OPS_HOME/config
+
+    # generate a literal (non-quoted) version for docker-compose
+    # https://github.com/docker/compose/issues/3702
+    cat $OPS_HOME/config |
+        sed -e '/^$/d' -e '/^#/d' |
+	xargs -n1 echo > $OPS_HOME/config.literal
+fi
+
+
+# options that can be overridden by global config
+
+declare -rx OPS_ENV="dev"
+declare -rx OPS_DOCKER_COMPOSER_IMAGE=${OPS_DOCKER_COMPOSER_IMAGE-"imarcagency/ops-php71:latest"}
+declare -rx OPS_DOCKER_NODE_IMAGE=${OPS_DOCKER_NODE_IMAGE-"imarcagency/ops-node:$OPS_VERSION"}
+declare -rx OPS_DOCKER_UTILS_IMAGE=${OPS_DOCKER_UTILS_IMAGE-"imarcagency/ops-utils:$OPS_VERSION"}
+declare -rx OPS_DOCKER_GID=${OPS_DOCKER_GID-""}
+declare -rx OPS_DOCKER_UID=${OPS_DOCKER_UID-""}
+declare -rx OPS_DOCKER_VERSION="18"
+declare -rx OPS_DOCKER_COMPOSE_VERSION="1.22"
+declare -rx OPS_DOMAIN=${OPS_DOMAIN-"imarc.io"}
+declare -rx OPS_MINIO_ACCESS_KEY=${OPS_MINIO_ACCESS_KEY-"minio-access"}
+declare -rx OPS_MINIO_SECRET_KEY=${OPS_MINIO_SECRET_KEY-"minio-secret"}
+declare -rx OPS_SITES_DIR=${OPS_SITES_DIR-"$HOME/Sites"}
+declare -rx OPS_ACME_EMAIL=${OPS_ACME_EMAIL-""}
+declare -rx OPS_ACME_DNS_PROVIDER=${OPS_ACME_DNS_PROVIDER-""}
+declare -rx OPS_ACME_PRODUCTION=${OPS_ACME_PRODUCTION-"0"}
+declare -rx OPS_ADMIN_AUTH=${OPS_ADMIN_AUTH-""}
+declare -rx OPS_DEFAULT_BACKEND=${OPS_DEFAULT_BACKEND-"apache-php71"}
+declare -rx OPS_DEFAULT_DOCROOT=${OPS_DEFAULT_DOCROOT-"public"}
+declare -rx OPS_DASHBOARD_URL="https://ops.${OPS_DOMAIN}"
+declare -rx OPS_MKCERT_VERSION="1.1.2"
+
+OPS_ACME_CA_SERVER="https://acme-staging-v02.api.letsencrypt.org/directory"
+if [[ $OPS_ACME_PRODUCTION == 1 ]]; then
+    OPS_ACME_CA_SERVER="https://acme-v02.api.letsencrypt.org/directory"
+fi
+declare -rx OPS_ACME_CA_SERVER
+
+# options that can be overridden by a project
+
+declare -x OPS_PROJECT_NAME="$(project-name)"
+declare -x OPS_PROJECT_BACKEND="${OPS_DEFAULT_BACKEND}"
+declare -x OPS_PROJECT_DOCROOT="${OPS_DEFAULT_DOCROOT}"
+
+# load project config
+
+if [[ -f "$OPS_SITES_DIR/$OPS_PROJECT_NAME/.env" ]]; then
+    source "$OPS_SITES_DIR/$OPS_PROJECT_NAME/.env"
+fi
+
+declare -x OPS_PROJECT_BASIC_AUTH=""
+declare -x OPS_PROJECT_BASIC_AUTH_FILE=".htpasswd"
+declare -x OPS_PROJECT_COMPOSE_FILE=${OPS_PROJECT_COMPOSE_FILE-"ops-compose.yml"}
+declare -x OPS_PROJECT_TEMPLATE=${OPS_PROJECT_TEMPLATE-""}
+declare -x OPS_PROJECT_DB_TYPE="${OPS_PROJECT_DB_TYPE}"
+declare -x OPS_PROJECT_DB_NAME="${OPS_PROJECT_DB_NAME-$OPS_PROJECT_NAME}"
+declare -x OPS_PROJECT_SYNC_DIRS="${OPS_PROJECT_SYNC_DIRS}"
+declare -x OPS_PROJECT_SYNC_NODB="${OPS_PROJECT_SYNC_NODB-0}"
+declare -x OPS_PROJECT_SYNC_EXCLUDES="${OPS_PROJECT_SYNC_EXCLUDES}"
+declare -x OPS_PROJECT_SYNC_MAXSIZE="${OPS_PROJECT_SYNC_MAXSIZE:-500M}"
+declare -x OPS_PROJECT_REMOTE_USER="${OPS_PROJECT_REMOTE_USER}"
+declare -x OPS_PROJECT_REMOTE_HOST="${OPS_PROJECT_REMOTE_HOST}"
+declare -x OPS_PROJECT_REMOTE_PATH="${OPS_PROJECT_REMOTE_PATH}"
+declare -x OPS_PROJECT_REMOTE_DB_HOST="${OPS_PROJECT_REMOTE_DB_HOST}"
+declare -x OPS_PROJECT_REMOTE_DB_TYPE="${OPS_PROJECT_DB_TYPE}"
+declare -x OPS_PROJECT_REMOTE_DB_NAME="${OPS_PROJECT_REMOTE_DB_NAME}"
+declare -x OPS_PROJECT_REMOTE_DB_USER="${OPS_PROJECT_REMOTE_DB_USER}"
+declare -x OPS_PROJECT_REMOTE_DB_PASSWORD="${OPS_PROJECT_REMOTE_DB_PASSWORD}"
+declare -x OPS_PROJECT_REMOTE_DB_PORT="${OPS_PROJECT_REMOTE_DB_PORT}"
+declare -x OPS_SHELL_BACKEND=${OPS_SHELL_BACKEND-$OPS_PROJECT_BACKEND}
+declare -x OPS_SHELL_COMMAND=${OPS_SHELL_COMMAND-"bash"}
+
+# load custom commands
+
+if [[ -f "$OPS_SITES_DIR/$OPS_PROJECT_NAME/ops-commands.sh" ]]; then
+    source "$OPS_SITES_DIR/$OPS_PROJECT_NAME/ops-commands.sh"
+fi
 
 main "$@"
