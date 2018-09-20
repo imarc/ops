@@ -50,10 +50,6 @@ validate-config() {
         exit 1
     fi
 
-    if [[ -f $OPS_HOME/VERSION ]] && version-greater-than $OPS_VERSION $(cat $OPS_HOME/VERSION); then
-        system-update
-    fi
-
     if [[ -z $OPS_SITES_DIR ]]; then
         errors+=("OPS_SITES_DIR config is not set")
     fi
@@ -73,6 +69,13 @@ validate-config() {
         echo
         exit 1
     fi
+
+
+    #if [[ -f $OPS_HOME/VERSION ]] && version-greater-than $OPS_VERSION $(cat $OPS_HOME/VERSION); then
+    #    echo "Ops needs to update"
+    #    system-install
+    #fi
+
 }
 
 version-greater-than() {
@@ -707,51 +710,40 @@ system-config() {
     fi
 }
 
-system-update() {
+system-install() {
     if [[ ! -d $OPS_HOME ]]; then
-        system-install
-        return
+        cp -rp $OPS_SCRIPT_DIR/home $OPS_HOME
+
+        source $OPS_HOME/config
+
+        if [[ "$OS" == linux ]]; then
+            local whoami="$(whoami)"
+
+            system-config OPS_DOCKER_UID "$(id -u $whoami)"
+            system-config OPS_DOCKER_GID "$(id -g $whoami)"
+        fi
+    else
+        rsync -a \
+          --exclude=bin \
+          --exclude=certs \
+          --exclude=config \
+          --exclude=acme.json \
+          $OPS_SCRIPT_DIR/home/ \
+          $OPS_HOME
     fi
 
-    #shopt -s extglob
-    #cp -rp $OPS_SCRIPT_DIR/home/!(config) $OPS_HOME
-    #shopt -u extglob
-
-    rsync -a \
-      --exclude=bin \
-      --exclude=certs \
-      --exclude=config \
-      --exclude=acme.json \
-      $OPS_SCRIPT_DIR/home/ \
-      $OPS_HOME
 
     echo $OPS_VERSION > $OPS_HOME/VERSION
 
-    system-install-mkcert
-    system-refresh-config
-    system-refresh-services
-}
-
-system-install() {
-    if [[ -d $OPS_HOME ]]; then
-        return
-    fi
-
-    cp -rp $OPS_SCRIPT_DIR/home $OPS_HOME
-
-    source $OPS_HOME/config
-
-    if [[ "$OS" == linux ]]; then
-        local whoami="$(whoami)"
-
-        system-config OPS_DOCKER_UID "$(id -u $whoami)"
-        system-config OPS_DOCKER_GID "$(id -g $whoami)"
-    fi
-
     source $OPS_HOME/config
 
     system-install-mkcert
     system-refresh-config
+
+    if [[ ! -f "$OPS_HOME/certs/self-signed-cert.key" ]]; then
+        system-refresh-certs
+    fi
+
     system-refresh-services
 }
 
@@ -786,8 +778,9 @@ system-refresh-certs() {
 
         if [[ $? == 1 ]]; then
             echo 'Invalid password. Certs were not generated :('
-            echo
-            return
+            echo 'Ops could not be installed'
+
+            exit 1
         fi
     fi
 
@@ -795,10 +788,13 @@ system-refresh-certs() {
         cd $OPS_HOME/certs
 
         CAROOT=$OPS_HOME/certs \
-        $OPS_HOME/bin/mkcert -install
+        $OPS_HOME/bin/mkcert-$OPS_MKCERT_VERSION -uninstall 2>/dev/null
 
         CAROOT=$OPS_HOME/certs \
-        $OPS_HOME/bin/mkcert \
+        $OPS_HOME/bin/mkcert-$OPS_MKCERT_VERSION -install
+
+        CAROOT=$OPS_HOME/certs \
+        $OPS_HOME/bin/mkcert-$OPS_MKCERT_VERSION \
             "*.$OPS_DOMAIN" \
             "*.ops.$OPS_DOMAIN" \
             "$OPS_DOMAIN" \
@@ -865,8 +861,9 @@ main() {
         exit
     fi
 
-    system-install
-    validate-config
+    if [[ "$@" != "system install" ]]; then
+        validate-config
+    fi
 
     cmd-run ops "$@"
     exit
