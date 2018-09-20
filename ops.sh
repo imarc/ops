@@ -725,6 +725,9 @@ system-install() {
             system-config OPS_DOCKER_GID "$(id -g $whoami)"
         fi
     else
+        mkdir -p $OPS_HOME/bin
+        mkdir -p $OPS_HOME/certs
+
         rsync -a \
           --exclude=bin \
           --exclude=certs \
@@ -767,7 +770,7 @@ system-install-mkcert() {
     fi
 
     echo "Downloading mkcert v$OPS_MKCERT_VERSION"
-    curl $MKCERT_URL > $OPS_HOME/bin/mkcert-$OPS_MKCERT_VERSION 2>/dev/null
+    curl --silent --output $OPS_HOME/bin/mkcert-$OPS_MKCERT_VERSION $MKCERT_URL
     chmod 744 $OPS_HOME/bin/mkcert-$OPS_MKCERT_VERSION
 }
 
