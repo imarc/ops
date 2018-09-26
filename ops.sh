@@ -447,7 +447,12 @@ ops-sync() {
         [[ ! -z "$OPS_PROJECT_REMOTE_DB_TYPE" ]] && \
         [[ ! -z "$OPS_PROJECT_REMOTE_DB_NAME" ]]
     then
-        if [[ "$OPS_PROJECT_REMOTE_DB_TYPE" = "mariadb" ]]; then
+        if [[ "$OPS_PROJECT_REMOTE_OPS" ]]; then
+            ssh -C "$ssh_host" \
+                "ops $OPS_PROJECT_REMOTE_DB_TYPE export $OPS_PROJECT_REMOTE_DB_NAME" | \
+                ops $OPS_PROJECT_DB_TYPE import $OPS_PROJECT_DB_NAME
+
+        elif [[ "$OPS_PROJECT_REMOTE_DB_TYPE" = "mariadb" ]]; then
             echo "Syncing remote mariadb '$OPS_PROJECT_REMOTE_DB_NAME' to local '$OPS_PROJECT_DB_NAME'"
 
             local mysqldump_password="$([[ ! -z $OPS_PROJECT_REMOTE_DB_PASSWORD ]] && echo "-p$OPS_PROJECT_REMOTE_DB_PASSWORD")"
@@ -463,7 +468,7 @@ ops-sync() {
                 $OPS_PROJECT_REMOTE_DB_NAME" 2>/dev/null | \
                     mariadb-import "$OPS_PROJECT_DB_NAME"
 
-        elif [[ "$OPS_PROJECT_REMOTE_DB_TYPE" = "pgsql" ]]; then
+        elif [[ "$OPS_PROJECT_REMOTE_DB_TYPE" = "psql" ]]; then
             echo "Syncing remote pgsql database '$OPS_PROJECT_REMOTE_DB_NAME' to $dumpfile"
 
             OPS_PROJECT_REMOTE_DB_PORT="${OPS_PROJECT_REMOTE_DB_PORT:-"5432"}"
@@ -758,7 +763,8 @@ system-install-mkcert() {
     fi
 
     if [[ -f $OPS_HOME/bin/mkcert-$OPS_MKCERT_VERSION ]]; then
-        return
+        echo
+        #return
     fi
 
     rm -f $OPS_HOME/bin/mkcert-*
@@ -846,6 +852,7 @@ system-start() {
     system-docker-compose rm -fs apache-php56 &> /dev/null
     system-docker-compose rm -fs apache-php71 &> /dev/null
     system-docker-compose rm -fs apache-php72 &> /dev/null
+    system-docker-compose rm -fs dashbarod &> /dev/null
 
     system-docker-compose up -d --remove-orphans
 }
