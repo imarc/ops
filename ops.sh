@@ -763,8 +763,7 @@ system-install-mkcert() {
     fi
 
     if [[ -f $OPS_HOME/bin/mkcert-$OPS_MKCERT_VERSION ]]; then
-        echo
-        #return
+        return
     fi
 
     rm -f $OPS_HOME/bin/mkcert-*
@@ -776,7 +775,7 @@ system-install-mkcert() {
     fi
 
     echo "Downloading mkcert v$OPS_MKCERT_VERSION"
-    curl --silent --output $OPS_HOME/bin/mkcert-$OPS_MKCERT_VERSION $MKCERT_URL
+    curl -L --silent --output $OPS_HOME/bin/mkcert-$OPS_MKCERT_VERSION $MKCERT_URL
     chmod 744 $OPS_HOME/bin/mkcert-$OPS_MKCERT_VERSION
 }
 
