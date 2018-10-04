@@ -159,6 +159,10 @@ mariadb-cli() {
     system-shell-exec mariadb mysql "${@}"
 }
 
+mariadb-run() {
+    ops-exec mariadb mysql "${@}"
+}
+
 mariadb-create() {
     local db="$1"
 
