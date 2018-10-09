@@ -245,6 +245,10 @@ psql-create() {
     fi
 }
 
+psql-run() {
+    ops-exec postgres psql -U postgres "${@}"
+}
+
 psql-export() {
     local db="$1"
 
@@ -256,7 +260,7 @@ psql-import() {
     local sqlfile=${2--}
 
     (
-        # don't let these commands grab stdin
+        # don't let these commands capture stdin
         ops-exec postgres psql -c "DROP DATABASE IF EXISTS $db"
         ops-exec postgres psql -c "CREATE DATABASE $db"
     ) </dev/null
