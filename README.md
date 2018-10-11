@@ -51,7 +51,7 @@ If you use Firefox, you should install `nss` with homebrew.
 
 Install/Update ops:
 
-    npm install -g git+ssh://git@gitlab.imarc.net:imarc/ops.git
+    npm install -g git+https://git@github.com/imarc/ops
 
  **On first install, You will be asked for your sudo/system password in order to install the self-signed certs for HTTPS support**
 
