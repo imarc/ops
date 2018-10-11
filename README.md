@@ -264,6 +264,10 @@ If you are contributing to ops, debugging, or want to try out bleeding edge feat
 
 This means your global ops script will point directly to the repo and you can make live changes.
 
+    # run tests with bats
+    # https://github.com/sstephenson/bats
+    bats test
+
 ## License
 
 MIT License
