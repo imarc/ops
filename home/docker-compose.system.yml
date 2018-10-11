@@ -21,7 +21,7 @@ services:
       - "ops.project=ops"
       - "traefik.enable=true"
       - "traefik.docker.network=ops_gateway"
-      - "traefik.frontend.rule=HostRegexp:{subdomain:[a-z0-9-]+}.${OPS_DOMAIN}"
+      - "traefik.frontend.rule=HostRegexp:{subdomain:[a-z0-9-]+}.${OPS_DOMAIN},localhost"
       - "traefik.frontend.priority=1"
       - "traefik.port=80"
     environment:

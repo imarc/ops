@@ -159,6 +159,10 @@ mariadb-cli() {
     system-shell-exec mariadb mysql "${@}"
 }
 
+mariadb-run() {
+    ops-exec mariadb mysql "${@}"
+}
+
 mariadb-create() {
     local db="$1"
 
@@ -241,6 +245,10 @@ psql-create() {
     fi
 }
 
+psql-run() {
+    ops-exec postgres psql -U postgres "${@}"
+}
+
 psql-export() {
     local db="$1"
 
@@ -252,7 +260,7 @@ psql-import() {
     local sqlfile=${2--}
 
     (
-        # don't let these commands grab stdin
+        # don't let these commands capture stdin
         ops-exec postgres psql -c "DROP DATABASE IF EXISTS $db"
         ops-exec postgres psql -c "CREATE DATABASE $db"
     ) </dev/null
@@ -447,7 +455,12 @@ ops-sync() {
         [[ ! -z "$OPS_PROJECT_REMOTE_DB_TYPE" ]] && \
         [[ ! -z "$OPS_PROJECT_REMOTE_DB_NAME" ]]
     then
-        if [[ "$OPS_PROJECT_REMOTE_DB_TYPE" = "mariadb" ]]; then
+        if [[ "$OPS_PROJECT_REMOTE_OPS" ]]; then
+            ssh -C "$ssh_host" \
+                "ops $OPS_PROJECT_REMOTE_DB_TYPE export $OPS_PROJECT_REMOTE_DB_NAME" | \
+                ops $OPS_PROJECT_DB_TYPE import $OPS_PROJECT_DB_NAME
+
+        elif [[ "$OPS_PROJECT_REMOTE_DB_TYPE" = "mariadb" ]]; then
             echo "Syncing remote mariadb '$OPS_PROJECT_REMOTE_DB_NAME' to local '$OPS_PROJECT_DB_NAME'"
 
             local mysqldump_password="$([[ ! -z $OPS_PROJECT_REMOTE_DB_PASSWORD ]] && echo "-p$OPS_PROJECT_REMOTE_DB_PASSWORD")"
@@ -463,7 +476,7 @@ ops-sync() {
                 $OPS_PROJECT_REMOTE_DB_NAME" 2>/dev/null | \
                     mariadb-import "$OPS_PROJECT_DB_NAME"
 
-        elif [[ "$OPS_PROJECT_REMOTE_DB_TYPE" = "pgsql" ]]; then
+        elif [[ "$OPS_PROJECT_REMOTE_DB_TYPE" = "psql" ]]; then
             echo "Syncing remote pgsql database '$OPS_PROJECT_REMOTE_DB_NAME' to $dumpfile"
 
             OPS_PROJECT_REMOTE_DB_PORT="${OPS_PROJECT_REMOTE_DB_PORT:-"5432"}"
@@ -556,9 +569,11 @@ project-docker-compose() {
 }
 
 project-name() {
-    if [[ "$(pwd)" != $OPS_SITES_DIR/* ]]; then
-        exit 1
-    fi
+    (
+        if [[ "$(pwd)" != $OPS_SITES_DIR/* ]]; then
+            exit 1
+        fi
+    )
 
     echo $(
         local basename="$(basename $(pwd))"
@@ -723,6 +738,9 @@ system-install() {
             system-config OPS_DOCKER_GID "$(id -g $whoami)"
         fi
     else
+        mkdir -p $OPS_HOME/bin
+        mkdir -p $OPS_HOME/certs
+
         rsync -a \
           --exclude=bin \
           --exclude=certs \
@@ -765,7 +783,7 @@ system-install-mkcert() {
     fi
 
     echo "Downloading mkcert v$OPS_MKCERT_VERSION"
-    wget --quiet -O $OPS_HOME/bin/mkcert-$OPS_MKCERT_VERSION $MKCERT_URL
+    curl -L --silent --output $OPS_HOME/bin/mkcert-$OPS_MKCERT_VERSION $MKCERT_URL
     chmod 744 $OPS_HOME/bin/mkcert-$OPS_MKCERT_VERSION
 }
 
@@ -841,6 +859,7 @@ system-start() {
     system-docker-compose rm -fs apache-php56 &> /dev/null
     system-docker-compose rm -fs apache-php71 &> /dev/null
     system-docker-compose rm -fs apache-php72 &> /dev/null
+    system-docker-compose rm -fs dashbarod &> /dev/null
 
     system-docker-compose up -d --remove-orphans
 }
@@ -888,26 +907,26 @@ fi
 
 # options that can be overridden by global config
 
-declare -rx OPS_ENV="dev"
-declare -rx OPS_DOCKER_COMPOSER_IMAGE=${OPS_DOCKER_COMPOSER_IMAGE-"imarcagency/ops-php71:latest"}
-declare -rx OPS_DOCKER_NODE_IMAGE=${OPS_DOCKER_NODE_IMAGE-"imarcagency/ops-node:$OPS_VERSION"}
-declare -rx OPS_DOCKER_UTILS_IMAGE=${OPS_DOCKER_UTILS_IMAGE-"imarcagency/ops-utils:$OPS_VERSION"}
-declare -rx OPS_DOCKER_GID=${OPS_DOCKER_GID-""}
-declare -rx OPS_DOCKER_UID=${OPS_DOCKER_UID-""}
-declare -rx OPS_DOCKER_VERSION="18"
-declare -rx OPS_DOCKER_COMPOSE_VERSION="1.22"
-declare -rx OPS_DOMAIN=${OPS_DOMAIN-"imarc.io"}
-declare -rx OPS_MINIO_ACCESS_KEY=${OPS_MINIO_ACCESS_KEY-"minio-access"}
-declare -rx OPS_MINIO_SECRET_KEY=${OPS_MINIO_SECRET_KEY-"minio-secret"}
-declare -rx OPS_SITES_DIR=${OPS_SITES_DIR-"$HOME/Sites"}
-declare -rx OPS_ACME_EMAIL=${OPS_ACME_EMAIL-""}
-declare -rx OPS_ACME_DNS_PROVIDER=${OPS_ACME_DNS_PROVIDER-""}
-declare -rx OPS_ACME_PRODUCTION=${OPS_ACME_PRODUCTION-"0"}
-declare -rx OPS_ADMIN_AUTH=${OPS_ADMIN_AUTH-""}
-declare -rx OPS_DEFAULT_BACKEND=${OPS_DEFAULT_BACKEND-"apache-php71"}
-declare -rx OPS_DEFAULT_DOCROOT=${OPS_DEFAULT_DOCROOT-"public"}
-declare -rx OPS_DASHBOARD_URL="https://ops.${OPS_DOMAIN}"
-declare -rx OPS_MKCERT_VERSION="1.1.2"
+declare -x OPS_ENV="dev"
+declare -x OPS_DOCKER_COMPOSER_IMAGE=${OPS_DOCKER_COMPOSER_IMAGE-"imarcagency/ops-php71:latest"}
+declare -x OPS_DOCKER_NODE_IMAGE=${OPS_DOCKER_NODE_IMAGE-"imarcagency/ops-node:$OPS_VERSION"}
+declare -x OPS_DOCKER_UTILS_IMAGE=${OPS_DOCKER_UTILS_IMAGE-"imarcagency/ops-utils:$OPS_VERSION"}
+declare -x OPS_DOCKER_GID=${OPS_DOCKER_GID-""}
+declare -x OPS_DOCKER_UID=${OPS_DOCKER_UID-""}
+declare -x OPS_DOCKER_VERSION="18"
+declare -x OPS_DOCKER_COMPOSE_VERSION="1.22"
+declare -x OPS_DOMAIN=${OPS_DOMAIN-"imarc.io"}
+declare -x OPS_MINIO_ACCESS_KEY=${OPS_MINIO_ACCESS_KEY-"minio-access"}
+declare -x OPS_MINIO_SECRET_KEY=${OPS_MINIO_SECRET_KEY-"minio-secret"}
+declare -x OPS_SITES_DIR=${OPS_SITES_DIR-"$HOME/Sites"}
+declare -x OPS_ACME_EMAIL=${OPS_ACME_EMAIL-""}
+declare -x OPS_ACME_DNS_PROVIDER=${OPS_ACME_DNS_PROVIDER-""}
+declare -x OPS_ACME_PRODUCTION=${OPS_ACME_PRODUCTION-"0"}
+declare -x OPS_ADMIN_AUTH=${OPS_ADMIN_AUTH-""}
+declare -x OPS_DEFAULT_BACKEND=${OPS_DEFAULT_BACKEND-"apache-php71"}
+declare -x OPS_DEFAULT_DOCROOT=${OPS_DEFAULT_DOCROOT-"public"}
+declare -x OPS_DASHBOARD_URL="https://ops.${OPS_DOMAIN}"
+declare -x OPS_MKCERT_VERSION="1.1.2"
 
 OPS_ACME_CA_SERVER="https://acme-staging-v02.api.letsencrypt.org/directory"
 if [[ $OPS_ACME_PRODUCTION == 1 ]]; then

@@ -29,6 +29,21 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Big refactor of script variables
 - `ops sync` db vars now optional (host, name, port, pass)
 
+## [0.7.5] - 2018-08-30
+
+### Added
+- php 5.6: Added php zip extension and webgrind
+
+## [0.7.4] - 2018-08-23
+
+### Added
+- **dashboard** Proper php links for 5.6, 7.1, and 7.2
+
+## [0.7.3] - 2018-08-23
+
+### Fixed
+- **dashboard** fixed php NOTICE
+
 ## [0.7.2] - 2018-08-15
 
 ### Added
@@ -83,8 +98,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - `ops mariadb` is now `ops mariadb cli`
 - `ops mariadb-import` is now `ops mariadb import`
 - `ops mariadb-export` is now `ops mariadb export`
-
-
 
 ## [0.5.0] - 2018-05-24
 
