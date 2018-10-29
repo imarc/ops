@@ -82,7 +82,21 @@ Within your project's .env file you can set the following options:
 
     # set the project document root
     # default: public
-    #OPS_PROJECT_DOCROOT="public"
+    OPS_PROJECT_DOCROOT="public"
+
+    # enable basic auth for project
+    # default: 0
+    OPS_PROJECT_BASIC_AUTH=1
+
+    # sets the .htpasswd file to use for basic auth
+    # looks for this file within the project path
+    # default: .htpasswd
+    OPS_PROJECT_BASIC_AUTH_FILE=".htpasswd"
+
+    # allow the use of subdomains.
+    # may require 'ops system regenerate-certs' for HTTPS
+    # default: 0
+    OPS_PROJECT_ALLOW_SUBDOMAINS=1
 
 ## Connect to Services
 
