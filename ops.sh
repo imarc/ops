@@ -333,7 +333,7 @@ ops-link() {
 
     echo "Linking $project_name."
 
-    project-start "$@"
+    project-start "$@" --remove-orphans
 }
 
 ops-unlink() {
@@ -586,7 +586,7 @@ project-name() {
 }
 
 project-start() {
-    project-docker-compose up -d
+    project-docker-compose up -d "$@"
 }
 
 project-stop() {
