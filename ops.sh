@@ -573,6 +573,13 @@ project-docker-compose() {
     docker-compose --project-directory "$OPS_SITES_DIR/$project_name" "$@"
 }
 
+project-ls() {
+    (
+        cd $OPS_SITES_DIR
+        ls -d -1 */ | sed 's/\/$//'
+    )
+}
+
 project-name() {
     (
         if [[ "$(pwd)" != $OPS_SITES_DIR/* ]]; then
@@ -807,6 +814,13 @@ system-refresh-certs() {
         fi
     fi
 
+    local project_domains=""
+    local project_count=$(ops project ls | wc -l)
+
+    for project in $(ops project ls); do
+        project_domains+=" *.$project.$OPS_DOMAIN"
+    done
+
     (
         cd $OPS_HOME/certs
 
@@ -818,13 +832,18 @@ system-refresh-certs() {
 
         CAROOT=$OPS_HOME/certs \
         $OPS_HOME/bin/mkcert-$OPS_MKCERT_VERSION \
+            localhost \
+            "$OPS_DOMAIN" \
             "*.$OPS_DOMAIN" \
             "*.ops.$OPS_DOMAIN" \
-            "$OPS_DOMAIN" \
-            localhost
+            $project_domains
 
-        mv "_wildcard.$OPS_DOMAIN+3-key.pem" self-signed-cert.key
-        mv "_wildcard.$OPS_DOMAIN+3.pem" self-signed-cert.crt
+        local domain_count=$(expr $project_count + 3)
+
+        echo $domain_count
+
+        mv "localhost+$domain_count-key.pem" self-signed-cert.key
+        mv "localhost+$domain_count.pem" self-signed-cert.crt
     )
 }
 

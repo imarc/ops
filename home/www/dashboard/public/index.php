@@ -33,7 +33,7 @@ $postgresDatabases = $postgres->query('SELECT datname AS name FROM pg_database W
         <div class="navbar">
             <div class="container">
                 <h1>Ops Dashboard <strong>v<?= $version ?></strong></h1>
-                <a href="https://gitlab.imarc.net/imarc/ops/blob/master/README.md">Documentation</a>
+                <a href="https://github.com/imarc/ops">Documentation</a>
             </div>
         </div>
 
