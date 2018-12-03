@@ -317,10 +317,15 @@ ops-restart() {
 ops-shell() {
     local id=$(system-docker-compose ps -q $OPS_SHELL_BACKEND)
     local project=$(project-name)
+    local command="$OPS_SHELL_COMMAND"
 
     [[ -z $id ]] && exit
 
-    ops docker exec -w "/var/www/html/$project" -u www-data -it $id "$OPS_SHELL_COMMAND"
+    if [[ ! -z "$1" ]]; then
+        command="$@"
+    fi
+
+    ops docker exec -w "/var/www/html/$project" -u "$OPS_SHELL_USER" -it $id $command
 }
 
 ops-link() {
@@ -967,6 +972,7 @@ declare -x OPS_PROJECT_REMOTE_DB_PASSWORD="${OPS_PROJECT_REMOTE_DB_PASSWORD}"
 declare -x OPS_PROJECT_REMOTE_DB_PORT="${OPS_PROJECT_REMOTE_DB_PORT}"
 declare -x OPS_SHELL_BACKEND=${OPS_SHELL_BACKEND-$OPS_PROJECT_BACKEND}
 declare -x OPS_SHELL_COMMAND=${OPS_SHELL_COMMAND-"bash"}
+declare -x OPS_SHELL_USER=${OPS_SHELL_USER-"www-data"}
 
 # load custom commands
 
