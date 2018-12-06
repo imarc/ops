@@ -5,6 +5,11 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/)
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.8.5] - 2018-12-06
+
+### Fixed
+- Bug typo that caused the dashboard to not restart properly.
+
 ## [0.8.4] - 2018-12-06
 
 ### Added
@@ -14,7 +19,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 - Added `--remove-orphans` flag to `ops link`
--
 
 ## [0.8.0] - 2018-09-19
 
