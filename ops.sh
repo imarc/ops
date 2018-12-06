@@ -317,10 +317,15 @@ ops-restart() {
 ops-shell() {
     local id=$(system-docker-compose ps -q $OPS_SHELL_BACKEND)
     local project=$(project-name)
+    local command="$OPS_SHELL_COMMAND"
 
     [[ -z $id ]] && exit
 
-    ops docker exec -w "/var/www/html/$project" -u www-data -it $id "$OPS_SHELL_COMMAND"
+    if [[ ! -z "$1" ]]; then
+        command="$@"
+    fi
+
+    ops docker exec -w "/var/www/html/$project" -u "$OPS_SHELL_USER" -it $id $command
 }
 
 ops-link() {
@@ -333,7 +338,7 @@ ops-link() {
 
     echo "Linking $project_name."
 
-    project-start "$@"
+    project-start "$@" --remove-orphans
 }
 
 ops-unlink() {
@@ -568,6 +573,13 @@ project-docker-compose() {
     docker-compose --project-directory "$OPS_SITES_DIR/$project_name" "$@"
 }
 
+project-ls() {
+    (
+        cd $OPS_SITES_DIR
+        ls -d -1 */ | sed 's/\/$//'
+    )
+}
+
 project-name() {
     (
         if [[ "$(pwd)" != $OPS_SITES_DIR/* ]]; then
@@ -586,7 +598,7 @@ project-name() {
 }
 
 project-start() {
-    project-docker-compose up -d
+    project-docker-compose up -d "$@"
 }
 
 project-stop() {
@@ -802,6 +814,13 @@ system-refresh-certs() {
         fi
     fi
 
+    local project_domains=""
+    local project_count=$(ops project ls | wc -l)
+
+    for project in $(ops project ls); do
+        project_domains+=" *.$project.$OPS_DOMAIN"
+    done
+
     (
         cd $OPS_HOME/certs
 
@@ -813,13 +832,18 @@ system-refresh-certs() {
 
         CAROOT=$OPS_HOME/certs \
         $OPS_HOME/bin/mkcert-$OPS_MKCERT_VERSION \
+            localhost \
+            "$OPS_DOMAIN" \
             "*.$OPS_DOMAIN" \
             "*.ops.$OPS_DOMAIN" \
-            "$OPS_DOMAIN" \
-            localhost
+            $project_domains
 
-        mv "_wildcard.$OPS_DOMAIN+3-key.pem" self-signed-cert.key
-        mv "_wildcard.$OPS_DOMAIN+3.pem" self-signed-cert.crt
+        local domain_count=$(expr $project_count + 3)
+
+        echo $domain_count
+
+        mv "localhost+$domain_count-key.pem" self-signed-cert.key
+        mv "localhost+$domain_count.pem" self-signed-cert.crt
     )
 }
 
@@ -967,6 +991,7 @@ declare -x OPS_PROJECT_REMOTE_DB_PASSWORD="${OPS_PROJECT_REMOTE_DB_PASSWORD}"
 declare -x OPS_PROJECT_REMOTE_DB_PORT="${OPS_PROJECT_REMOTE_DB_PORT}"
 declare -x OPS_SHELL_BACKEND=${OPS_SHELL_BACKEND-$OPS_PROJECT_BACKEND}
 declare -x OPS_SHELL_COMMAND=${OPS_SHELL_COMMAND-"bash"}
+declare -x OPS_SHELL_USER=${OPS_SHELL_USER-"www-data"}
 
 # load custom commands
 
