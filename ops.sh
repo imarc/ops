@@ -883,7 +883,7 @@ system-start() {
     system-docker-compose rm -fs apache-php56 &> /dev/null
     system-docker-compose rm -fs apache-php71 &> /dev/null
     system-docker-compose rm -fs apache-php72 &> /dev/null
-    system-docker-compose rm -fs dashbarod &> /dev/null
+    system-docker-compose rm -fs dashboard &> /dev/null
 
     system-docker-compose up -d --remove-orphans
 }
