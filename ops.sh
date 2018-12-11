@@ -482,13 +482,11 @@ ops-sync() {
                     mariadb-import "$OPS_PROJECT_DB_NAME"
 
         elif [[ "$OPS_PROJECT_REMOTE_DB_TYPE" = "psql" ]]; then
-            echo "Syncing remote pgsql database '$OPS_PROJECT_REMOTE_DB_NAME' to $dumpfile"
-
             OPS_PROJECT_REMOTE_DB_PORT="${OPS_PROJECT_REMOTE_DB_PORT:-"5432"}"
 
-            ssh -TC "$ssh_host" "pg_dump $OPS_PROJECT_REMOTE_DB_NAME" > $dumpfile
-            echo "Importing $dumpfile to '$OPS_PROJECT_DB_NAME' pgsql database"
-            psql-import "$OPS_PROJECT_DB_NAME" $dumpfile
+            echo "Importing databse from $OPS_PROJECT_REMOTE_DB_NAME to '$OPS_PROJECT_DB_NAME' pgsql database"
+            ssh -TC "$ssh_host" "pg_dump $OPS_PROJECT_REMOTE_DB_NAME" 2>/dev/null | \
+                psql-import "$OPS_PROJECT_DB_NAME"
         fi
     fi
 

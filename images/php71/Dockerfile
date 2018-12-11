@@ -35,6 +35,9 @@ RUN apt-get update && apt-get install -y --fix-missing \
 RUN ln -s /usr/lib/x86_64-linux-gnu/libsybdb.so /usr/lib/libsybdb.so
 RUN ln -s /usr/lib/x86_64-linux-gnu/libsybdb.a /usr/lib/libsybdb.a
 
+# Configure GD with jpeg
+RUN docker-php-ext-configure gd --with-freetype-dir=/usr/include/ --with-jpeg-dir=/usr/include/
+
 # install officially supported php extensions
 RUN docker-php-ext-install \
     curl \

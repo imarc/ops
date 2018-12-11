@@ -1,6 +1,6 @@
 # Ops
 
-**Version 0.8.5**
+**Version 0.8.6**
 
 - A local development environment focused on PHP-based projects.
 - Create a new host by making a directory.
@@ -144,7 +144,7 @@ Currently `ops sync` assumes the following:
 
 The following settings can be placed in the project's `.env`
 
-    # the local database type: mariadb, postgres
+    # the local database type: mariadb, psql
     # default: none
     OPS_PROJECT_DB_TYPE=""
 
