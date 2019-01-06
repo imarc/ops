@@ -727,9 +727,13 @@ system-config() {
     local val=$(local IFS=" "; echo "$@");
 
     if [[ -n $key && -n $val ]]; then
-        sed -i ' ' -e "s#^$key=.*#$key=\"$val\"#" "$OPS_HOME/config"
+        if [[ -n $(system-config $key) ]]; then
+            sed -i -e "s#^$key=.*#$key=\"$val\"#" "$OPS_HOME/config"
+        else
+            echo "$key=\"$val\"" >> $OPS_HOME/config
+        fi
     elif [[ -n $key ]]; then
-        cat $OPS_HOME/config | awk "/^$1=(.*)/ { sub(/$1=/, \"\", \$0); print }"
+        cat $OPS_HOME/config | awk "/^$key=(.*)/ { sub(/$key=/, \"\", \$0); print }"
     else
         cat $OPS_HOME/config
     fi

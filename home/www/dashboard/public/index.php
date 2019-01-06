@@ -215,6 +215,17 @@ $postgresDatabases = $postgres->query('SELECT datname AS name FROM pg_database W
 
                     <ul>
                         <li>
+                            PHP 7.3
+
+                            <?php
+                            echo sprintf(
+                                '<small> / <a href="%s">logs</a> / <a href="%s">console</a></small>',
+                                $containers['ops']['apache-php73']['logs_link'],
+                                $containers['ops']['apache-php73']['console_link']
+                            );
+                            ?>
+                        </li>
+                        <li>
                             PHP 7.2
 
                             <?php

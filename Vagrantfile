@@ -5,12 +5,12 @@ Vagrant.configure(2) do |config|
   config.vm.box = "ubuntu/xenial64"
   #config.vm.box_version = "20180215.0.0"
 
-  #config.vm.network "forwarded_port", guest: 8080, host: 8888
   config.vm.network "forwarded_port", guest: 80, host: 8888
+  config.vm.network "forwarded_port", guest: 443, host: 4443
 
   # config.vm.network "private_network", ip: "192.168.33.10"
   # config.vm.network "public_network"
-  # config.vm.synced_folder "../data", "/vagrant_data"
+  config.vm.synced_folder ".", "/home/vagrant/ops"
 
   config.vm.provision "shell", inline: <<-SHELL
     # install docker
@@ -36,7 +36,10 @@ Vagrant.configure(2) do |config|
     curl -sL https://deb.nodesource.com/setup_9.x | sudo -E bash -
     sudo apt-get install -y nodejs
 
-    sudo groupadd docker
     sudo usermod -aG docker vagrant
+
+    # cd ops
+    # sudo npm link
+    # sudo npm install .
   SHELL
 end
