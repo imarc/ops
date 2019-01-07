@@ -341,4 +341,4 @@ This means your global ops script will point directly to the repo and you can ma
 
 MIT License
 
-Copyright (c) 2018 Imarc
+Copyright (c) 2019 Imarc
