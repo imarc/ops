@@ -1,8 +1,12 @@
-FROM php:5.6.39-apache-stretch
+FROM php:7.3.0-apache-stretch
 
 MAINTAINER Imarc <info@imarc.com>
+
+
+
 # install supporting packages
 RUN apt-get update && apt-get install -y --fix-missing \
+    apt-transport-https \
     autoconf \
     build-essential \
     chrpath \
@@ -10,59 +14,48 @@ RUN apt-get update && apt-get install -y --fix-missing \
     freetds-dev \
     g++ \
     git-core \
+    gnupg \
     imagemagick \
     libcurl4-openssl-dev \
     libdbd-freetds \
-    libgmp-dev \
     libjpeg62-turbo-dev \
     libmagickwand-dev \
     libmcrypt-dev \
-    libmcrypt-dev \
     libmemcached-dev \
     libmemcached11 \
-    libmhash-dev \
     libpng-dev \
     libpq-dev \
     libpspell-dev \
     libsqlite3-dev \
-    libssl-dev \
-    libtidy-dev \
-    libxslt1-dev \
+    libzip-dev \
     netcat \
     pkg-config \
     python \
-    re2c \
-    sudo \
+    subversion \
+    unixodbc-dev \
     vim \
     wget
 
-# link libsysbdb libs. (required for mssql extension)
+RUN curl https://packages.microsoft.com/keys/microsoft.asc | apt-key add -
+RUN curl https://packages.microsoft.com/config/debian/9/prod.list > /etc/apt/sources.list.d/mssql-release.list
+
+RUN apt-get update
+RUN ACCEPT_EULA=y apt-get install -y \
+    msodbcsql17 \
+    mssql-tools
+
+# link libsysbdb libs. (required for sqlsrv extension)
 RUN ln -s /usr/lib/x86_64-linux-gnu/libsybdb.so /usr/lib/libsybdb.so
 RUN ln -s /usr/lib/x86_64-linux-gnu/libsybdb.a /usr/lib/libsybdb.a
 
-# link gmp.h for gmp extension
-RUN ln -s /usr/include/x86_64-linux-gnu/gmp.h /usr/local/include/
+# Configure GD with jpeg
+RUN docker-php-ext-configure gd --with-freetype-dir=/usr/include/ --with-jpeg-dir=/usr/include/
 
 # install officially supported php extensions
 RUN docker-php-ext-install \
-    bz2 \
-    calendar \
-    ctype \
     curl \
-    dom \
-    exif \
-    fileinfo \
-    ftp \
-    gettext \
     gd \
-    gmp \
-    hash \
     iconv \
-    json \
-    mbstring \
-    mcrypt \
-    mssql \
-    mysql \
     mysqli \
     opcache \
     pcntl \
@@ -71,47 +64,38 @@ RUN docker-php-ext-install \
     pdo_mysql \
     pdo_pgsql \
     pdo_sqlite \
-    posix \
-    pspell \
     pgsql \
-    session \
-    shmop \
-    simplexml \
+    pspell \
     soap \
-    sockets \
-    sysvmsg \
-    sysvsem \
-    sysvshm \
-    tidy \
-    tokenizer \
-    wddx \
-    xml \
-    xmlreader \
-    xmlwriter \
-    xsl \
     zip
 
+# install pecl extensions
 RUN pecl install \
     imagick \
-    memcached-2.2.0 \
+    memcached \
     redis \
-    xdebug-2.5.5
-#
+    sqlsrv-5.5.0preview \
+    pdo_sqlsrv-5.5.0preview \
+    xdebug-2.7.0beta1
+
+# enable pecl extensions
 RUN docker-php-ext-enable \
     imagick \
     memcached \
+    pdo_sqlsrv \
     redis \
     xdebug
 
 # cleanup apt
-RUN apt-get clean && \
-    apt-get autoremove -y && \
-    rm -rf /var/lib/apt/lists/* /tmp/* /var/tmp/* /usr/src/*
+RUN apt-get clean
+RUN apt-get autoremove -y
+RUN rm -rf /var/lib/apt/lists/* /tmp/* /var/tmp/* /usr/src/*
 
 # install composer
-RUN wget https://getcomposer.org/composer.phar && \
-    mv composer.phar /usr/local/bin/composer && \
-    chmod 755 /usr/local/bin/composer
+WORKDIR /tmp
+RUN wget https://getcomposer.org/composer.phar
+RUN mv composer.phar /bin/composer
+RUN chmod 755 /bin/composer
 
 # enable apache modules
 RUN a2enmod \
@@ -130,10 +114,6 @@ COPY php.ini /usr/local/etc/php/conf.d
 
 # copy apache config
 COPY 000-default.conf /etc/apache2/sites-enabled/000-default.conf
-
-WORKDIR /tmp
-RUN git clone https://github.com/jokkedk/webgrind
-RUN mv /tmp/webgrind /var/www/webgrind
 
 # set working directory
 WORKDIR /var/www

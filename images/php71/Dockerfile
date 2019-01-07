@@ -1,4 +1,4 @@
-FROM php:7.1.20-apache-stretch
+FROM php:7.1.25-apache-stretch
 
 MAINTAINER Imarc <info@imarc.com>
 
@@ -91,6 +91,8 @@ RUN a2enmod \
     cache_disk \
     expires \
     headers \
+    macro \
+    http2 \
     lua \
     rewrite \
     vhost_alias

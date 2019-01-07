@@ -214,39 +214,35 @@ $postgresDatabases = $postgres->query('SELECT datname AS name FROM pg_database W
                     <h2>Tools</h2>
 
                     <ul>
-                        <li>
-                            PHP 7.2
+                        <?php
+                        $backends = [
+                            'apache-php73' => 'PHP 7.3',
+                            'apache-php72' => 'PHP 7.2',
+                            'apache-php71' => 'PHP 7.1',
+                            'apache-php56' => 'PHP 5.6',
+                        ];
 
-                            <?php
-                            echo sprintf(
-                                '<small> / <a href="%s">logs</a> / <a href="%s">console</a></small>',
-                                $containers['ops']['apache-php72']['logs_link'],
-                                $containers['ops']['apache-php72']['console_link']
-                            );
-                            ?>
-                        </li>
-                        <li>
-                            PHP 7.1
+                        foreach ($backends as $key => $name) {
+                            if (isset($containers['ops'][$key])) {
+                                ?>
 
-                            <?php
-                            echo sprintf(
-                                '<small> / <a href="%s">logs</a> / <a href="%s">console</a></small>',
-                                $containers['ops']['apache-php71']['logs_link'],
-                                $containers['ops']['apache-php71']['console_link']
-                            );
-                            ?>
-                        </li>
-                        <li>
-                            PHP 5.6
+                                <li>
 
-                            <?php
-                            echo sprintf(
-                                '<small> / <a href="%s">logs</a> / <a href="%s">console</a></small>',
-                                $containers['ops']['apache-php56']['logs_link'],
-                                $containers['ops']['apache-php56']['console_link']
-                            );
-                            ?>
-                        </li>
+                                    <?= $name ?>
+
+                                    <?php
+                                    echo sprintf(
+                                        '<small> / <a href="%s">logs</a> / <a href="%s">console</a></small>',
+                                        $containers['ops']['apache-php73']['logs_link'],
+                                        $containers['ops']['apache-php73']['console_link']
+                                    );
+                                    ?>
+                                </li>
+
+                                <?php
+                            }
+                        }
+                        ?>
                         <li>
                             <a href="https://adminer.ops.<?= $domain ?>">Adminer</a>
 

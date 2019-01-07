@@ -1,6 +1,6 @@
 # Ops
 
-**Version 0.8.6**
+**Version 0.9.0**
 
 - A local development environment focused on PHP-based projects.
 - Create a new host by making a directory.
@@ -75,28 +75,85 @@ The dashboard ([https://ops.imarc.io](https://ops.imarc.io)) will show you all p
 
 Within your project's .env file you can set the following options:
 
-    # set the application backend
-    # values: apache-php56, apache-php71, apache-php72
-    # default: apache-php71
-    OPS_PROJECT_BACKEND="apache-php71"
+    # Set the application backend
+    #
+    # Valid values are the OPS_BACKENDS global option
+    #
+    # Default: value of OPS_DEFAULT_BACKEND global option
+    OPS_PROJECT_BACKEND="apache-php73"
 
     # set the project document root
-    # default: public
+    #
+    # Default: value of OPS_DEFAULT_DOCROOT global option
     OPS_PROJECT_DOCROOT="public"
 
     # enable basic auth for project
-    # default: 0
+    #
+    # Default: 0
     OPS_PROJECT_BASIC_AUTH=1
 
     # sets the .htpasswd file to use for basic auth
     # looks for this file within the project path
-    # default: .htpasswd
+    #
+    # Default: .htpasswd
     OPS_PROJECT_BASIC_AUTH_FILE=".htpasswd"
 
     # allow the use of subdomains.
     # may require 'ops system regenerate-certs' for HTTPS
-    # default: 0
+    #
+    # Default: 0
     OPS_PROJECT_ALLOW_SUBDOMAINS=1
+
+## Global Configuration
+
+    # A space separated list of application backends that
+    # should be enabled. Available options are:
+    #  apache-php56, apache-php71, apache-php72, apache-php73
+    #
+    # Default: apache-php73 apache-php56
+    OPS_BACKENDS="apache-php73 apache-php56"
+
+    # A linux user id that a backend process should attempt to run as.
+    #
+    # Recommended on linux systems. Ensures that files written to the filesystem
+    # by the backend process map to the correct owner on the host system.
+    #
+    # Docker Desktop for mac or windows already resolves this behavior.
+    #
+    # Default: (none)
+    OPS_DOCKER_UID=""
+
+    # A linux group id that a backend process should attempt to run as.
+    #
+    # See OPS_DOCKER_UID for description.
+    #
+    # Default: (none)
+    OPS_DOCKER_GID=""
+
+    # The root domain to extend with custom project subdomains
+    #
+    # For development, the dns should be configured as a wildcard and to point
+    # back to 127.0.0.1
+    #
+    # Default: "imarc.io"
+    OPS_DOMAIN="imarc.io"
+
+    # Set the diretory where projects live.
+    #
+    # Default: $HOME/Sites
+    OPS_SITES_DIR="$HOME/Sites"
+
+    # If a backend is not specified in a project's .env
+    # file, this backend will be used.
+    #
+    # Default: apache-php73
+    OPS_DEFAULT_BACKEND="apache-php73"
+
+    # If a document root is not specified in a project's .env
+    # file, this document root will be used.
+    #
+    # Default: public
+    OPS_DEFAULT_DOCROOT="public"
 
 ## Connect to Services
 
