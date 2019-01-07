@@ -1,6 +1,6 @@
 # Ops
 
-**Version 0.9.0**
+**Version 0.9.1**
 
 - A local development environment focused on PHP-based projects.
 - Create a new host by making a directory.
@@ -80,7 +80,7 @@ Within your project's .env file you can set the following options:
     # Valid values are the OPS_BACKENDS global option
     #
     # Default: value of OPS_DEFAULT_BACKEND global option
-    OPS_PROJECT_BACKEND="apache-php73"
+    OPS_PROJECT_BACKEND="apache-php71"
 
     # set the project document root
     #
@@ -112,7 +112,7 @@ The following options can be set within your $HOME/.ops/config file.
     # should be enabled. Available options are:
     #  apache-php56, apache-php71, apache-php72, apache-php73
     #
-    # Default: apache-php73 apache-php56
+    # Default: apache-php73 apache-php72 apache-php71 apache-php56
     OPS_BACKENDS="apache-php73 apache-php56"
 
     # A linux user id that a backend process should attempt to run as.
