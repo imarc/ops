@@ -106,6 +106,8 @@ Within your project's .env file you can set the following options:
 
 ## Global Configuration
 
+The following options can be set within your $HOME/.ops/config file.
+
     # A space separated list of application backends that
     # should be enabled. Available options are:
     #  apache-php56, apache-php71, apache-php72, apache-php73
