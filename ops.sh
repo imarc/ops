@@ -939,7 +939,7 @@ fi
 # options that can be overridden by global config
 
 declare -x OPS_ENV="dev"
-declare -x OPS_BACKENDS=${OPS_BACKENDS-"apache-php73 apache-php56"}
+declare -x OPS_BACKENDS=${OPS_BACKENDS-"apache-php71 apache-php72 apache-php73 apache-php56"}
 declare -x OPS_DOCKER_COMPOSER_IMAGE=${OPS_DOCKER_COMPOSER_IMAGE-"imarcagency/ops-php71:latest"}
 declare -x OPS_DOCKER_NODE_IMAGE=${OPS_DOCKER_NODE_IMAGE-"imarcagency/ops-node:$OPS_VERSION"}
 declare -x OPS_DOCKER_UTILS_IMAGE=${OPS_DOCKER_UTILS_IMAGE-"imarcagency/ops-utils:$OPS_VERSION"}
@@ -955,7 +955,7 @@ declare -x OPS_ACME_EMAIL=${OPS_ACME_EMAIL-""}
 declare -x OPS_ACME_DNS_PROVIDER=${OPS_ACME_DNS_PROVIDER-""}
 declare -x OPS_ACME_PRODUCTION=${OPS_ACME_PRODUCTION-"0"}
 declare -x OPS_ADMIN_AUTH=${OPS_ADMIN_AUTH-""}
-declare -x OPS_DEFAULT_BACKEND=${OPS_DEFAULT_BACKEND-"apache-php73"}
+declare -x OPS_DEFAULT_BACKEND=${OPS_DEFAULT_BACKEND-"apache-php71"}
 declare -x OPS_DEFAULT_DOCROOT=${OPS_DEFAULT_DOCROOT-"public"}
 declare -x OPS_DASHBOARD_URL="https://ops.${OPS_DOMAIN}"
 declare -x OPS_MKCERT_VERSION="1.1.2"
