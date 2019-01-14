@@ -217,6 +217,33 @@ _ops-npm() {
         "$@"
 }
 
+ops-package() {
+    OPS_PROJECT_BUILD="composer laravel-mix"
+
+    local project_name=$(project-name)
+    local project_path="$OPS_SITES_DIR/$project_name"
+
+    prebackend=""
+    postbackend=""
+
+    NL=$'\n'
+
+    for step in $OPS_PROJECT_BUILD; do
+        local buildfile="$OPS_HOME/build/$step.Dockerfile"
+        prebackend+="$(cat $buildfile | grep -vE '^COPY --from=')${NL}${NL}"
+        postbackend+="${NL}$(cat $buildfile | grep -E '^COPY --from=')"
+    done
+
+    echo "ARG OPS_PROJECT_IMAGE${NL}ARG OPS_PROJECT_DOCROOT${NL}$prebackend${NL}$(cat $OPS_HOME/build/Dockerfile)${NL}$postbackend" \
+        > $project_path/ops-Dockerfile
+
+
+    docker build -f ops-Dockerfile -t $project_name:latest --no-cache \
+        --build-arg OPS_PROJECT_IMAGE="imarcagency/ops-$OPS_PROJECT_BACKEND:$OPS_VERSION" \
+        --build-arg OPS_PROJECT_DOCROOT="$OPS_PROJECT_DOCROOT" \
+        $project_path
+}
+
 ops-ps() {
     system-docker-compose ps "$@"
 }
