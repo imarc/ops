@@ -198,8 +198,9 @@ from a remote server. Ideally, these settings should be checked into version con
 
 Currently `ops sync` assumes the following:
 
-- SSH access is enabled to the remote web and/or DB servers
+- SSH access is enabled to the remote web and/or DB servers.
 - remote server has the following database tools available to the SSH user: mysqldump, pg_dump.
+- `OPS_PROJECT_SYNC_DIRS`, `OPS_PROJECT_REMOTE_HOST` and `OPS_PROJECT_REMOTE_PATH` are all defined.
 
 The following settings can be placed in the project's `.env`
 
