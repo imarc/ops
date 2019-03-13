@@ -1,8 +1,6 @@
-FROM php:7.3.0-apache-stretch
+FROM php:7.3.1-apache-stretch
 
 MAINTAINER Imarc <info@imarc.com>
-
-
 
 # install supporting packages
 RUN apt-get update && apt-get install -y --fix-missing \
@@ -74,17 +72,18 @@ RUN pecl install \
     imagick \
     memcached \
     redis \
-    sqlsrv-5.5.0preview \
-    pdo_sqlsrv-5.5.0preview \
-    xdebug-2.7.0beta1
+    xdebug \
+    sqlsrv \
+    pdo_sqlsrv
 
 # enable pecl extensions
 RUN docker-php-ext-enable \
     imagick \
     memcached \
-    pdo_sqlsrv \
     redis \
-    xdebug
+    xdebug \
+    sqlsrv \
+    pdo_sqlsrv
 
 # cleanup apt
 RUN apt-get clean
