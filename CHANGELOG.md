@@ -20,6 +20,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - PHP 7.3.1 upgraded to PHP 7.3.3
 
 ### Added
+- BC Math extension to all PHP versions
 - Command hooks for use in project-level ops-commands.sh file
 - Push docker images script
 
