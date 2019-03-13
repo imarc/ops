@@ -1,4 +1,4 @@
-FROM php:7.3.1-apache-stretch
+FROM php:7.3.3-apache-stretch
 
 MAINTAINER Imarc <info@imarc.com>
 
@@ -51,6 +51,7 @@ RUN docker-php-ext-configure gd --with-freetype-dir=/usr/include/ --with-jpeg-di
 
 # install officially supported php extensions
 RUN docker-php-ext-install \
+    bcmath \
     curl \
     gd \
     iconv \

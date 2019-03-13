@@ -1,4 +1,4 @@
-FROM php:5.6.39-apache-stretch
+FROM php:5.6.40-apache-stretch
 
 MAINTAINER Imarc <info@imarc.com>
 # install supporting packages
@@ -45,6 +45,7 @@ RUN ln -s /usr/include/x86_64-linux-gnu/gmp.h /usr/local/include/
 
 # install officially supported php extensions
 RUN docker-php-ext-install \
+    bcmath \
     bz2 \
     calendar \
     ctype \
