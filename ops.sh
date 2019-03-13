@@ -261,8 +261,8 @@ psql-import() {
 
     (
         # don't let these commands capture stdin
-        ops-exec postgres psql -c "DROP DATABASE IF EXISTS $db"
-        ops-exec postgres psql -c "CREATE DATABASE $db"
+        ops-exec postgres psql -U postgres -c "DROP DATABASE IF EXISTS $db"
+        ops-exec postgres psql -U postgres -c "CREATE DATABASE $db"
     ) </dev/null
 
     cat "$sqlfile" | ops-exec postgres psql -U postgres "$db"
@@ -452,6 +452,11 @@ ops-sync() {
     local ssh_host="$([[ ! -z $OPS_PROJECT_REMOTE_USER ]] && echo "$OPS_PROJECT_REMOTE_USER@")"
     local ssh_host="$ssh_host$OPS_PROJECT_REMOTE_HOST"
 
+    echo $OPS_PROJECT_DB_NAME
+    echo $OPS_PROJECT_DB_TYPE
+    echo $OPS_PROJECT_REMOTE_DB_TYPE
+    echo $OPS_PROJECT_REMOTE_DB_NAME
+
     # sync database
     if \
         [[ $OPS_PROJECT_SYNC_NODB == 0 ]] && \
@@ -484,13 +489,23 @@ ops-sync() {
         elif [[ "$OPS_PROJECT_REMOTE_DB_TYPE" = "psql" ]]; then
             OPS_PROJECT_REMOTE_DB_PORT="${OPS_PROJECT_REMOTE_DB_PORT:-"5432"}"
 
-            echo "Importing databse from $OPS_PROJECT_REMOTE_DB_NAME to '$OPS_PROJECT_DB_NAME' pgsql database"
-            ssh -TC "$ssh_host" "pg_dump $OPS_PROJECT_REMOTE_DB_NAME" 2>/dev/null | \
-                psql-import "$OPS_PROJECT_DB_NAME"
+            echo "Importing database from $OPS_PROJECT_REMOTE_DB_NAME to '$OPS_PROJECT_DB_NAME' pgsql database"
+
+            #local pgdump_password="$([[ ! -z $OPS_PROJECT_REMOTE_DB_PASSWORD ]] && echo "-p$OPS_PROJECT_REMOTE_DB_PASSWORD")"
+            local pgdump_host="$([[ ! -z $OPS_PROJECT_REMOTE_DB_HOST ]] && echo "-h $OPS_PROJECT_REMOTE_DB_HOST")"
+            #local pgdump_port="$([[ ! -z $OPS_PROJECT_REMOTE_DB_PORT ]] && echo "-P $OPS_PROJECT_REMOTE_DB_PORT")"
+            #local pgdump_user="$([[ ! -z $OPS_PROJECT_REMOTE_DB_USER ]] && echo "-u $OPS_PROJECT_REMOTE_DB_USER")"
+
+            ssh -TC "$ssh_host" "pg_dump \
+                $pgdump_host \
+                $OPS_PROJECT_REMOTE_DB_NAME" 2>/dev/null | \
+                    psql-import "$OPS_PROJECT_DB_NAME"
         fi
     fi
 
     # sync filesystem
+
+    local max_size="$([[ ! -z $OPS_PROJECT_SYNC_MAXSIZE ]] && echo "--max-size=$OPS_PROJECT_SYNC_MAXSIZE")"
 
     if \
         [[ ! -z "$OPS_PROJECT_REMOTE_HOST" ]] && \
@@ -504,16 +519,17 @@ ops-sync() {
             # sync entire dir structure first
             rsync -a -f"+ */" -f"- *" \
                 "$ssh_host:$OPS_PROJECT_REMOTE_PATH/$sync_dir/" \
-                "$sync_dir" 2>/dev/null
+                "$sync_dir" 1>/dev/null
 
             echo -e "Syncing files..."
 
             # send exclude patterns as stdin, one per line.
-            $(printf %"s\n" $OPS_PROJECT_SYNC_EXCLUDES | \
-                rsync -a --exclude-from=- \
-                    --max-size=$OPS_PROJECT_SYNC_MAXSIZE \
+            printf %"s\n" $OPS_PROJECT_SYNC_EXCLUDES | \
+                rsync -av --exclude-from=- \
+                    --timeout=5 \
+                    $max_size \
                     "$ssh_host:$OPS_PROJECT_REMOTE_PATH/$sync_dir/" \
-                    "$sync_dir" 2>/dev/null)
+                    "$sync_dir"
         done
     fi
 
@@ -987,12 +1003,12 @@ declare -x OPS_PROJECT_DB_NAME="${OPS_PROJECT_DB_NAME-$OPS_PROJECT_NAME}"
 declare -x OPS_PROJECT_SYNC_DIRS="${OPS_PROJECT_SYNC_DIRS}"
 declare -x OPS_PROJECT_SYNC_NODB="${OPS_PROJECT_SYNC_NODB-0}"
 declare -x OPS_PROJECT_SYNC_EXCLUDES="${OPS_PROJECT_SYNC_EXCLUDES}"
-declare -x OPS_PROJECT_SYNC_MAXSIZE="${OPS_PROJECT_SYNC_MAXSIZE:-500M}"
+declare -x OPS_PROJECT_SYNC_MAXSIZE="${OPS_PROJECT_SYNC_MAXSIZE}"
 declare -x OPS_PROJECT_REMOTE_USER="${OPS_PROJECT_REMOTE_USER}"
 declare -x OPS_PROJECT_REMOTE_HOST="${OPS_PROJECT_REMOTE_HOST}"
 declare -x OPS_PROJECT_REMOTE_PATH="${OPS_PROJECT_REMOTE_PATH}"
 declare -x OPS_PROJECT_REMOTE_DB_HOST="${OPS_PROJECT_REMOTE_DB_HOST}"
-declare -x OPS_PROJECT_REMOTE_DB_TYPE="${OPS_PROJECT_DB_TYPE}"
+declare -x OPS_PROJECT_REMOTE_DB_TYPE="${OPS_PROJECT_REMOTE_DB_TYPE-$OPS_PROJECT_DB_TYPE}"
 declare -x OPS_PROJECT_REMOTE_DB_NAME="${OPS_PROJECT_REMOTE_DB_NAME}"
 declare -x OPS_PROJECT_REMOTE_DB_USER="${OPS_PROJECT_REMOTE_DB_USER}"
 declare -x OPS_PROJECT_REMOTE_DB_PASSWORD="${OPS_PROJECT_REMOTE_DB_PASSWORD}"
