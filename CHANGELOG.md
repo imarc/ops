@@ -5,9 +5,28 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/)
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+
+## [0.9.2] - 2019-03-13
+
+### Fixed
+- Domains with dashes now work. Caused by Lua regex issue.
+- PHP 7.3 beta extensions upgraded to stable versions (xdebug, sqlsrv, pdo_sqlsrv)
+- Postgres remote DB sync
+
+### Changed
+- PHP 5.3.39 upgraded to PHP 5.3.40
+- PHP 7.1.25 upgraded to PHP 7.1.27
+- PHP 7.2.13 upgraded to PHP 7.2.16
+- PHP 7.3.1 upgraded to PHP 7.3.3
+
+### Added
+- Command hooks for use in project-level ops-commands.sh file
+- Push docker images script
+
+
 ## [0.9.1] - 2019-01-07
 
-## Changed
+### Changed
 - Reverted default backend to `apache-php71`
 - Active backends now `apache-php71`, `apache-php72`, `apache-php73`, and `apache-php56`
 
