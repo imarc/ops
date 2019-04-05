@@ -847,9 +847,6 @@ system-refresh-certs() {
         cd $OPS_HOME/certs
 
         CAROOT=$OPS_HOME/certs \
-        $OPS_HOME/bin/mkcert-$OPS_MKCERT_VERSION -uninstall 2>/dev/null
-
-        CAROOT=$OPS_HOME/certs \
         $OPS_HOME/bin/mkcert-$OPS_MKCERT_VERSION -install
 
         CAROOT=$OPS_HOME/certs \
@@ -974,7 +971,7 @@ declare -x OPS_ADMIN_AUTH=${OPS_ADMIN_AUTH-""}
 declare -x OPS_DEFAULT_BACKEND=${OPS_DEFAULT_BACKEND-"apache-php71"}
 declare -x OPS_DEFAULT_DOCROOT=${OPS_DEFAULT_DOCROOT-"public"}
 declare -x OPS_DASHBOARD_URL="https://ops.${OPS_DOMAIN}"
-declare -x OPS_MKCERT_VERSION="1.1.2"
+declare -x OPS_MKCERT_VERSION="1.3.0"
 
 OPS_ACME_CA_SERVER="https://acme-staging-v02.api.letsencrypt.org/directory"
 if [[ $OPS_ACME_PRODUCTION == 1 ]]; then
