@@ -151,7 +151,7 @@ ops-env() {
 
     if [[ -n $key && -n $val ]]; then
         if [[ -n $(grep -E "^$key=" .env) ]]; then
-            sed -i -e "s#^$key=.*#$key=\"$val\"#" .env
+            sed -i '' -e "s#^$key=.*#$key=\"$val\"#" .env
         else
             echo "$key=\"$val\"" >> .env
         fi
