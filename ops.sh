@@ -134,6 +134,34 @@ ops-logs() {
     system-docker-compose logs -f --tail="30" "$@"
 }
 
+ops-env() {
+    #
+    # list: env
+    # get:  env [key]
+    # set:  env [key] [value]
+    #
+
+    local key=$1
+    shift
+    local val=$(local IFS=" "; echo "$@");
+
+    if [[ ! -e ".env" ]]; then
+        exit 1
+    fi
+
+    if [[ -n $key && -n $val ]]; then
+        if [[ -n $(grep -E "^$key=" .env) ]]; then
+            sed -i -e "s#^$key=.*#$key=\"$val\"#" .env
+        else
+            echo "$key=\"$val\"" >> .env
+        fi
+    elif [[ -n $key ]]; then
+        cat .env | awk "/^$key=(.*)/ { sub(/$key=/, \"\", \$0); print }"
+    else
+        cat .env
+    fi
+}
+
 _ops-mc() {
     ops docker run \
         --rm -it \
