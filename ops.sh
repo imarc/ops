@@ -90,19 +90,24 @@ get-version() {
 # Main Commands
 
 _ops-composer() {
-    mkdir -p "$HOME/.composer"
-    mkdir -p "$HOME/.ssh"
+    if [[ -e "$(which composer)" ]]; then
+        composer "$@"
+        return;
+    fi
+
+    mkdir -p "$OPS_HOME/.composer"
+    mkdir -p "$OPS_HOME/.ssh"
 
     ops docker run \
         --rm -itP \
         -v "$(pwd):/usr/src/app" \
-        -v "$OPS_HOME/composer:/composer" \
-        -v "$HOME/.ssh:/var/www/.ssh" \
-        -v "$ssh_agent:/ssh-agent" \
+        -v "$OPS_HOME/.composer:/composer" \
+        -v "$OPS_HOME/.ssh:/var/www/.ssh" \
+        -v "$SSH_AUTH_SOCK:/ssh-agent" \
         -e "SSH_AUTH_SOCK=/ssh-agent" \
         -e "COMPOSER_HOME=/composer" \
         -w "/usr/src/app" \
-        --label=ops.site="$(ops site id)" \
+        --label=ops.project="$(ops project name)" \
         --user "www-data:www-data" \
         $OPS_DOCKER_COMPOSER_IMAGE \
         composer -n "$@"
@@ -776,7 +781,7 @@ system-config() {
 
     if [[ -n $key && -n $val ]]; then
         if [[ -n $(system-config $key) ]]; then
-            sed -i -e "s#^$key=.*#$key=\"$val\"#" "$OPS_HOME/config"
+            sed -i '' -e "s#^$key=.*#$key=\"$val\"#" "$OPS_HOME/config"
         else
             echo "$key=\"$val\"" >> $OPS_HOME/config
         fi
@@ -996,7 +1001,7 @@ declare -x OPS_ACME_EMAIL=${OPS_ACME_EMAIL-""}
 declare -x OPS_ACME_DNS_PROVIDER=${OPS_ACME_DNS_PROVIDER-""}
 declare -x OPS_ACME_PRODUCTION=${OPS_ACME_PRODUCTION-"0"}
 declare -x OPS_ADMIN_AUTH=${OPS_ADMIN_AUTH-""}
-declare -x OPS_DEFAULT_BACKEND=${OPS_DEFAULT_BACKEND-"apache-php71"}
+declare -x OPS_DEFAULT_BACKEND=${OPS_DEFAULT_BACKEND-"apache-php73"}
 declare -x OPS_DEFAULT_DOCROOT=${OPS_DEFAULT_DOCROOT-"public"}
 declare -x OPS_DASHBOARD_URL="https://ops.${OPS_DOMAIN}"
 declare -x OPS_MKCERT_VERSION="1.3.0"
