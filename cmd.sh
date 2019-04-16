@@ -27,7 +27,6 @@ cmd-help() {
     echo
 }
 
-
 cmd-run() {
     local prefix=$1
     local command="$2"

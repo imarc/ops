@@ -12,9 +12,15 @@ services:
       - OPS_ENABLED=1
       - OPS_SITES_DIR=${OPS_SITES_DIR}
       - OPS_VERSION=${OPS_VERSION}
+
+    dns: 172.18.1.1
+
     networks:
       - backend
+      - services
+
     volumes:
+      - ${OPS_HOME}/certs/rootCA.pem:/usr/local/share/ca-certificates/ops.crt
       - ${OPS_HOME}/apache/apache.conf:/etc/apache2/sites-enabled/000-default.conf
       - ${OPS_HOME}/apache/configure:/usr/local/bin/docker-configure
       - ${OPS_HOME}/apache/set_docroot.lua:/etc/apache2/set_docroot.lua

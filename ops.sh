@@ -99,7 +99,7 @@ _ops-composer() {
     mkdir -p "$OPS_HOME/.ssh"
 
     ops docker run \
-        --rm -itP \
+        --rm -iP \
         -v "$(pwd):/usr/src/app" \
         -v "$OPS_HOME/.composer:/composer" \
         -v "$OPS_HOME/.ssh:/var/www/.ssh" \
