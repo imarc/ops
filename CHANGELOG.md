@@ -5,6 +5,41 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/)
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.9.4] - 2019-04-09
+
+### Added
+- Added .env helper `ops env`
+
+## [0.9.3] - 2019-04-05
+
+### Fixed
+- Issue with uninstalling rootCA on macOS
+
+## [0.9.2] - 2019-03-13
+
+### Fixed
+- Domains with dashes now work. Caused by Lua regex issue.
+- PHP 7.3 beta extensions upgraded to stable versions (xdebug, sqlsrv, pdo_sqlsrv)
+- Postgres remote DB sync
+
+### Changed
+- PHP 5.3.39 upgraded to PHP 5.3.40
+- PHP 7.1.25 upgraded to PHP 7.1.27
+- PHP 7.2.13 upgraded to PHP 7.2.16
+- PHP 7.3.1 upgraded to PHP 7.3.3
+
+### Added
+- BC Math extension to all PHP versions
+- Command hooks for use in project-level ops-commands.sh file
+- Push docker images script
+
+
+## [0.9.1] - 2019-01-07
+
+### Changed
+- Reverted default backend to `apache-php71`
+- Active backends now `apache-php71`, `apache-php72`, `apache-php73`, and `apache-php56`
+
 ## [0.9.0] - 2019-01-06
 
 ### Changed
@@ -13,13 +48,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 - PHP 7.3 support (apache-php73 backend)
-- OPS_BACKENDS global config option
+- `OPS_BACKENDS` global config option
 - enabled macro and http2 modules for all apache backends
 - Lots of documentation about global config options
 
 ### Fixed
 - Fied bug where `ops system config` wouldn't work
 - Bug where lua code would break on non-standard HTTP ports
+- Vagrant provisioning script
 
 
 

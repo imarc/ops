@@ -90,19 +90,24 @@ get-version() {
 # Main Commands
 
 _ops-composer() {
-    mkdir -p "$HOME/.composer"
-    mkdir -p "$HOME/.ssh"
+    if [[ -e "$(which composer)" ]]; then
+        composer "$@"
+        return;
+    fi
+
+    mkdir -p "$OPS_HOME/.composer"
+    mkdir -p "$OPS_HOME/.ssh"
 
     ops docker run \
         --rm -itP \
         -v "$(pwd):/usr/src/app" \
-        -v "$OPS_HOME/composer:/composer" \
-        -v "$HOME/.ssh:/var/www/.ssh" \
-        -v "$ssh_agent:/ssh-agent" \
+        -v "$OPS_HOME/.composer:/composer" \
+        -v "$OPS_HOME/.ssh:/var/www/.ssh" \
+        -v "$SSH_AUTH_SOCK:/ssh-agent" \
         -e "SSH_AUTH_SOCK=/ssh-agent" \
         -e "COMPOSER_HOME=/composer" \
         -w "/usr/src/app" \
-        --label=ops.site="$(ops site id)" \
+        --label=ops.project="$(ops project name)" \
         --user "www-data:www-data" \
         $OPS_DOCKER_COMPOSER_IMAGE \
         composer -n "$@"
@@ -132,6 +137,34 @@ ops-help() {
 
 ops-logs() {
     system-docker-compose logs -f --tail="30" "$@"
+}
+
+ops-env() {
+    #
+    # list: env
+    # get:  env [key]
+    # set:  env [key] [value]
+    #
+
+    local key=$1
+    shift
+    local val=$(local IFS=" "; echo "$@");
+
+    if [[ ! -e ".env" ]]; then
+        exit 1
+    fi
+
+    if [[ -n $key && -n $val ]]; then
+        if [[ -n $(grep -E "^$key=" .env) ]]; then
+            sed -i '' -e "s#^$key=.*#$key=\"$val\"#" .env
+        else
+            echo "$key=\"$val\"" >> .env
+        fi
+    elif [[ -n $key ]]; then
+        cat .env | awk "/^$key=(.*)/ { sub(/$key=/, \"\", \$0); print }"
+    else
+        cat .env
+    fi
 }
 
 _ops-mc() {
@@ -288,8 +321,8 @@ psql-import() {
 
     (
         # don't let these commands capture stdin
-        ops-exec postgres psql -c "DROP DATABASE IF EXISTS $db"
-        ops-exec postgres psql -c "CREATE DATABASE $db"
+        ops-exec postgres psql -U postgres -c "DROP DATABASE IF EXISTS $db"
+        ops-exec postgres psql -U postgres -c "CREATE DATABASE $db"
     ) </dev/null
 
     cat "$sqlfile" | ops-exec postgres psql -U postgres "$db"
@@ -479,6 +512,11 @@ ops-sync() {
     local ssh_host="$([[ ! -z $OPS_PROJECT_REMOTE_USER ]] && echo "$OPS_PROJECT_REMOTE_USER@")"
     local ssh_host="$ssh_host$OPS_PROJECT_REMOTE_HOST"
 
+    echo $OPS_PROJECT_DB_NAME
+    echo $OPS_PROJECT_DB_TYPE
+    echo $OPS_PROJECT_REMOTE_DB_TYPE
+    echo $OPS_PROJECT_REMOTE_DB_NAME
+
     # sync database
     if \
         [[ $OPS_PROJECT_SYNC_NODB == 0 ]] && \
@@ -511,13 +549,23 @@ ops-sync() {
         elif [[ "$OPS_PROJECT_REMOTE_DB_TYPE" = "psql" ]]; then
             OPS_PROJECT_REMOTE_DB_PORT="${OPS_PROJECT_REMOTE_DB_PORT:-"5432"}"
 
-            echo "Importing databse from $OPS_PROJECT_REMOTE_DB_NAME to '$OPS_PROJECT_DB_NAME' pgsql database"
-            ssh -TC "$ssh_host" "pg_dump $OPS_PROJECT_REMOTE_DB_NAME" 2>/dev/null | \
-                psql-import "$OPS_PROJECT_DB_NAME"
+            echo "Importing database from $OPS_PROJECT_REMOTE_DB_NAME to '$OPS_PROJECT_DB_NAME' pgsql database"
+
+            #local pgdump_password="$([[ ! -z $OPS_PROJECT_REMOTE_DB_PASSWORD ]] && echo "-p$OPS_PROJECT_REMOTE_DB_PASSWORD")"
+            local pgdump_host="$([[ ! -z $OPS_PROJECT_REMOTE_DB_HOST ]] && echo "-h $OPS_PROJECT_REMOTE_DB_HOST")"
+            #local pgdump_port="$([[ ! -z $OPS_PROJECT_REMOTE_DB_PORT ]] && echo "-P $OPS_PROJECT_REMOTE_DB_PORT")"
+            #local pgdump_user="$([[ ! -z $OPS_PROJECT_REMOTE_DB_USER ]] && echo "-u $OPS_PROJECT_REMOTE_DB_USER")"
+
+            ssh -TC "$ssh_host" "pg_dump \
+                $pgdump_host \
+                $OPS_PROJECT_REMOTE_DB_NAME" 2>/dev/null | \
+                    psql-import "$OPS_PROJECT_DB_NAME"
         fi
     fi
 
     # sync filesystem
+
+    local max_size="$([[ ! -z $OPS_PROJECT_SYNC_MAXSIZE ]] && echo "--max-size=$OPS_PROJECT_SYNC_MAXSIZE")"
 
     if \
         [[ ! -z "$OPS_PROJECT_REMOTE_HOST" ]] && \
@@ -531,16 +579,17 @@ ops-sync() {
             # sync entire dir structure first
             rsync -a -f"+ */" -f"- *" \
                 "$ssh_host:$OPS_PROJECT_REMOTE_PATH/$sync_dir/" \
-                "$sync_dir" 2>/dev/null
+                "$sync_dir" 1>/dev/null
 
             echo -e "Syncing files..."
 
             # send exclude patterns as stdin, one per line.
-            $(printf %"s\n" $OPS_PROJECT_SYNC_EXCLUDES | \
-                rsync -a --exclude-from=- \
-                    --max-size=$OPS_PROJECT_SYNC_MAXSIZE \
+            printf %"s\n" $OPS_PROJECT_SYNC_EXCLUDES | \
+                rsync -av --exclude-from=- \
+                    --timeout=5 \
+                    $max_size \
                     "$ssh_host:$OPS_PROJECT_REMOTE_PATH/$sync_dir/" \
-                    "$sync_dir" 2>/dev/null)
+                    "$sync_dir"
         done
     fi
 
@@ -759,7 +808,7 @@ system-config() {
 
     if [[ -n $key && -n $val ]]; then
         if [[ -n $(system-config $key) ]]; then
-            sed -i -e "s#^$key=.*#$key=\"$val\"#" "$OPS_HOME/config"
+            sed -i '' -e "s#^$key=.*#$key=\"$val\"#" "$OPS_HOME/config"
         else
             echo "$key=\"$val\"" >> $OPS_HOME/config
         fi
@@ -856,9 +905,6 @@ system-refresh-certs() {
 
     (
         cd $OPS_HOME/certs
-
-        CAROOT=$OPS_HOME/certs \
-        $OPS_HOME/bin/mkcert-$OPS_MKCERT_VERSION -uninstall 2>/dev/null
 
         CAROOT=$OPS_HOME/certs \
         $OPS_HOME/bin/mkcert-$OPS_MKCERT_VERSION -install
@@ -966,7 +1012,7 @@ fi
 # options that can be overridden by global config
 
 declare -x OPS_ENV="dev"
-declare -x OPS_BACKENDS=${OPS_BACKENDS-"apache-php73 apache-php56"}
+declare -x OPS_BACKENDS=${OPS_BACKENDS-"apache-php71 apache-php72 apache-php73 apache-php56"}
 declare -x OPS_DOCKER_COMPOSER_IMAGE=${OPS_DOCKER_COMPOSER_IMAGE-"imarcagency/ops-php71:latest"}
 declare -x OPS_DOCKER_NODE_IMAGE=${OPS_DOCKER_NODE_IMAGE-"imarcagency/ops-node:$OPS_VERSION"}
 declare -x OPS_DOCKER_UTILS_IMAGE=${OPS_DOCKER_UTILS_IMAGE-"imarcagency/ops-utils:$OPS_VERSION"}
@@ -985,7 +1031,7 @@ declare -x OPS_ADMIN_AUTH=${OPS_ADMIN_AUTH-""}
 declare -x OPS_DEFAULT_BACKEND=${OPS_DEFAULT_BACKEND-"apache-php73"}
 declare -x OPS_DEFAULT_DOCROOT=${OPS_DEFAULT_DOCROOT-"public"}
 declare -x OPS_DASHBOARD_URL="https://ops.${OPS_DOMAIN}"
-declare -x OPS_MKCERT_VERSION="1.1.2"
+declare -x OPS_MKCERT_VERSION="1.3.0"
 
 OPS_ACME_CA_SERVER="https://acme-staging-v02.api.letsencrypt.org/directory"
 if [[ $OPS_ACME_PRODUCTION == 1 ]]; then
@@ -1014,12 +1060,12 @@ declare -x OPS_PROJECT_DB_NAME="${OPS_PROJECT_DB_NAME-$OPS_PROJECT_NAME}"
 declare -x OPS_PROJECT_SYNC_DIRS="${OPS_PROJECT_SYNC_DIRS}"
 declare -x OPS_PROJECT_SYNC_NODB="${OPS_PROJECT_SYNC_NODB-0}"
 declare -x OPS_PROJECT_SYNC_EXCLUDES="${OPS_PROJECT_SYNC_EXCLUDES}"
-declare -x OPS_PROJECT_SYNC_MAXSIZE="${OPS_PROJECT_SYNC_MAXSIZE:-500M}"
+declare -x OPS_PROJECT_SYNC_MAXSIZE="${OPS_PROJECT_SYNC_MAXSIZE}"
 declare -x OPS_PROJECT_REMOTE_USER="${OPS_PROJECT_REMOTE_USER}"
 declare -x OPS_PROJECT_REMOTE_HOST="${OPS_PROJECT_REMOTE_HOST}"
 declare -x OPS_PROJECT_REMOTE_PATH="${OPS_PROJECT_REMOTE_PATH}"
 declare -x OPS_PROJECT_REMOTE_DB_HOST="${OPS_PROJECT_REMOTE_DB_HOST}"
-declare -x OPS_PROJECT_REMOTE_DB_TYPE="${OPS_PROJECT_DB_TYPE}"
+declare -x OPS_PROJECT_REMOTE_DB_TYPE="${OPS_PROJECT_REMOTE_DB_TYPE-$OPS_PROJECT_DB_TYPE}"
 declare -x OPS_PROJECT_REMOTE_DB_NAME="${OPS_PROJECT_REMOTE_DB_NAME}"
 declare -x OPS_PROJECT_REMOTE_DB_USER="${OPS_PROJECT_REMOTE_DB_USER}"
 declare -x OPS_PROJECT_REMOTE_DB_PASSWORD="${OPS_PROJECT_REMOTE_DB_PASSWORD}"
