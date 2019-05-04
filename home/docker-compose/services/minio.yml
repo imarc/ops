@@ -8,6 +8,7 @@ services:
       - "traefik.enable=true"
       - "traefik.docker.network=ops_gateway"
       - "traefik.port=9000"
+      - "traefik.frontend.whiteList.sourceRange=172.22.0.0/16"
     command: server --address ":9000" /data
     environment:
       - "MINIO_ACCESS_KEY=${OPS_MINIO_ACCESS_KEY}"
@@ -20,14 +21,3 @@ services:
     volumes:
       - minio:/data
 
-  mailhog:
-    image: mailhog/mailhog
-    labels:
-      - "ops.project=ops"
-      - "traefik.port=8025"
-      - "traefik.enable=true"
-      - "traefik.docker.network=ops_gateway"
-      - "traefik.frontend.whiteList.sourceRange=172.22.0.1"
-    networks:
-      - gateway
-      - backend

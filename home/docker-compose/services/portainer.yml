@@ -7,7 +7,8 @@ services:
       - "ops.project=ops"
       - "traefik.enable=true"
       - "traefik.docker.network=ops_gateway"
-      - "traefik.frontend.whiteList.sourceRange=172.22.0.1"
+      - "traefik.frontend.whiteList.sourceRange=172.22.0.0/16"
+      - "${OPS_ADMIN_AUTH_LABEL_PREFIX}traefik.frontend.auth.basic.users=${OPS_ADMIN_AUTH}"
     userns_mode: "host"
     networks:
       - gateway
@@ -15,19 +16,3 @@ services:
     volumes:
       - /var/run/docker.sock:/var/run/docker.sock
       - portainer:/data
-
-  traefik:
-    image: traefik:1.7.10-alpine
-    command: --docker.domain=${OPS_DOMAIN}
-    networks:
-      gateway:
-      services:
-        ipv4_address: 172.18.1.2
-    userns_mode: 'host'
-    labels:
-      - "ops.project=ops"
-    volumes:
-      - /var/run/docker.sock:/var/run/docker.sock
-      - ${OPS_HOME}/traefik/traefik.dev.toml:/etc/traefik/traefik.toml
-      - ${OPS_HOME}/certs/:/etc/traefik-certs
-      - ${OPS_HOME}/traefik/acme.json:/etc/traefik/acme/acme.json
