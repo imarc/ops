@@ -1,0 +1,25 @@
+version: '3'
+
+services:
+    nginx:
+      image: openresty/openresty:1.13.6.2-stretch-fat
+      labels:
+        - "ops.project=ops"
+        - "traefik.enable=true"
+        - "traefik.docker.network=ops_gateway"
+        - "traefik.frontend.rule=HostRegexp:{subdomain:.+}.${OPS_DOMAIN},localhost"
+        - "traefik.frontend.priority=1"
+        - "traefik.port=80"
+      environment:
+        - OPS_DOMAIN=${OPS_DOMAIN}
+        - OPS_ENABLED=1
+        - OPS_SITES_DIR=${OPS_SITES_DIR}
+        - OPS_VERSION=${OPS_VERSION}
+        - OPS_DEFAULT_BACKEND=${OPS_DEFAULT_BACKEND}
+        - OPS_DEFAULT_DOCROOT=${OPS_DEFAULT_DOCROOT}
+      networks:
+        - gateway
+        - backend
+      volumes:
+        - ${OPS_HOME}/nginx/nginx.conf:/usr/local/openresty/nginx/conf/nginx.conf
+        - ${OPS_SITES_DIR}:/var/www/html:cached

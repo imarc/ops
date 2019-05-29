@@ -1,0 +1,16 @@
+version: '3'
+
+services:
+  traefik:
+    image: traefik:alpine
+    command: --docker.domain=${OPS_DOMAIN}
+    networks:
+      - gateway
+    userns_mode: 'host'
+    labels:
+      - "ops.project=ops"
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+      - ${OPS_HOME}/traefik/traefik.dev.toml:/etc/traefik/traefik.toml
+      - ${OPS_HOME}/certs/:/etc/traefik-certs
+      - ${OPS_HOME}/traefik/acme.json:/etc/traefik/acme/acme.json

@@ -722,16 +722,21 @@ project-stats() {
 # System Sub-Commands
 
 system-docker-compose() {
-    COMPOSE_FILE="$OPS_HOME/docker-compose.system.yml"
+    COMPOSE_FILE="$OPS_HOME/docker-compose/system/base.yml"
+    COMPOSE_FILE="$COMPOSE_FILE:$OPS_HOME/docker-compose/services/traefik.yml"
+
+    for service in $OPS_SERVICES; do
+        COMPOSE_FILE="$COMPOSE_FILE:$OPS_HOME/docker-compose/services/$service.yml"
+    done
 
     if [[ ! -z "$OPS_PUBLIC" ]]; then
-	    COMPOSE_FILE="$COMPOSE_FILE:$OPS_HOME/docker-compose.system.public.yml"
+	    COMPOSE_FILE="$COMPOSE_FILE:$OPS_HOME/docker-compose/system/public.yml"
     else
-	    COMPOSE_FILE="$COMPOSE_FILE:$OPS_HOME/docker-compose.system.private.yml"
+	    COMPOSE_FILE="$COMPOSE_FILE:$OPS_HOME/docker-compose/system/private.yml"
     fi
 
     for backend in $OPS_BACKENDS; do
-        COMPOSE_FILE="$COMPOSE_FILE:$OPS_HOME/docker-compose.service.$backend.yml"
+        COMPOSE_FILE="$COMPOSE_FILE:$OPS_HOME/docker-compose/backends/$backend.yml"
     done
 
     COMPOSE_PROJECT_NAME="ops" \
@@ -1012,7 +1017,8 @@ fi
 # options that can be overridden by global config
 
 declare -x OPS_ENV="dev"
-declare -x OPS_BACKENDS=${OPS_BACKENDS-"apache-php71 apache-php72 apache-php73 apache-php56"}
+declare -x OPS_BACKENDS="$OPS_BACKENDS apache-php73"
+declare -x OPS_SERVICES="$OPS_SERVICES dnsmasq portainer nginx dashboard mariadb postgres redis adminer"
 declare -x OPS_DOCKER_COMPOSER_IMAGE=${OPS_DOCKER_COMPOSER_IMAGE-"imarcagency/ops-php71:latest"}
 declare -x OPS_DOCKER_NODE_IMAGE=${OPS_DOCKER_NODE_IMAGE-"imarcagency/ops-node:$OPS_VERSION"}
 declare -x OPS_DOCKER_UTILS_IMAGE=${OPS_DOCKER_UTILS_IMAGE-"imarcagency/ops-utils:$OPS_VERSION"}

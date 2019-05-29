@@ -1,0 +1,17 @@
+version: '3'
+
+services:
+  dnsmasq:
+    image: jpillora/dnsmasq:1.1.0
+    labels:
+      - "traefik.port=8080"
+      - "traefik.enable=true"
+      - "traefik.docker.network=ops_gateway"
+      - "traefik.frontend.whiteList.sourceRange=172.22.0.1"
+    networks:
+      gateway:
+      backend:
+      services:
+        ipv4_address: 172.18.1.1
+    volumes:
+      - ${OPS_HOME}/dnsmasq/dnsmasq.conf:/etc/dnsmasq.conf

@@ -1,0 +1,20 @@
+version: '3'
+
+networks:
+  gateway:
+    ipam:
+      driver: default
+      config:
+        - subnet: 172.22.0.0/16
+  backend:
+  services:
+    ipam:
+      driver: default
+      config:
+        - subnet: 172.18.0.0/16
+
+volumes:
+  minio:
+  portainer:
+  postgres:
+  mariadb:

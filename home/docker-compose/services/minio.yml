@@ -1,0 +1,33 @@
+version: '3'
+
+services:
+  minio:
+    image: minio/minio
+    labels:
+      - "ops.project=ops"
+      - "traefik.enable=true"
+      - "traefik.docker.network=ops_gateway"
+      - "traefik.port=9000"
+    command: server --address ":9000" /data
+    environment:
+      - "MINIO_ACCESS_KEY=${OPS_MINIO_ACCESS_KEY}"
+      - "MINIO_SECRET_KEY=${OPS_MINIO_SECRET_KEY}"
+    ports:
+      - "127.0.0.1:9000:9000"
+    networks:
+      - gateway
+      - backend
+    volumes:
+      - minio:/data
+
+  mailhog:
+    image: mailhog/mailhog
+    labels:
+      - "ops.project=ops"
+      - "traefik.port=8025"
+      - "traefik.enable=true"
+      - "traefik.docker.network=ops_gateway"
+      - "traefik.frontend.whiteList.sourceRange=172.22.0.1"
+    networks:
+      - gateway
+      - backend

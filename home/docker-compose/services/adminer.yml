@@ -1,0 +1,13 @@
+version: '3'
+
+services:
+  adminer:
+    image: "clue/adminer"
+    networks:
+      - backend
+      - gateway
+    labels:
+      - "ops.project=ops"
+      - "traefik.enable=true"
+      - "traefik.docker.network=ops_gateway"
+      - "traefik.frontend.whiteList.sourceRange=172.22.0.1"

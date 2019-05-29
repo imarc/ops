@@ -1,0 +1,11 @@
+version: '3'
+
+services:
+  memcached:
+    image: "memcached:1.4"
+    ports:
+      - "127.0.0.1:11211:11211"
+    labels:
+      - "ops.project=ops"
+    networks:
+      - backend
