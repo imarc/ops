@@ -13,7 +13,7 @@ services:
       - OPS_SITES_DIR=${OPS_SITES_DIR}
       - OPS_VERSION=${OPS_VERSION}
 
-    dns: 172.18.1.1
+    dns: 172.23.1.1
 
     networks:
       - backend
