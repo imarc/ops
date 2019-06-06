@@ -1,4 +1,5 @@
-#!/bin/bash
+#!/usr/bin/env bash
+
 shopt -s extglob
 
 # Determine OS
@@ -89,26 +90,35 @@ get-version() {
 
 # Main Commands
 
-_ops-composer() {
+ops-composer() {
+    cmd-doc "Run local composer. Fallback to composer in a container"
+
     if [[ -e "$(which composer)" ]]; then
         composer "$@"
         return;
     fi
 
+    if [[ $OS != 'linux' ]]; then
+        echo 'composer required. Please install.'
+        exit 1
+    fi
+
     mkdir -p "$OPS_HOME/.composer"
     mkdir -p "$OPS_HOME/.ssh"
 
+    local project="$(ops project name)"
+
     ops docker run \
         --rm -itP \
-        -v "$(pwd):/usr/src/app" \
-        -v "$OPS_HOME/.composer:/composer" \
-        -v "$OPS_HOME/.ssh:/var/www/.ssh" \
-        -v "$SSH_AUTH_SOCK:/ssh-agent" \
+        -v "$(pwd):/var/www/html/$project" \
+        -v "$HOME/.composer:/var/www/.composer" \
+        -v "$HOME/.ssh:/var/www/.ssh" \
+        -v "$ssh_agent:/ssh-agent" \
         -e "SSH_AUTH_SOCK=/ssh-agent" \
-        -e "COMPOSER_HOME=/composer" \
-        -w "/usr/src/app" \
-        --label=ops.project="$(ops project name)" \
-        --user "www-data:www-data" \
+        -e "COMPOSER_HOME=/var/www/.composer" \
+        -w "/var/www/html/$project" \
+        --label=ops.project="$project" \
+        --user "$OPS_DOCKER_UID:$OPS_DOCKER_GID" \
         $OPS_DOCKER_COMPOSER_IMAGE \
         composer -n "$@"
 }
@@ -118,6 +128,8 @@ _ops-docker() {
 }
 
 ops-exec() {
+    cmd-doc "Execute a non-TTY command in a container"
+
     local service=$1
     shift
 
@@ -128,18 +140,20 @@ ops-exec() {
     ops docker exec -i $id "$@"
 }
 
-ops-help() {
-    cmd-help ops ops
-
+ops-help--after() {
     echo $(ops-version)
     echo
 }
 
 ops-logs() {
+    cmd-doc "Follow logs"
+
     system-docker-compose logs -f --tail="30" "$@"
 }
 
 ops-env() {
+    cmd-doc "Set or get a variable in project .env file"
+
     #
     # list: env
     # get:  env [key]
@@ -180,6 +194,8 @@ _ops-mc() {
 }
 
 ops-mariadb() {
+    cmd-doc "MariaDB-specific commands"
+
     cmd-run mariadb "$@"
 }
 
@@ -237,31 +253,55 @@ _ops-node() {
         "$@"
 }
 
-_ops-npm() {
+ops-npm() {
+    cmd-doc "Run local npm. Fallback to npm in a container"
+
+    if [[ -e "$(which npm)" ]]; then
+        npm "$@"
+        return;
+    fi
+
+    if [[ $OS != 'linux' ]]; then
+        echo 'npm required. Please install.'
+        exit 1
+    fi
+
+    local project="$(ops project name)"
+
     ops docker run \
         --rm -itP --init \
-        -v "$(pwd):/usr/src/app" \
-        -w "/usr/src/app" \
-        --label=ops.project="$(ops project id)" \
-        --label=traefik.enable=true \
-        --user "node" \
+        -v "$(pwd):/var/www/html/$project" \
+        -v "$HOME/.composer:/var/www/.composer" \
+        -v "$HOME/.ssh:/var/www/.ssh" \
+        -v "$ssh_agent:/ssh-agent" \
+        -e "SSH_AUTH_SOCK=/ssh-agent" \
+        -e "COMPOSER_HOME=/var/www/.composer" \
+        -w "/var/www/html/$project" \
+        --label=ops.project="$project" \
+        --user "$OPS_DOCKER_UID:$OPS_DOCKER_GID" \
         --entrypoint "npm" \
         ops-node:$OPS_VERSION \
         "$@"
 }
 
+_ops-package() {
+    local project_name=$(project-name)
+    local project_path="$OPS_SITES_DIR/$project_name"
+
+    cp $OPS_HOME/build/Dockerfile $project_path/_temp-ops-Dockerfile
+
+    docker build -f _temp-ops-Dockerfile -t $project_name:latest --no-cache \
+        --build-arg OPS_PROJECT_IMAGE="imarcagency/ops-$OPS_PROJECT_BACKEND:$OPS_VERSION" \
+        --build-arg OPS_PROJECT_DOCROOT="$OPS_PROJECT_DOCROOT" \
+        $project_path
+
+    rm _temp-ops-Dockerfile
+}
+
 ops-ps() {
+    cmd-doc "Show process list for ops containers"
+
     system-docker-compose ps "$@"
-}
-
-
-ops-mariadb() {
-    cmd-run mariadb "$@"
-}
-
-mariadb-help() {
-    cmd-help "ops mariadb" mariadb
-    echo
 }
 
 psql-cli() {
@@ -307,6 +347,8 @@ psql-help() {
 }
 
 ops-psql() {
+    cmd-doc "PostreSQL-specific commands"
+
     cmd-run psql "$@"
 }
 
@@ -339,20 +381,27 @@ _ops-gulp() {
 }
 
 ops-redis() {
+    cmd-doc "Run interactive redis cli"
+
     system-shell-exec redis redis-cli "$@"
 }
 
 ops-restart() {
+    cmd-doc "Restart all running containers"
     ops-stop
     ops-start
 }
 
 ops-shell() {
+    cmd-doc "Enter shell or execute command"
+
     local id=$(system-docker-compose ps -q $OPS_SHELL_BACKEND)
     local project=$(project-name)
     local command="$OPS_SHELL_COMMAND"
 
-    [[ -z $id ]] && exit
+    if [[ -z $id ]]; then
+        exit
+    fi
 
     if [[ ! -z "$1" ]]; then
         command="$@"
@@ -362,6 +411,8 @@ ops-shell() {
 }
 
 ops-link() {
+    cmd-doc "Link and start project-specific containers"
+
     local project_name=$(project-name)
 
     if [[ -z $project_name ]]; then
@@ -375,6 +426,8 @@ ops-link() {
 }
 
 ops-unlink() {
+    cmd-doc "Unlink and stop project-specific containers"
+
     local project_name=$(project-name)
 
     if [[ -z $project_name ]]; then
@@ -388,16 +441,26 @@ ops-unlink() {
 }
 
 ops-project() {
+    cmd-doc "Project-specific commands"
+
     cmd-run project "$@"
 }
 
 ops-stats() {
+    cmd-doc "Watch service stats"
+
     local ids=$(system-docker-compose ps -q)
-    [[ -z $ids ]] && exit
+
+    if [[ -z $ids ]]; then
+        exit
+    fi
+
     ops docker stats $ids
 }
 
 ops-start() {
+    cmd-doc "Start services"
+
     echo 'Starting ops services...'
     echo
 
@@ -427,6 +490,8 @@ ops-start() {
 }
 
 ops-stop() {
+    cmd-doc "Stop services"
+
     system-stop
 
     local info=$(ops docker ps -a --format '{{.ID}} {{.Label "ops.project"}}' --filter="label=ops.project")
@@ -454,6 +519,8 @@ ops-stop() {
 }
 
 ops-sync() {
+    cmd-doc "Sync remote databases/files to local project"
+
     # Ops sync assumes the following:
     #
     # - SSH access is enabled to the remote web and/or DB servers
@@ -481,14 +548,17 @@ ops-sync() {
 
     # best debugging helper
     # ( set -o posix ; set ) | grep -E '^OPS_'
-
     local ssh_host="$([[ ! -z $OPS_PROJECT_REMOTE_USER ]] && echo "$OPS_PROJECT_REMOTE_USER@")"
     local ssh_host="$ssh_host$OPS_PROJECT_REMOTE_HOST"
 
-    echo $OPS_PROJECT_DB_NAME
-    echo $OPS_PROJECT_DB_TYPE
-    echo $OPS_PROJECT_REMOTE_DB_TYPE
-    echo $OPS_PROJECT_REMOTE_DB_NAME
+    if [[ ! -z "$OPS_DEBUG" ]]; then
+        # print out all OPS_ vars
+        echo
+        echo '=== START DEBUG ==='
+        ( set -o posix ; set ) | grep -E '^OPS_'
+        echo '=== END DEBUG ==='
+        echo
+    fi
 
     # sync database
     if \
@@ -590,10 +660,14 @@ _ops-jq() {
 }
 
 ops-system() {
+    cmd-doc "System-specific commands"
+
     cmd-run system "$@"
 }
 
 ops-version() {
+    cmd-doc "Show ops version"
+
     echo "ops version $OPS_VERSION"
 }
 
@@ -621,9 +695,12 @@ project-docker-compose() {
 }
 
 project-ls() {
+    cmd-doc "List all projects in OPS_SITES_DIR"
+
+
     (
         cd $OPS_SITES_DIR
-        ls -d -1 */ | sed 's/\/$//'
+        ls -d -1 */ 2>/dev/null | sed 's/\/$//'
     )
 }
 
@@ -666,13 +743,15 @@ project-exec() {
 
     local id=$(project-docker-compose ps -q $service)
 
-    [[ -z $id ]] && exit
+    if [[ -z $id ]]; then
+        exit
+    fi
 
     ops docker exec -i $id "$@"
 }
 
 project-help() {
-    cmd-help "ops project" project
+    cmd-help "ops project" project "$@"
     echo
 }
 
@@ -680,14 +759,19 @@ project-shell-exec() {
     local id=$(project-docker-compose ps -q $1)
     shift
 
-    [[ -z $id ]] && exit
+    if [[ -z $id ]]; then
+        exit
+    fi
 
     ops docker exec -it $id "$@"
 }
 
 project-stats() {
     local ids=$(project-docker-compose ps -q)
-    [[ -z $ids ]] && exit
+
+    if [[ -z $id ]]; then
+        exit
+    fi
 
     ops docker stats $ids
 }
@@ -794,7 +878,7 @@ system-config() {
 
 system-install() {
     if [[ ! -d $OPS_HOME ]]; then
-        cp -rp $OPS_SCRIPT_DIR/home $OPS_HOME
+        cp -R $OPS_SCRIPT_DIR/home $OPS_HOME
 
         source $OPS_HOME/config
 
@@ -827,9 +911,10 @@ system-install() {
 
     if [[ ! -f "$OPS_HOME/certs/self-signed-cert.key" ]]; then
         system-refresh-certs
+        exit
     fi
 
-    system-refresh-services
+    #system-refresh-services
 }
 
 system-install-mkcert() {
@@ -856,6 +941,7 @@ system-install-mkcert() {
 
 system-refresh-certs() {
     sudo --non-interactive echo 2> /dev/null
+
     if [[ $? == 1 ]]; then
         echo
         echo 'Installing self-signed certs for valid HTTPS support.'
@@ -870,9 +956,9 @@ system-refresh-certs() {
     fi
 
     local project_domains=""
-    local project_count=$(ops project ls | wc -l)
+    local project_count=$(project-ls | wc -l)
 
-    for project in $(ops project ls); do
+    for project in $(project-ls); do
         project_domains+=" *.$project.$OPS_DOMAIN"
     done
 
@@ -892,11 +978,11 @@ system-refresh-certs() {
 
         local domain_count=$(expr $project_count + 3)
 
-        echo $domain_count
-
         mv "localhost+$domain_count-key.pem" self-signed-cert.key
         mv "localhost+$domain_count.pem" self-signed-cert.crt
     )
+
+
 }
 
 system-refresh-config() {
@@ -946,18 +1032,18 @@ system-stop() {
 }
 
 system-help() {
-    cmd-help "ops system" system
+    cmd-help "ops system" system "$@"
     echo
 }
 
 main() {
-    docker ps > /dev/null
-
-    if [[ $? != 0 ]]; then
-        exit
-    fi
-
     if [[ "$@" != "system install" ]]; then
+        docker ps > /dev/null
+
+        if [[ $? != 0 ]]; then
+            exit
+        fi
+
         validate-config
     fi
 
@@ -985,8 +1071,9 @@ fi
 # options that can be overridden by global config
 
 declare -x OPS_ENV="dev"
+declare -x OPS_DEBUG="${OPS_DEBUG}"
 declare -x OPS_BACKENDS=${OPS_BACKENDS-"apache-php71 apache-php72 apache-php73 apache-php56"}
-declare -x OPS_DOCKER_COMPOSER_IMAGE=${OPS_DOCKER_COMPOSER_IMAGE-"imarcagency/ops-php71:latest"}
+declare -x OPS_DOCKER_COMPOSER_IMAGE=${OPS_DOCKER_COMPOSER_IMAGE-"imarcagency/ops-php73:latest"}
 declare -x OPS_DOCKER_NODE_IMAGE=${OPS_DOCKER_NODE_IMAGE-"imarcagency/ops-node:$OPS_VERSION"}
 declare -x OPS_DOCKER_UTILS_IMAGE=${OPS_DOCKER_UTILS_IMAGE-"imarcagency/ops-utils:$OPS_VERSION"}
 declare -x OPS_DOCKER_GID=${OPS_DOCKER_GID-""}

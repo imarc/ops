@@ -1,3 +1,11 @@
+# show all queries in log
 log-queries
+
+# disable resolv reading
 no-resolv
-server=/.OPS_DOMAIN/127.0.0.1
+
+# ensure all traffic to the ops domain goes to traefik
+address=/.OPS_DOMAIN/172.18.1.2
+
+# fallback server to default docker dns
+server=/#/127.0.0.11
