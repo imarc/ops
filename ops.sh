@@ -285,29 +285,17 @@ ops-npm() {
 }
 
 _ops-package() {
-    OPS_PROJECT_BUILD="composer laravel-mix"
-
     local project_name=$(project-name)
     local project_path="$OPS_SITES_DIR/$project_name"
 
-    prebackend=""
-    postbackend=""
+    cp $OPS_HOME/build/Dockerfile $project_path/_temp-ops-Dockerfile
 
-    NL=$'\n'
-
-    for step in $OPS_PROJECT_BUILD; do
-        local buildfile="$OPS_HOME/build/$step.Dockerfile"
-        prebackend+="$(cat $buildfile | grep -vE '^COPY --from=')${NL}${NL}"
-        postbackend+="${NL}$(cat $buildfile | grep -E '^COPY --from=')"
-    done
-
-    echo "ARG OPS_PROJECT_IMAGE${NL}ARG OPS_PROJECT_DOCROOT${NL}$prebackend${NL}$(cat $OPS_HOME/build/Dockerfile)${NL}$postbackend" \
-        > $project_path/ops-Dockerfile
-
-    docker build -f ops-Dockerfile -t $project_name:latest --no-cache \
+    docker build -f _temp-ops-Dockerfile -t $project_name:latest --no-cache \
         --build-arg OPS_PROJECT_IMAGE="imarcagency/ops-$OPS_PROJECT_BACKEND:$OPS_VERSION" \
         --build-arg OPS_PROJECT_DOCROOT="$OPS_PROJECT_DOCROOT" \
         $project_path
+
+    rm _temp-ops-Dockerfile
 }
 
 ops-ps() {
@@ -558,6 +546,8 @@ ops-sync() {
     cd "$OPS_SITES_DIR/$OPS_PROJECT_NAME"
         #source ".env"
 
+    # best debugging helper
+    # ( set -o posix ; set ) | grep -E '^OPS_'
     local ssh_host="$([[ ! -z $OPS_PROJECT_REMOTE_USER ]] && echo "$OPS_PROJECT_REMOTE_USER@")"
     local ssh_host="$ssh_host$OPS_PROJECT_REMOTE_HOST"
 
@@ -693,16 +683,6 @@ _ops-yarn() {
         "$@"
 }
 
-my-command() {
-    cmd-doc "Test this command"
-
-    cmd-arg verbose "-v|--verbose" "enable verbosity"
-
-    eval $(cmd-get-input "$@")
-
-    echo $verbose
-}
-
 # Site sub sommands
 
 project-docker-compose() {
@@ -717,12 +697,6 @@ project-docker-compose() {
 project-ls() {
     cmd-doc "List all projects in OPS_SITES_DIR"
 
-    # cmd-opt "--help" "show help"
-    cmd-arg "-v|--verbose" "enable verbose mode"
-
-    #cmd-opt "--help"
-
-    local args=$(cmd-get-flag )
 
     (
         cd $OPS_SITES_DIR
@@ -965,8 +939,6 @@ system-install-mkcert() {
     elif [[ "$OS" == mac ]]; then
         MKCERT_URL="https://github.com/FiloSottile/mkcert/releases/download/v$OPS_MKCERT_VERSION/mkcert-v$OPS_MKCERT_VERSION-darwin-amd64"
     fi
-
-    echo $MKCERT_URL
 
     echo "Downloading mkcert v$OPS_MKCERT_VERSION"
     curl -L --silent --output $OPS_HOME/bin/mkcert-$OPS_MKCERT_VERSION $MKCERT_URL
