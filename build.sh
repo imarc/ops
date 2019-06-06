@@ -11,3 +11,4 @@ docker build -t "imarcagency/ops-apache-php72:$OPS_VERSION" images/php72
 docker build -t "imarcagency/ops-apache-php73:$OPS_VERSION" images/php73
 docker build -t "imarcagency/ops-node:$OPS_VERSION" images/node
 docker build -t "imarcagency/ops-utils:$OPS_VERSION" images/utils
+docker build -t "imarcagency/ops:$OPS_VERSION" .

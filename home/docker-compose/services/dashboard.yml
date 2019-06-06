@@ -1,0 +1,29 @@
+version: '3'
+
+services:
+  dashboard:
+    image: imarcagency/ops-apache-php73:${OPS_VERSION}
+    labels:
+      - "ops.project=ops"
+      - "traefik.enable=true"
+      - "traefik.docker.network=ops_gateway"
+      - "traefik.frontend.rule=Host:ops.${OPS_DOMAIN},dashboard.ops.${OPS_DOMAIN}"
+      - "traefik.frontend.priority=1"
+      - "traefik.frontend.whiteList.sourceRange=172.22.0.0/16"
+      - "traefik.port=80"
+      - "${OPS_ADMIN_AUTH_LABEL_PREFIX}traefik.frontend.auth.basic.users=${OPS_ADMIN_AUTH}"
+    environment:
+      - APACHE_UID=${OPS_DOCKER_UID}
+      - APACHE_GID=${OPS_DOCKER_GID}
+      - APACHE_ROOT="/var/www/dashboard/public"
+      - OPS_DOMAIN=${OPS_DOMAIN}
+      - OPS_ENABLED=1
+      - OPS_SITES_DIR=${OPS_SITES_DIR}
+      - OPS_VERSION=${OPS_VERSION}
+    networks:
+      - gateway
+      - backend
+    volumes:
+      - ${OPS_HOME}/www/dashboard:/var/www/dashboard
+      - ${OPS_HOME}/apache/configure:/usr/local/bin/docker-configure
+      - ${OPS_SITES_DIR}:/var/www/html:cached

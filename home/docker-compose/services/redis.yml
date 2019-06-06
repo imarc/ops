@@ -1,0 +1,11 @@
+version: '3'
+
+services:
+  redis:
+    image: "redis:3.2"
+    ports:
+      - "127.0.0.1:6379:6379"
+    labels:
+      - "ops.project=ops"
+    networks:
+      - backend

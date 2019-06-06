@@ -2,3 +2,4 @@ node_modules
 .vagrant
 *.log
 package-lock.json
+NOTES.txt
