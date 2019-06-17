@@ -389,6 +389,12 @@ ops-redis() {
 ops-restart() {
     cmd-doc "Restart all running containers"
     ops-stop
+
+    # remove networks
+    ops-docker rm ops_backend
+    ops-docker rm ops_backend
+    ops-docker rm ops_services
+
     ops-start
 }
 
@@ -906,7 +912,6 @@ system-install() {
           $OPS_SCRIPT_DIR/home/ \
           $OPS_HOME
     fi
-
 
     echo $OPS_VERSION > $OPS_HOME/VERSION
 
