@@ -391,9 +391,9 @@ ops-restart() {
     ops-stop
 
     # remove networks
-    ops-docker rm ops_backend
-    ops-docker rm ops_backend
-    ops-docker rm ops_services
+    _ops-docker rm ops_backend
+    _ops-docker rm ops_backend
+    _ops-docker rm ops_services
 
     ops-start
 }
