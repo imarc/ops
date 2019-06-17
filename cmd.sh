@@ -18,46 +18,6 @@ LPURPLE='\033[01;35m'
 LCYAN='\033[01;36m'
 WHITE='\033[01;37m'
 
-declare -A CMD_ARGS
-
-cmd-arg() {
-    # callee
-    # echo ${FUNCNAME[1]}
-
-    local IFS=$'|'
-    for arg in $2; do
-        key="${FUNCNAME[1]}.$arg"
-        CMD_ARGS["$key.name"]=$1
-        CMD_ARGS["$key.arg"]=$arg
-        CMD_ARGS["$key.group"]=$2
-        CMD_ARGS["$key.doc"]=$3
-    done
-
-    return
-}
-
-cmd-get-input() {
-    local args="$@"
-    local func="${FUNCNAME[1]}"
-    local input=hkkk
-
-    while test $# -gt 0; do
-        for k in "${!CMD_ARGS[@]}"
-        do
-            if [[ $k =~ $func\.[^.]*\.arg ]]
-            then
-                local arg="${CMD_ARGS[$k]}"
-
-                if [[ $1 =~ $arg=.* ]]; then
-                    echo "local ${CMD_ARGS[$func.$arg.name]}=$'$(echo $1 | sed -E 's/.*=(.*)$/\1/' | sed "s/'/\\\\'/g")'"
-                fi
-            fi
-        done
-
-        shift
-    done
-}
-
 cmd-doc() {
     return;
 }
