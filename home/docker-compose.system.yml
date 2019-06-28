@@ -71,7 +71,7 @@ services:
     networks:
       gateway:
       services:
-        ipv4_address: 172.23.1.2
+        ipv4_address: 172.23.10.11
     userns_mode: 'host'
     labels:
       - "ops.project=ops"
@@ -178,7 +178,7 @@ services:
       gateway:
       backend:
       services:
-        ipv4_address: 172.23.1.1
+        ipv4_address: 172.23.10.10
     volumes:
       - ${OPS_HOME}/dnsmasq/dnsmasq.conf:/etc/dnsmasq.conf
 
@@ -189,7 +189,7 @@ services:
     environment:
       CHROMEDRIVER_WHITELISTED_IPS: ""
       CHROMEDRIVER_PORT: "9515"
-    dns: 172.23.1.1
+    dns: 172.23.10.10
     shm_size: '2gb'
     cap_add:
        - "SYS_ADMIN"
@@ -201,6 +201,10 @@ networks:
       config:
         - subnet: 172.22.0.0/16
   backend:
+    ipam:
+      driver: default
+      config:
+        - subnet: 172.24.0.0/16
   services:
     ipam:
       driver: default
