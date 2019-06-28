@@ -7,7 +7,7 @@ services:
       - "ops.project=ops"
       - "traefik.enable=true"
       - "traefik.docker.network=ops_gateway"
-      - "traefik.frontend.whiteList.sourceRange=172.22.0.1"
+      - "traefik.frontend.whiteList.sourceRange=172.22.0.0/16"
     userns_mode: "host"
     networks:
       - gateway
@@ -47,7 +47,7 @@ services:
       - "traefik.docker.network=ops_gateway"
       - "traefik.frontend.rule=Host:ops.${OPS_DOMAIN},dashboard.ops.${OPS_DOMAIN}"
       - "traefik.frontend.priority=1"
-      - "traefik.frontend.whiteList.sourceRange=172.22.0.1"
+      - "traefik.frontend.whiteList.sourceRange=172.22.0.0/16"
       - "traefik.port=80"
     environment:
       - APACHE_UID=${OPS_DOCKER_UID}
@@ -107,7 +107,7 @@ services:
       - "traefik.port=8025"
       - "traefik.enable=true"
       - "traefik.docker.network=ops_gateway"
-      - "traefik.frontend.whiteList.sourceRange=172.22.0.1"
+      - "traefik.frontend.whiteList.sourceRange=172.22.0.0/16"
     networks:
       - gateway
       - backend
@@ -165,7 +165,7 @@ services:
       - "ops.project=ops"
       - "traefik.enable=true"
       - "traefik.docker.network=ops_gateway"
-      - "traefik.frontend.whiteList.sourceRange=172.22.0.1"
+      - "traefik.frontend.whiteList.sourceRange=172.22.0.0/16"
 
   dnsmasq:
     image: jpillora/dnsmasq:1.1.0
