@@ -5,6 +5,7 @@ MAINTAINER Imarc <info@imarc.com>
 RUN apt-get update && apt-get install -y --fix-missing \
     apt-transport-https \
     autoconf \
+    bsdmainutils \
     build-essential \
     ca-certificates \
     chrpath \
@@ -23,6 +24,7 @@ RUN apt-get update && apt-get install -y --fix-missing \
     rsync \
     software-properties-common \
     sudo \
+    util-linux \
     vim \
     wget
 

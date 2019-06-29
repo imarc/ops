@@ -7,7 +7,7 @@ services:
       - "ops.project=ops"
       - "traefik.enable=true"
       - "traefik.docker.network=ops_gateway"
-      - "traefik.frontend.whiteList.sourceRange=172.22.0.1"
+      - "traefik.frontend.whiteList.sourceRange=172.22.0.0/16"
     userns_mode: "host"
     networks:
       - gateway
@@ -47,7 +47,7 @@ services:
       - "traefik.docker.network=ops_gateway"
       - "traefik.frontend.rule=Host:ops.${OPS_DOMAIN},dashboard.ops.${OPS_DOMAIN}"
       - "traefik.frontend.priority=1"
-      - "traefik.frontend.whiteList.sourceRange=172.22.0.1"
+      - "traefik.frontend.whiteList.sourceRange=172.22.0.0/16"
       - "traefik.port=80"
     environment:
       - APACHE_UID=${OPS_DOCKER_UID}
@@ -71,7 +71,7 @@ services:
     networks:
       gateway:
       services:
-        ipv4_address: 172.18.1.2
+        ipv4_address: 172.23.10.11
     userns_mode: 'host'
     labels:
       - "ops.project=ops"
@@ -107,7 +107,7 @@ services:
       - "traefik.port=8025"
       - "traefik.enable=true"
       - "traefik.docker.network=ops_gateway"
-      - "traefik.frontend.whiteList.sourceRange=172.22.0.1"
+      - "traefik.frontend.whiteList.sourceRange=172.22.0.0/16"
     networks:
       - gateway
       - backend
@@ -165,7 +165,7 @@ services:
       - "ops.project=ops"
       - "traefik.enable=true"
       - "traefik.docker.network=ops_gateway"
-      - "traefik.frontend.whiteList.sourceRange=172.22.0.1"
+      - "traefik.frontend.whiteList.sourceRange=172.22.0.0/16"
 
   dnsmasq:
     image: jpillora/dnsmasq:1.1.0
@@ -178,7 +178,7 @@ services:
       gateway:
       backend:
       services:
-        ipv4_address: 172.18.1.1
+        ipv4_address: 172.23.10.10
     volumes:
       - ${OPS_HOME}/dnsmasq/dnsmasq.conf:/etc/dnsmasq.conf
 
@@ -189,7 +189,7 @@ services:
     environment:
       CHROMEDRIVER_WHITELISTED_IPS: ""
       CHROMEDRIVER_PORT: "9515"
-    dns: 172.18.1.1
+    dns: 172.23.10.10
     shm_size: '2gb'
     cap_add:
        - "SYS_ADMIN"
@@ -200,12 +200,16 @@ networks:
       driver: default
       config:
         - subnet: 172.22.0.0/16
-  backend:
   services:
     ipam:
       driver: default
       config:
-        - subnet: 172.18.0.0/16
+        - subnet: 172.23.0.0/16
+  backend:
+    ipam:
+      driver: default
+      config:
+        - subnet: 172.24.0.0/16
 
 volumes:
   minio:

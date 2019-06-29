@@ -5,6 +5,11 @@ Vagrant.configure(2) do |config|
   config.vm.box = "ubuntu/xenial64"
   #config.vm.box_version = "20180215.0.0"
 
+  config.vm.provider "virtualbox" do |v|
+      v.memory = 6144
+      v.cpus = 1
+  end
+
   config.vm.network "forwarded_port", guest: 80, host: 8888
   config.vm.network "forwarded_port", guest: 443, host: 4443
 
