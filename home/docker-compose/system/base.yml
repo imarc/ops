@@ -1,0 +1,60 @@
+version: '3'
+
+services:
+  nginx:
+    image: openresty/openresty:1.13.6.2-stretch-fat
+    labels:
+      - "ops.project=ops"
+      - "traefik.enable=true"
+      - "traefik.docker.network=ops_gateway"
+      - "traefik.frontend.rule=HostRegexp:{subdomain:.+}.${OPS_DOMAIN},localhost"
+      - "traefik.frontend.priority=1"
+      - "traefik.port=80"
+    environment:
+      - OPS_DOMAIN=${OPS_DOMAIN}
+      - OPS_ENABLED=1
+      - OPS_SITES_DIR=${OPS_SITES_DIR}
+      - OPS_VERSION=${OPS_VERSION}
+      - OPS_DEFAULT_BACKEND=${OPS_DEFAULT_BACKEND}
+      - OPS_DEFAULT_DOCROOT=${OPS_DEFAULT_DOCROOT}
+    networks:
+      - gateway
+      - backend
+    volumes:
+      - ${OPS_HOME}/nginx/nginx.conf:/usr/local/openresty/nginx/conf/nginx.conf
+      - ${OPS_SITES_DIR}:/var/www/html:cached
+
+  traefik:
+    image: traefik:1.7.10-alpine
+    command: --docker.domain=${OPS_DOMAIN}
+    networks:
+      gateway:
+      services:
+        ipv4_address: 172.23.10.11
+    userns_mode: 'host'
+    labels:
+      - "ops.project=ops"
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+      - ${OPS_HOME}/traefik/traefik.dev.toml:/etc/traefik/traefik.toml
+      - ${OPS_HOME}/certs/:/etc/traefik-certs
+      - ${OPS_HOME}/traefik/acme.json:/etc/traefik/acme/acme.json
+
+networks:
+  gateway:
+    ipam:
+      driver: default
+      config:
+        - subnet: 172.22.0.0/16
+  backend:
+  services:
+    ipam:
+      driver: default
+      config:
+        - subnet: 172.18.0.0/16
+
+volumes:
+  minio:
+  portainer:
+  postgres:
+  mariadb:

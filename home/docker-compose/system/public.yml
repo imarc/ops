@@ -1,10 +1,6 @@
 version: '3'
 
 services:
-  portainer:
-    labels:
-        - "traefik.frontend.auth.basic=${OPS_ADMIN_AUTH}"
-
   traefik:
     command: --docker.domain=${OPS_DOMAIN}
       --debug
@@ -21,16 +17,3 @@ services:
       - "443:443"
     volumes:
       - ${OPS_HOME}/traefik/traefik.toml:/etc/traefik/traefik.toml
-
-  dashboard:
-    labels:
-      - "traefik.frontend.auth.basic=${OPS_ADMIN_AUTH}"
-
-  mailhog:
-    labels:
-      - "traefik.frontend.auth.basic=${OPS_ADMIN_AUTH}"
-
-  adminer:
-    labels:
-      - "traefik.frontend.auth.basic=${OPS_ADMIN_AUTH}"
-

@@ -1,0 +1,15 @@
+version: '3'
+
+services:
+  mariadb:
+    image: "mariadb:10.3"
+    environment:
+      - "MYSQL_ALLOW_EMPTY_PASSWORD=yes"
+    networks:
+      - backend
+    labels:
+      - "ops.project=ops"
+    ports:
+      - "127.0.0.1:3306:3306"
+    volumes:
+      - "mariadb:/var/lib/mysql"

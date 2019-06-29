@@ -1,0 +1,15 @@
+version: '3'
+
+services:
+  postgres:
+    image: "postgres:9.6"
+    environment:
+        PGDATA: "/var/lib/postgresql/data/pgdata"
+    networks:
+      - backend
+    labels:
+      - "ops.project=ops"
+    ports:
+      - "127.0.0.1:5432:5432"
+    volumes:
+      - "postgres:/var/lib/postgresql/data/pgdata"
