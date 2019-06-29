@@ -389,6 +389,8 @@ ops-redis() {
 ops-restart() {
     cmd-doc "Restart all running containers"
     ops-stop
+
+
     ops-start
 }
 
@@ -907,7 +909,6 @@ system-install() {
           $OPS_HOME
     fi
 
-
     echo $OPS_VERSION > $OPS_HOME/VERSION
 
     source $OPS_HOME/config
@@ -1020,16 +1021,20 @@ system-refresh-services() {
     fi
 }
 
-system-start() {
-    # Temporary hack to fix weird apache/mod_lua state issue. This seems to happen intermittently
-    # with Docker for Mac when containers are left running during a sleep/wakeup If not
-    # remedied, the apache containers refuses to start up again.
-    system-docker-compose rm -fs apache-php56 &> /dev/null
-    system-docker-compose rm -fs apache-php71 &> /dev/null
-    system-docker-compose rm -fs apache-php72 &> /dev/null
-    system-docker-compose rm -fs apache-php73 &> /dev/null
-    system-docker-compose rm -fs dashboard &> /dev/null
+system-reset() {
+    # remove all containers on every start
+    system-docker-compose rm -fs &> /dev/null
 
+    # remove all networks
+    _ops-docker network rm ops_backend &> /dev/null
+    _ops-docker network rm ops_gateway &> /dev/null
+    _ops-docker network rm ops_services &> /dev/null
+}
+
+system-start() {
+    system-reset
+
+    # start all services
     system-docker-compose up -d --remove-orphans
 }
 
