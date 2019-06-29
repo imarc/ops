@@ -1021,14 +1021,18 @@ system-refresh-services() {
     fi
 }
 
-system-start() {
+system-reset() {
     # remove all containers on every start
     system-docker-compose rm -fs &> /dev/null
 
-    # remove networks
+    # remove all networks
     _ops-docker network rm ops_backend &> /dev/null
     _ops-docker network rm ops_gateway &> /dev/null
     _ops-docker network rm ops_services &> /dev/null
+}
+
+system-start() {
+    system-reset
 
     # start all services
     system-docker-compose up -d --remove-orphans
