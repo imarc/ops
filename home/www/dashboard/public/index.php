@@ -243,6 +243,7 @@ $postgresDatabases = $postgres->query('SELECT datname AS name FROM pg_database W
                             }
                         }
                         ?>
+                        <?php if (isset($containers['ops']['adminer'])): ?>
                         <li>
                             <a href="https://adminer.ops.<?= $domain ?>">Adminer</a>
 
@@ -280,6 +281,9 @@ $postgresDatabases = $postgres->query('SELECT datname AS name FROM pg_database W
                                 </li>
                             </ul>
                         </li>
+                        <?php endif ?>
+
+                        <?php if (isset($containers['ops']['minio'])): ?>
                         <li>
                             <a href="https://minio.ops.<?= $domain ?>">Minio</a>
 
@@ -291,6 +295,9 @@ $postgresDatabases = $postgres->query('SELECT datname AS name FROM pg_database W
                             );
                             ?>
                         </li>
+                        <?php endif?>
+
+                        <?php if (isset($containers['ops']['mailhog'])): ?>
                         <li>
                             <a href="https://mailhog.ops.<?= $domain ?>">Mailhog</a>
 
@@ -302,6 +309,8 @@ $postgresDatabases = $postgres->query('SELECT datname AS name FROM pg_database W
                             );
                             ?>
                         </li>
+                        <?php endif ?>
+
                         <li>
                             <a href="https://ops.<?= $domain ?>:8080/dashboard/#/health">Traefik</a>
 
@@ -313,7 +322,6 @@ $postgresDatabases = $postgres->query('SELECT datname AS name FROM pg_database W
                             );
                             ?>
                         </li>
-
                         <li>
                             <a href="https://portainer.ops.<?= $domain ?>">Portainer</a>
                         </li>

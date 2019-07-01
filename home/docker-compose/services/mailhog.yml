@@ -1,0 +1,14 @@
+version: '3'
+services:
+  mailhog:
+    image: mailhog/mailhog
+    labels:
+      - "ops.project=ops"
+      - "traefik.port=8025"
+      - "traefik.enable=true"
+      - "traefik.docker.network=ops_gateway"
+      - "traefik.frontend.whiteList.sourceRange=172.22.0.0/16"
+      - "${OPS_ADMIN_AUTH_LABEL_PREFIX}traefik.frontend.auth.basic.users=${OPS_ADMIN_AUTH}"
+    networks:
+      - gateway
+      - backend

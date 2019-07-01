@@ -191,6 +191,10 @@ secret key: minio-secret<br>
 hostname: mailhog<br>
 port: 1025
 
+**ChromeDriver**<br>
+hostname: chrome<br>
+port: 9515
+
 ## Remote to Local Syncing
 
 With a few settings in a project's `.env` file, you can sync the project's database and filesystem storage
