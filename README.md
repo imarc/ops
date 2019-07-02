@@ -22,6 +22,7 @@ On linux `certutil` is required.
 ### Linux Installation Instructions
 
 - [Install Docker CE](https://docs.docker.com/engine/installation/linux/)
+- [Install Docker Compose](https://docs.docker.com/compose/install/)
 
 Install `certutil`
 
