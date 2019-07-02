@@ -20,6 +20,7 @@ services:
       - OPS_ENABLED=1
       - OPS_SITES_DIR=${OPS_SITES_DIR}
       - OPS_VERSION=${OPS_VERSION}
+      - OPS_SERVICES=${OPS_SERVICES}
     networks:
       - gateway
       - backend
