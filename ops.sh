@@ -254,13 +254,13 @@ mariadb-import() {
 
 _ops-node() {
     ops docker run \
-        --rm -itP --init \
+        --rm -iP --init \
         -v "$(pwd):/usr/src/app" \
         -w "/usr/src/app" \
         --label=ops.project="$(ops project id)" \
         --user "node" \
         --entrypoint "node" \
-        ops-node:$OPS_VERSION \
+        imarcagency/ops-node:$OPS_VERSION \
         "$@"
 }
 
@@ -291,7 +291,7 @@ ops-npm() {
         --label=ops.project="$project" \
         --user "$OPS_DOCKER_UID:$OPS_DOCKER_GID" \
         --entrypoint "npm" \
-        ops-node:$OPS_VERSION \
+        imarcagency/ops-node:$OPS_VERSION \
         "$@"
 }
 
@@ -386,13 +386,13 @@ _ops-lt() {
 
 _ops-gulp() {
     ops docker run \
-        --rm -itP --init \
+        --rm -iP --init \
         -v "$(pwd):/usr/src/app" \
         -w "/usr/src/app" \
         --label=ops.project="$(ops project id)" \
         --user "node" \
         --entrypoint "gulp" \
-        ops-node:$OPS_VERSION \
+        imarcagency/ops-node:$OPS_VERSION \
         "$@"
 }
 
@@ -703,13 +703,13 @@ ops-version() {
 
 _ops-yarn() {
     ops docker run \
-        --rm -itP --init \
+        --rm -iP --init \
         -v "$(pwd):/usr/src/app" \
         -w "/usr/src/app" \
         --label=ops.project="$(ops project name)" \
         --user "node" \
         --entrypoint "yarn" \
-        ops-node:$OPS_VERSION \
+        imarcagency/ops-node:$OPS_VERSION \
         "$@"
 }
 
