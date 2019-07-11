@@ -151,7 +151,7 @@ ops-env() {
 
     if [[ -n $key && -n $val ]]; then
         if [[ -n $(grep -E "^$key=" .env) ]]; then
-            sed -i '' -e "s#^$key=.*#$key=\"$val\"#" .env
+            sed -i -e "s#^$key=.*#$key=\"$val\"#" .env
         else
             echo "$key=\"$val\"" >> .env
         fi
@@ -222,26 +222,29 @@ mariadb-import() {
 
 _ops-node() {
     ops docker run \
-        --rm -itP --init \
+        --rm -iP --init \
         -v "$(pwd):/usr/src/app" \
         -w "/usr/src/app" \
         --label=ops.project="$(ops project id)" \
         --user "node" \
         --entrypoint "node" \
-        ops-node:$OPS_VERSION \
+        imarcagency/ops-node:$OPS_VERSION \
         "$@"
 }
 
 _ops-npm() {
     ops docker run \
-        --rm -itP --init \
+        --rm -iP --init \
         -v "$(pwd):/usr/src/app" \
+	-v "$HOME/.npmrc:/home/node/.npmrc" \
         -w "/usr/src/app" \
+        -v "$SSH_AUTH_SOCK:/ssh-agent" \
+        -e "SSH_AUTH_SOCK=/ssh-agent" \
         --label=ops.project="$(ops project id)" \
         --label=traefik.enable=true \
         --user "node" \
         --entrypoint "npm" \
-        ops-node:$OPS_VERSION \
+        imarcagency/ops-node:$OPS_VERSION \
         "$@"
 }
 
@@ -323,13 +326,13 @@ _ops-lt() {
 
 _ops-gulp() {
     ops docker run \
-        --rm -itP --init \
+        --rm -iP --init \
         -v "$(pwd):/usr/src/app" \
         -w "/usr/src/app" \
         --label=ops.project="$(ops project id)" \
         --user "node" \
         --entrypoint "gulp" \
-        ops-node:$OPS_VERSION \
+        imarcagency/ops-node:$OPS_VERSION \
         "$@"
 }
 
@@ -353,7 +356,12 @@ ops-shell() {
         command="$@"
     fi
 
-    ops docker exec -w "/var/www/html/$project" -u "$OPS_SHELL_USER" -it $id $command
+    local t=''
+    if [[ -t 1 ]]; then
+        t='t'
+    fi
+
+    ops docker exec -w "/var/www/html/$project" -u "$OPS_SHELL_USER" -i$t $id $command
 }
 
 ops-link() {
@@ -594,13 +602,13 @@ ops-version() {
 
 _ops-yarn() {
     ops docker run \
-        --rm -itP --init \
+        --rm -iP --init \
         -v "$(pwd):/usr/src/app" \
         -w "/usr/src/app" \
         --label=ops.project="$(ops project name)" \
         --user "node" \
         --entrypoint "yarn" \
-        ops-node:$OPS_VERSION \
+        imarcagency/ops-node:$OPS_VERSION \
         "$@"
 }
 
@@ -981,7 +989,7 @@ fi
 
 declare -x OPS_ENV="dev"
 declare -x OPS_BACKENDS=${OPS_BACKENDS-"apache-php71 apache-php72 apache-php73 apache-php56"}
-declare -x OPS_DOCKER_COMPOSER_IMAGE=${OPS_DOCKER_COMPOSER_IMAGE-"imarcagency/ops-php71:latest"}
+declare -x OPS_DOCKER_COMPOSER_IMAGE=${OPS_DOCKER_COMPOSER_IMAGE-"imarcagency/ops-apache-php73:$OPS_VERSION"}
 declare -x OPS_DOCKER_NODE_IMAGE=${OPS_DOCKER_NODE_IMAGE-"imarcagency/ops-node:$OPS_VERSION"}
 declare -x OPS_DOCKER_UTILS_IMAGE=${OPS_DOCKER_UTILS_IMAGE-"imarcagency/ops-utils:$OPS_VERSION"}
 declare -x OPS_DOCKER_GID=${OPS_DOCKER_GID-""}
