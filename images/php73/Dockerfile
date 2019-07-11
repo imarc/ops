@@ -9,11 +9,13 @@ RUN apt-get update && apt-get install -y --fix-missing \
     build-essential \
     chrpath \
     curl \
+    dnsutils \
     freetds-dev \
     g++ \
     git-core \
     gnupg \
     imagemagick \
+    iproute2 \
     libcurl4-openssl-dev \
     libdbd-freetds \
     libjpeg62-turbo-dev \
@@ -27,9 +29,9 @@ RUN apt-get update && apt-get install -y --fix-missing \
     libsqlite3-dev \
     libzip-dev \
     netcat \
+    net-tools \
     pkg-config \
     python \
-    subversion \
     unixodbc-dev \
     vim \
     wget
@@ -38,6 +40,7 @@ RUN curl https://packages.microsoft.com/keys/microsoft.asc | apt-key add -
 RUN curl https://packages.microsoft.com/config/debian/9/prod.list > /etc/apt/sources.list.d/mssql-release.list
 
 RUN apt-get update
+
 RUN ACCEPT_EULA=y apt-get install -y \
     msodbcsql17 \
     mssql-tools

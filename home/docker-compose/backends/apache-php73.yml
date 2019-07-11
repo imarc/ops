@@ -1,8 +1,8 @@
 version: '3'
 
 services:
-  apache-php71:
-    image: imarcagency/ops-apache-php71:${OPS_VERSION}
+  apache-php73:
+    image: imarcagency/ops-apache-php73:${OPS_VERSION}
     labels:
       - "ops.project=ops"
     environment:
@@ -12,9 +12,15 @@ services:
       - OPS_ENABLED=1
       - OPS_SITES_DIR=${OPS_SITES_DIR}
       - OPS_VERSION=${OPS_VERSION}
+
+    dns: 172.23.10.10
+
     networks:
       - backend
+      - services
+
     volumes:
+      - ${OPS_HOME}/certs/rootCA.pem:/usr/local/share/ca-certificates/ops.crt
       - ${OPS_HOME}/apache/apache.conf:/etc/apache2/sites-enabled/000-default.conf
       - ${OPS_HOME}/apache/configure:/usr/local/bin/docker-configure
       - ${OPS_HOME}/apache/set_docroot.lua:/etc/apache2/set_docroot.lua

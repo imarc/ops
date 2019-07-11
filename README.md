@@ -1,6 +1,6 @@
 # Ops
 
-**Version 0.9.4**
+**Version 0.10.0**
 
 - A local development environment focused on PHP-based projects.
 - Create a new host by making a directory.
@@ -22,6 +22,7 @@ On linux `certutil` is required.
 ### Linux Installation Instructions
 
 - [Install Docker CE](https://docs.docker.com/engine/installation/linux/)
+- [Install Docker Compose](https://docs.docker.com/compose/install/)
 
 Install `certutil`
 
@@ -190,6 +191,10 @@ secret key: minio-secret<br>
 *SMTP Config:*<br>
 hostname: mailhog<br>
 port: 1025
+
+**ChromeDriver**<br>
+hostname: chrome<br>
+port: 9515
 
 ## Remote to Local Syncing
 

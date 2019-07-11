@@ -1,5 +1,7 @@
 #!/bin/bash
 
+update-ca-certificates
+
 cat << EOF > /var/www/.bashrc
 alias ll="ls -l"
 alias ls="ls -la"
@@ -7,6 +9,8 @@ EOF
 
 mkdir -p /var/www/cache
 mkdir -p /var/www/.config
+mkdir -p /var/www/.local
 
 chown www-data:www-data /var/www/.config
 chown www-data:www-data /var/www/.bashrc
+chown www-data:www-data /var/www/.local

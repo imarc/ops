@@ -1,0 +1,18 @@
+version: '3'
+
+services:
+  portainer:
+    image: portainer/portainer
+    labels:
+      - "ops.project=ops"
+      - "traefik.enable=true"
+      - "traefik.docker.network=ops_gateway"
+      - "traefik.frontend.whiteList.sourceRange=172.22.0.0/16"
+      - "${OPS_ADMIN_AUTH_LABEL_PREFIX}traefik.frontend.auth.basic.users=${OPS_ADMIN_AUTH}"
+    userns_mode: "host"
+    networks:
+      - gateway
+    command: --no-auth --host=unix:///var/run/docker.sock
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+      - portainer:/data
