@@ -1,6 +1,10 @@
-FROM php:7.3.3-apache-stretch
+FROM php:7.3.7-apache-stretch
 
 MAINTAINER Imarc <info@imarc.com>
+
+# fix for postgresql-client
+RUN mkdir -p /usr/share/man/man1 && \
+    mkdir -p /usr/share/man/man7
 
 # install supporting packages
 RUN apt-get update && apt-get install -y --fix-missing \
@@ -28,9 +32,11 @@ RUN apt-get update && apt-get install -y --fix-missing \
     libpspell-dev \
     libsqlite3-dev \
     libzip-dev \
+    mysql-client \
     netcat \
     net-tools \
     pkg-config \
+    postgresql-client \
     python \
     unixodbc-dev \
     vim \
