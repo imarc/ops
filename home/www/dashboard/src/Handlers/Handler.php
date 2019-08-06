@@ -26,8 +26,5 @@ abstract class Handler implements RequestHandlerInterface
         return $this->response;
     }
 
-    abstract public function handle(ServerRequestInterface $request): ResponseInterface
-    {
-
-    }
+    abstract public function handle(ServerRequestInterface $request): ResponseInterface;
 }
