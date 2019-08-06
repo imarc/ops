@@ -903,9 +903,9 @@ system-install() {
         mkdir -p $OPS_HOME/certs
 
         rsync -a \
-          --exclude=bin \
-          --exclude=certs \
-          --exclude=config \
+          --exclude=/bin \
+          --exclude=/certs \
+          --exclude=/config \
           --exclude=acme.json \
           $OPS_SCRIPT_DIR/home/ \
           $OPS_HOME
