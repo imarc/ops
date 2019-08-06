@@ -1,9 +1,17 @@
 {
     "require": {
         "guzzlehttp/guzzle": "~6.0",
-        "symfony/dotenv": "^4.0"
+        "symfony/dotenv": "^4.0",
+        "league/plates": "^3.3",
+        "psr/http-server-handler": "^1.0",
+        "pimple/pimple": "^3.2",
+        "zendframework/zend-diactoros": "^2.1",
+        "zendframework/zend-httphandlerrunner": "^1.1"
     },
     "autoload": {
+        "psr-4": {
+            "Imarc\\Ops\\Dashboard\\": "src/"
+        },
         "files": ["src/helpers.php"]
     }
 }
