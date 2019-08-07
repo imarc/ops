@@ -17,46 +17,58 @@
                 $errors = ['error parsing .env files'];
             }
 
-            $requiresLink = (!empty($env['OPS_PROJECT_TEMPLATE']) || file_exists($dir . '/ops-compose.yml')); ?>
+            $requiresLink = file_exists($dir . '/ops-compose.yml');
+            ?>
 
             <li>
-                <?php if ($requiresLink): ?>
+                <?php if ($requiresLink && !isset($containers['data'][$site])): ?>
                     <?= $site ?>
                     <span
-                        class="badge badge-primary"
+                        class="badge badge-secondary"
                         data-toggle="tooltip"
                         data-placement="right"
                         data-html="true"
                         title="Linked project container(s) required. Run <code>ops link</code> In project directory.">
                             link
                     </span>
+                <?php elseif ($requiresLink && isset($containers['data'][$site])): ?>
+                    <?= $site ?>
+                    <span
+                        class="badge badge-primary"
+                        data-toggle="tooltip"
+                        data-placement="right"
+                        data-html="true"
+                        title="Linked project container(s) listed below">
+                            linked
+                    </span>
+
                 <?php else: ?>
                     <a class="site" href="https://<?= $site ?>.<?= $domain ?>"><?= $site ?></a>
                 <?php endif ?>
 
 
-            <?php if (isset($containers[$site])): ?>
-                <ul>
-                <?php foreach ($containers[$site] as $service => $details): ?>
+                <?php if (isset($containers['data'][$site])): ?>
+                    <ul>
+                        <?php foreach ($containers['data'][$site] as $service => $details): ?>
 
 
-                        <li>
-                            <?php if ($details['hostname']): ?>
-                                <a href="https://<?= $details['hostname'] ?>"><?= $service ?></a>
+                            <li>
+                                <?php if ($details['hostname']): ?>
+                                    <a href="https://<?= $details['hostname'] ?>"><?= $service ?></a>
 
-                            <?php else: ?>
-                                <?= $service ?>
-                            <?php endif ?>
+                                <?php else: ?>
+                                    <?= $service ?>
+                                <?php endif ?>
 
-                            <?= sprintf(
-                                '<small> / <a href="%s">logs</a> / <a href="%s">console</a> </small>',
-                                $details['logs_link'],
-                                $details['console_link'],
-                            )?>
-                        </li>
-                <?php endforeach ?>
-                </ul>
-            <?php endif ?>
+                                <?= sprintf(
+                                    '<small> / <a href="%s">logs</a> / <a href="%s">console</a> </small>',
+                                    $details['logs_link'],
+                                    $details['console_link'],
+                                )?>
+                            </li>
+                    <?php endforeach ?>
+                    </ul>
+                <?php endif ?>
             </li>
         <?php endforeach ?>
         </ul>
