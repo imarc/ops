@@ -222,10 +222,17 @@ mariadb-create() {
     fi
 }
 
+mariadb-list() {
+    ops-exec mariadb mysql --column-names=FALSE -e "show databases;" | \
+        grep -v "^information_schema$" | \
+        grep -v "^performance_schema$" | \
+        grep -v "^mysql$"
+}
+
 mariadb-export() {
     local db="$1"
 
-    ops-exec mariadb mysqldump --single-transaction "$db"
+    ops-exec mariadb mysqldump --single-transaction --add-drop-table "$db"
 }
 
 mariadb-import() {
@@ -321,6 +328,11 @@ psql-create() {
 
 psql-run() {
     ops-exec postgres psql -U postgres "${@}"
+}
+
+psql-list() {
+    ops-exec postgres psql -U postgres -t -c "SELECT datname FROM pg_database WHERE datname NOT IN ('template0', 'template1', 'postgres')" | \
+    sed -e "s/^ *//" -e "/^$/d"
 }
 
 psql-export() {
@@ -546,7 +558,7 @@ ops-sync() {
     fi
 
     cd "$OPS_SITES_DIR/$OPS_PROJECT_NAME"
-        #source ".env"
+    #source ".env"
 
     # best debugging helper
     # ( set -o posix ; set ) | grep -E '^OPS_'
@@ -1148,7 +1160,7 @@ declare -x OPS_PROJECT_SYNC_DIRS="${OPS_PROJECT_SYNC_DIRS}"
 declare -x OPS_PROJECT_SYNC_NODB="${OPS_PROJECT_SYNC_NODB-0}"
 declare -x OPS_PROJECT_SYNC_EXCLUDES="${OPS_PROJECT_SYNC_EXCLUDES}"
 declare -x OPS_PROJECT_SYNC_MAXSIZE="${OPS_PROJECT_SYNC_MAXSIZE}"
-declare -x OPS_PROJECT_REMOTE_OPS="${OPS_PROJET_REMOTE_OPS-0}"
+declare -x OPS_PROJECT_REMOTE_OPS="${OPS_PROJECT_REMOTE_OPS-0}"
 declare -x OPS_PROJECT_REMOTE_USER="${OPS_PROJECT_REMOTE_USER}"
 declare -x OPS_PROJECT_REMOTE_HOST="${OPS_PROJECT_REMOTE_HOST}"
 declare -x OPS_PROJECT_REMOTE_PATH="${OPS_PROJECT_REMOTE_PATH}"
