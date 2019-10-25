@@ -413,7 +413,12 @@ ops-shell() {
     local project=$(project-name)
     local command="$OPS_SHELL_COMMAND"
 
-    if [[ -z $id ]]; then
+    if [[ -z "$project" ]]; then
+        echo "shell must be run from a project directory"
+        exit
+    fi
+
+    if [[ -z "$id" ]]; then
         exit
     fi
 
@@ -721,20 +726,18 @@ project-ls() {
 }
 
 project-name() {
-    (
-        if [[ "$(pwd)" != $OPS_SITES_DIR/* ]]; then
-            exit 1
-        fi
-    )
-
-    echo $(
-        local basename="$(basename $(pwd))"
-        while [[ "$(pwd)" != $OPS_SITES_DIR ]] && [[ "$(pwd)" != '/' ]]; do
-            basename=$(basename $(pwd))
-            cd ..
-        done
-        echo -n $basename
-    )
+    if [[ "$(pwd)" != $OPS_SITES_DIR/* ]]; then
+        exit 1
+    else
+        echo $(
+            local basename="$(basename $(pwd))"
+            while [[ "$(pwd)" != $OPS_SITES_DIR ]] && [[ "$(pwd)" != '/' ]]; do
+                basename=$(basename $(pwd))
+                cd ..
+            done
+            echo -n $basename
+        )
+    fi
 }
 
 project-start() {
