@@ -19,7 +19,7 @@ case "$(uname -s)" in
 esac
 
 if [[ -z "$OS" ]]; then
-    echo "Upsupported OS. Use Macintosh, Linux, or WSL"
+    echo "Unsupported operating system. Use Macintosh, Linux, or WSL."
     exit 1
 fi
 
@@ -41,32 +41,35 @@ source $OPS_SCRIPT_DIR/cmd.sh
 
 # Internal helpers
 
+bold() { echo "$(tput bold)$*$(tput sgr0)"; }
+under() { echo "$(tput smul)$*$(tput rmul)"; }
+
 validate-config() {
     errors=()
 
     if [[ ! -d $OPS_HOME ]]; then
         echo
-        echo "Ops not installed. Please run: ops system install"
+        echo "Ops not installed. Please run: $(bold ops system install)"
         echo
         exit 1
     fi
 
     if [[ -z $OPS_SITES_DIR ]]; then
-        errors+=("OPS_SITES_DIR config is not set")
+        errors+=("$(bold OPS_SITES_DIR) is not set in your ops config.")
     fi
 
     if [[ ! -d $OPS_SITES_DIR ]]; then
-        errors+=("OPS_SITES_DIR $OPS_SITES_DIR doesn't exist")
+        errors+=("$(bold OPS_SITES_DIR) \"$OPS_SITES_DIR\" doesn't exist.")
     fi
 
     if [[ -z $OPS_DOMAIN ]]; then
-        errors+=("OPS_DOMAIN config is not set")
+        errors+=("$(bold OPS_DOMAIN) is not set in your ops config.")
     fi
 
     if [[ -n $errors ]]; then
-        echo "The following items need to be addressed:"
+        echo "The following errors need to be addressed:"
         echo
-        printf "%s\n" "${errors[@]}"
+        printf " - %s\n" "${errors[@]}"
         echo
         exit 1
     fi
