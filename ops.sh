@@ -424,6 +424,7 @@ ops-shell() {
     fi
 
     if [[ -z "$id" ]]; then
+        echo "Unable to determine the container ID for current project's backend."
         exit
     fi
 
