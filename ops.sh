@@ -66,7 +66,7 @@ validate-config() {
     if [[ -n $errors ]]; then
         echo "The following items need to be addressed:"
         echo
-        printf "%s\n" "${errors}"
+        printf "%s\n" "${errors[@]}"
         echo
         exit 1
     fi
