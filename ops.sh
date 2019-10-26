@@ -94,7 +94,7 @@ get-version() {
 # Main Commands
 
 ops-composer() {
-    cmd-doc "Run local composer. Fallback to composer in a container"
+    cmd-doc "Run local composer. Fallback to running composer via docker."
 
     if [[ -e "$(which composer)" ]]; then
         composer "$@"
@@ -102,7 +102,7 @@ ops-composer() {
     fi
 
     if [[ $OS != 'linux' ]]; then
-        echo 'composer required. Please install.'
+        echo 'Running composer via docker is only supported on linux. Please install composer.'
         exit 1
     fi
 
@@ -131,7 +131,7 @@ _ops-docker() {
 }
 
 ops-exec() {
-    cmd-doc "Execute a non-TTY command in a container"
+    cmd-doc "Execute a non-TTY (non-interactive) command in a container."
 
     local service=$1
     shift
@@ -149,13 +149,13 @@ ops-help--after() {
 }
 
 ops-logs() {
-    cmd-doc "Follow logs"
+    cmd-doc "Tail (display) logs."
 
     system-docker-compose logs -f --tail="30" "$@"
 }
 
 ops-env() {
-    cmd-doc "Set or get a variable in project .env file"
+    cmd-doc "Set or get a variable in the current project's .env file."
 
     #
     # list: env
@@ -197,7 +197,7 @@ _ops-mc() {
 }
 
 ops-mariadb() {
-    cmd-doc "MariaDB-specific commands"
+    cmd-doc "MariaDB-specific commands."
 
     cmd-run mariadb "$@"
 }
@@ -265,7 +265,7 @@ _ops-node() {
 }
 
 ops-npm() {
-    cmd-doc "Run local npm. Fallback to npm in a container"
+    cmd-doc "Run local npm. Fallback to running npm via docker."
 
     if [[ -e "$(which npm)" ]]; then
         npm "$@"
@@ -273,7 +273,7 @@ ops-npm() {
     fi
 
     if [[ $OS != 'linux' ]]; then
-        echo 'npm required. Please install.'
+        echo 'Running npm via docker is only supported on linux. Please install npm.'
         exit 1
     fi
 
@@ -310,7 +310,7 @@ _ops-package() {
 }
 
 ops-ps() {
-    cmd-doc "Show process list for ops containers"
+    cmd-doc "Display the status of all ops containers."
 
     system-docker-compose ps "$@"
 }
@@ -363,7 +363,7 @@ psql-help() {
 }
 
 ops-psql() {
-    cmd-doc "PostreSQL-specific commands"
+    cmd-doc "PostreSQL-specific commands."
 
     cmd-run psql "$@"
 }
@@ -397,31 +397,32 @@ _ops-gulp() {
 }
 
 ops-redis() {
-    cmd-doc "Run interactive redis cli"
+    cmd-doc "Run interactive redis cli."
 
     system-shell-exec redis redis-cli "$@"
 }
 
 ops-restart() {
-    cmd-doc "Restart all running containers"
+    cmd-doc "Restart all running containers."
     ops-stop
 
     ops-start
 }
 
 ops-shell() {
-    cmd-doc "Enter shell or execute command"
+    cmd-doc "Enter shell or execute a command within the webserver's container."
 
     local id=$(system-docker-compose ps -q $OPS_SHELL_BACKEND)
     local project=$(project-name)
     local command="$OPS_SHELL_COMMAND"
 
     if [[ -z "$project" ]]; then
-        echo "shell must be run from a project directory"
+        echo "$(bold ops shell) must be run from a project directory."
         exit
     fi
 
     if [[ -z "$id" ]]; then
+        echo "Unable to determine the container ID for current project's backend."
         exit
     fi
 
