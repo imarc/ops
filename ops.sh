@@ -427,7 +427,7 @@ ops-shell() {
     fi
 
     if [[ -z "$(docker ps -qf id=$id)" ]]; then
-        echo "The backend container for this project is not running."
+        echo "The project's backend container is not running. Run $(bold ops start) to start services."
         exit 1
     fi
 
@@ -439,7 +439,7 @@ ops-shell() {
 }
 
 ops-link() {
-    cmd-doc "Link and start project-specific containers"
+    cmd-doc "Link and start project-specific containers."
 
     local project_name=$(project-name)
 
@@ -454,7 +454,7 @@ ops-link() {
 }
 
 ops-unlink() {
-    cmd-doc "Unlink and stop project-specific containers"
+    cmd-doc "Unlink and stop project-specific containers."
 
     local project_name=$(project-name)
 
@@ -469,13 +469,13 @@ ops-unlink() {
 }
 
 ops-project() {
-    cmd-doc "Project-specific commands"
+    cmd-doc "Project-specific commands."
 
     cmd-run project "$@"
 }
 
 ops-stats() {
-    cmd-doc "Watch service stats"
+    cmd-doc "Watch service stats."
 
     local ids=$(system-docker-compose ps -q)
 
@@ -487,7 +487,7 @@ ops-stats() {
 }
 
 ops-start() {
-    cmd-doc "Start services"
+    cmd-doc "Start services."
 
     echo 'Starting ops services...'
     echo
@@ -513,12 +513,12 @@ ops-start() {
     done
 
     echo
-    echo "Visit your dashboard: ${OPS_DASHBOARD_URL}"
+    echo "Visit your dashboard: $(bold $OPS_DASHBOARD_URL)"
     echo
 }
 
 ops-stop() {
-    cmd-doc "Stop services"
+    cmd-doc "Stop services."
 
     system-stop
 
@@ -547,7 +547,7 @@ ops-stop() {
 }
 
 ops-sync() {
-    cmd-doc "Sync remote databases/files to local project"
+    cmd-doc "Sync remote databases/files to local project."
 
     # Ops sync assumes the following:
     #
@@ -558,7 +558,7 @@ ops-sync() {
     RSYNC_BIN=$(which rsync)
 
     if [[ -z "$RSYNC_BIN" ]]; then
-        echo 'Rsync is a required dependency. Please install.'
+        echo '$(bold rsync) is a required dependency. Please install.'
         exit 1
     fi
 
@@ -568,7 +568,7 @@ ops-sync() {
     (
 
     if [[ -z "$OPS_PROJECT_NAME" ]]; then
-        echo "sync must be run from a project directory"
+        echo "$(bold ops sync) must be run from a project directory."
     fi
 
     cd "$OPS_SITES_DIR/$OPS_PROJECT_NAME"
@@ -597,14 +597,14 @@ ops-sync() {
         [[ ! -z "$OPS_PROJECT_REMOTE_DB_NAME" ]]
     then
         if [[ "$OPS_PROJECT_REMOTE_OPS" != 0 ]]; then
-            echo "Syncing remote mariadb '$OPS_PROJECT_REMOTE_DB_NAME' to local '$OPS_PROJECT_DB_NAME'"
+            echo "Syncing remote mariadb '$OPS_PROJECT_REMOTE_DB_NAME' to local '$OPS_PROJECT_DB_NAME'..."
 
             ssh -C "$ssh_host" \
                 "ops $OPS_PROJECT_REMOTE_DB_TYPE export $OPS_PROJECT_REMOTE_DB_NAME" | \
                 $OPS_PROJECT_DB_TYPE-import "$OPS_PROJECT_DB_NAME"
 
         elif [[ "$OPS_PROJECT_REMOTE_DB_TYPE" = "mariadb" ]]; then
-            echo "Syncing remote mariadb '$OPS_PROJECT_REMOTE_DB_NAME' to local '$OPS_PROJECT_DB_NAME'"
+            echo "Syncing remote mariadb '$OPS_PROJECT_REMOTE_DB_NAME' to local '$OPS_PROJECT_DB_NAME'..."
 
             local mysqldump_password="$([[ ! -z $OPS_PROJECT_REMOTE_DB_PASSWORD ]] && echo "-p$OPS_PROJECT_REMOTE_DB_PASSWORD")"
             local mysqldump_host="$([[ ! -z $OPS_PROJECT_REMOTE_DB_HOST ]] && echo "-h $OPS_PROJECT_REMOTE_DB_HOST")"
@@ -622,7 +622,7 @@ ops-sync() {
         elif [[ "$OPS_PROJECT_REMOTE_DB_TYPE" = "psql" ]]; then
             OPS_PROJECT_REMOTE_DB_PORT="${OPS_PROJECT_REMOTE_DB_PORT:-"5432"}"
 
-            echo "Importing database from $OPS_PROJECT_REMOTE_DB_NAME to '$OPS_PROJECT_DB_NAME' pgsql database"
+            echo "Importing database from $OPS_PROJECT_REMOTE_DB_NAME to '$OPS_PROJECT_DB_NAME' pgsql database..."
 
             #local pgdump_password="$([[ ! -z $OPS_PROJECT_REMOTE_DB_PASSWORD ]] && echo "-p$OPS_PROJECT_REMOTE_DB_PASSWORD")"
             local pgdump_host="$([[ ! -z $OPS_PROJECT_REMOTE_DB_HOST ]] && echo "-h $OPS_PROJECT_REMOTE_DB_HOST")"
@@ -696,7 +696,7 @@ ops-system() {
 }
 
 ops-version() {
-    cmd-doc "Show ops version"
+    cmd-doc "Show ops version."
 
     echo "ops version $OPS_VERSION"
 }
@@ -725,7 +725,7 @@ project-docker-compose() {
 }
 
 project-ls() {
-    cmd-doc "List all projects in OPS_SITES_DIR"
+    cmd-doc "List all projects in OPS_SITES_DIR."
 
 
     (
@@ -836,9 +836,15 @@ system-shell-exec() {
     shift
 
     if [[ -z $id ]]; then
-        echo "Service $service not available. Run: ops start"
+        echo "Unable to determine container ID for the $service service."
         exit 1
     fi
+
+    if [[ -z "$(docker ps -qf id=$id)" ]]; then
+        echo "Service $service is not running. Run $(bold ops start) to start services."
+        exit 1
+    fi
+
 
     _ops-docker exec -it $id "$@"
 }
