@@ -1,22 +1,23 @@
 #!/usr/bin/env bash
 
-RESTORE='\033[0m'
+RESTORE="$(tput sgr0)"
+UNDERLINE="$(tput smul)"
 
-RED='\033[00;31m'
-GREEN='\033[00;32m'
-YELLOW='\033[00;33m'
-BLUE='\033[00;34m'
-PURPLE='\033[00;35m'
-CYAN='\033[00;36m'
-LIGHTGRAY='\033[00;37m'
+RED="$(tput setaf 1)"
+GREEN="$(tput setaf 2)"
+YELLOW="$(tput setaf 3)"
+BLUE="$(tput setaf 4)"
+MAGENTA="$(tput setaf 5)"
+CYAN="$(tput setaf 6)"
+GRAY="$(tput setaf 7)"
 
-LRED='\033[01;31m'
-LGREEN='\033[01;32m'
-LYELLOW='\033[01;33m'
-LBLUE='\033[01;34m'
-LPURPLE='\033[01;35m'
-LCYAN='\033[01;36m'
-WHITE='\033[01;37m'
+LRED="$(tput bold)$RED"
+LGREEN="$(tput bold)$GREEN"
+LYELLOW="$(tput bold)$YELLOW"
+LBLUE="$(tput bold)$BLUE"
+LMAGENTA="$(tput bold)$MAGENTA"
+LCYAN="$(tput bold)$CYAN"
+WHITE="$(tput bold)$GRAY"
 
 cmd-doc() {
     return;
@@ -47,7 +48,7 @@ cmd-help() {
     local verbose=0
 
     echo
-    echo "Usage: $name <command>"
+    echo "Usage: $name ${UNDERLINE}command${RESTORE}"
     echo
     echo "Available commands:"
 
@@ -55,7 +56,7 @@ cmd-help() {
         local IFS=$'\n'
         for line in $commands
         do
-            echo -e "  ${GREEN}$line${RESTORE}\t$(cmd-get-doc $prefix-$line | head -n 1)"
+            echo -e "  ${LGREEN}$line${RESTORE}\t$(cmd-get-doc $prefix-$line | head -n 1)"
         done
     ) | column -t -s $'\t'
 
