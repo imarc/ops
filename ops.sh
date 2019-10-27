@@ -418,12 +418,17 @@ ops-shell() {
 
     if [[ -z "$project" ]]; then
         echo "$(bold ops shell) must be run from a project directory."
-        exit
+        exit 1
     fi
 
     if [[ -z "$id" ]]; then
         echo "Unable to determine the container ID for current project's backend."
-        exit
+        exit 1
+    fi
+
+    if [[ -z "$(docker ps -qf id=$id)" ]]; then
+        echo "The backend container for this project is not running."
+        exit 1
     fi
 
     if [[ ! -z "$1" ]]; then
