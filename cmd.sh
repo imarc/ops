@@ -109,3 +109,18 @@ cmd-run() {
         $prefix-$command--after "$@"
     fi
 }
+
+cmd-www() {
+    echo "Opening $1..."
+    case $OS in
+        linux)
+            exo-open $1
+            ;;
+        mac)
+            open $1
+            ;;
+        linux-wsl)
+            explorer.exe $1
+            ;;
+    esac
+}

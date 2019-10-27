@@ -123,6 +123,12 @@ ops-composer() {
         composer -n "$@"
 }
 
+ops-dashboard() {
+    cmd-doc "Open dashboard in your web browser."
+
+    cmd-www $OPS_DASHBOARD_URL
+}
+
 _ops-docker() {
     docker "$@"
 }
@@ -249,6 +255,18 @@ mariadb-import() {
     cat "$sqlfile" | ops-exec mariadb mysql "$db"
 }
 
+mariadb-www() {
+    cmd-doc "Open MariaDB in Adminer."
+
+    local url="https://adminer.ops.$OPS_DOMAIN/?server=mariadb&username=root"
+
+    if [[ -n "$1" ]]; then
+        cmd-www "$url&db=$1"
+    else
+        cmd-www "$url"
+    fi
+}
+
 _ops-node() {
     ops docker run \
         --rm -itP --init \
@@ -365,6 +383,18 @@ ops-psql() {
     cmd-run psql "$@"
 }
 
+psql-www() {
+    cmd-doc "Open PostgreSQL in Adminer."
+
+    local url="https://adminer.ops.$OPS_DOMAIN/?pgsql=postgres&username=postgres"
+
+    if [[ -n "$1" ]]; then
+        cmd-www "$url&db=$1"
+    else
+        cmd-www "$url"
+    fi
+}
+
 _ops-lt() {
     local project="$(ops project name)"
 
@@ -422,6 +452,13 @@ ops-shell() {
     fi
 
     _ops-docker exec -w "/var/www/html/$project" -u "$OPS_SHELL_USER" -it $id $command
+}
+
+ops-www() {
+    cmd-doc "Open current project in web browser."
+    local project=$(project-name)
+
+    cmd-www "https://$project.$OPS_DOMAIN/"
 }
 
 ops-link() {
