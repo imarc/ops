@@ -108,7 +108,7 @@ ops-composer() {
 
     local project="$(ops project name)"
 
-    ops docker run \
+    _ops-docker run \
         --rm -itP \
         -v "$(pwd):/var/www/html/$project" \
         -v "$HOME/.composer:/var/www/.composer" \
@@ -137,7 +137,7 @@ ops-exec() {
 
     [[ -z $id ]] && exit
 
-    ops docker exec -i $id "$@"
+    _ops-docker exec -i $id "$@"
 }
 
 ops-help--after() {
@@ -170,7 +170,7 @@ ops-env() {
 
     if [[ -n $key && -n $val ]]; then
         if [[ -n $(grep -E "^$key=" .env) ]]; then
-            sed -i '' -e "s#^$key=.*#$key=\"$val\"#" .env
+            sed -i -e "s#^$key=.*#$key=\"$val\"#" .env
         else
             echo "$key=\"$val\"" >> .env
         fi
@@ -222,15 +222,23 @@ mariadb-create() {
     fi
 }
 
+mariadb-list() {
+    ops-exec mariadb mysql --column-names=FALSE -e "show databases;" | \
+        grep -v "^information_schema$" | \
+        grep -v "^performance_schema$" | \
+        grep -v "^mysql$"
+}
+
 mariadb-export() {
     local db="$1"
 
-    ops-exec mariadb mysqldump --single-transaction "$db"
+    ops-exec mariadb mysqldump --single-transaction --add-drop-table "$db"
 }
 
 mariadb-import() {
     local db="$1"
     local sqlfile=${2--}
+
 
     (
         # don't let these commands grab stdin
@@ -322,6 +330,11 @@ psql-run() {
     ops-exec postgres psql -U postgres "${@}"
 }
 
+psql-list() {
+    ops-exec postgres psql -U postgres -t -c "SELECT datname FROM pg_database WHERE datname NOT IN ('template0', 'template1', 'postgres')" | \
+    sed -e "s/^ *//" -e "/^$/d"
+}
+
 psql-export() {
     local db="$1"
 
@@ -390,7 +403,6 @@ ops-restart() {
     cmd-doc "Restart all running containers"
     ops-stop
 
-
     ops-start
 }
 
@@ -409,7 +421,7 @@ ops-shell() {
         command="$@"
     fi
 
-    ops docker exec -w "/var/www/html/$project" -u "$OPS_SHELL_USER" -it $id $command
+    _ops-docker exec -w "/var/www/html/$project" -u "$OPS_SHELL_USER" -it $id $command
 }
 
 ops-link() {
@@ -457,7 +469,7 @@ ops-stats() {
         exit
     fi
 
-    ops docker stats $ids
+    _ops-docker stats $ids
 }
 
 ops-start() {
@@ -496,7 +508,7 @@ ops-stop() {
 
     system-stop
 
-    local info=$(ops docker ps -a --format '{{.ID}} {{.Label "ops.project"}}' --filter="label=ops.project")
+    local info=$(_ops-docker ps -a --format '{{.ID}} {{.Label "ops.project"}}' --filter="label=ops.project")
 
     IFS=$'\n'
     for container in $info; do
@@ -546,7 +558,7 @@ ops-sync() {
     fi
 
     cd "$OPS_SITES_DIR/$OPS_PROJECT_NAME"
-        #source ".env"
+    #source ".env"
 
     # best debugging helper
     # ( set -o posix ; set ) | grep -E '^OPS_'
@@ -570,10 +582,12 @@ ops-sync() {
         [[ ! -z "$OPS_PROJECT_REMOTE_DB_TYPE" ]] && \
         [[ ! -z "$OPS_PROJECT_REMOTE_DB_NAME" ]]
     then
-        if [[ "$OPS_PROJECT_REMOTE_OPS" ]]; then
+        if [[ "$OPS_PROJECT_REMOTE_OPS" != 0 ]]; then
+            echo "Syncing remote mariadb '$OPS_PROJECT_REMOTE_DB_NAME' to local '$OPS_PROJECT_DB_NAME'"
+
             ssh -C "$ssh_host" \
                 "ops $OPS_PROJECT_REMOTE_DB_TYPE export $OPS_PROJECT_REMOTE_DB_NAME" | \
-                ops $OPS_PROJECT_DB_TYPE import $OPS_PROJECT_DB_NAME
+                $OPS_PROJECT_DB_TYPE-import "$OPS_PROJECT_DB_NAME"
 
         elif [[ "$OPS_PROJECT_REMOTE_DB_TYPE" = "mariadb" ]]; then
             echo "Syncing remote mariadb '$OPS_PROJECT_REMOTE_DB_NAME' to local '$OPS_PROJECT_DB_NAME'"
@@ -724,7 +738,7 @@ project-name() {
 }
 
 project-start() {
-    project-docker-compose up -d "$@"
+    project-docker-compose up -d --force-recreate "$@"
 }
 
 project-stop() {
@@ -749,7 +763,7 @@ project-exec() {
         exit
     fi
 
-    ops docker exec -i $id "$@"
+    _ops-docker exec -i $id "$@"
 }
 
 project-help() {
@@ -765,7 +779,7 @@ project-shell-exec() {
         exit
     fi
 
-    ops docker exec -it $id "$@"
+    _ops-docker exec -it $id "$@"
 }
 
 project-stats() {
@@ -775,7 +789,7 @@ project-stats() {
         exit
     fi
 
-    ops docker stats $ids
+    _ops-docker stats $ids
 }
 
 # System Sub-Commands
@@ -814,7 +828,7 @@ system-shell-exec() {
         exit 1
     fi
 
-    ops docker exec -it $id "$@"
+    _ops-docker exec -it $id "$@"
 }
 
 system-check() {
@@ -901,9 +915,9 @@ system-install() {
         mkdir -p $OPS_HOME/certs
 
         rsync -a \
-          --exclude=bin \
-          --exclude=certs \
-          --exclude=config \
+          --exclude=/bin \
+          --exclude=/certs \
+          --exclude=/config \
           --exclude=acme.json \
           $OPS_SCRIPT_DIR/home/ \
           $OPS_HOME
@@ -914,7 +928,6 @@ system-install() {
     source $OPS_HOME/config
 
     system-install-mkcert
-    system-refresh-config
 
     if [[ ! -f "$OPS_HOME/certs/self-signed-cert.key" ]]; then
         system-refresh-certs
@@ -992,19 +1005,6 @@ system-refresh-certs() {
 
 }
 
-system-refresh-config() {
-    #
-    # Build config
-    #
-
-    sed "s/OPS_DOMAIN/$OPS_DOMAIN/" $OPS_HOME/dnsmasq/dnsmasq.conf.tmpl > $OPS_HOME/dnsmasq/dnsmasq.conf
-
-    sed \
-        -e "s/OPS_MINIO_ACCESS_KEY/$OPS_MINIO_ACCESS_KEY/" \
-        -e "s/OPS_MINIO_SECRET_KEY/$OPS_MINIO_SECRET_KEY/" \
-        $OPS_HOME/minio/config.json.tmpl > $OPS_HOME/minio/config.json
-}
-
 system-refresh-services() {
     #
     # Regenerate/Restart services. (They might depend on new configs/certs)
@@ -1029,10 +1029,27 @@ system-reset() {
     _ops-docker network rm ops_backend &> /dev/null
     _ops-docker network rm ops_gateway &> /dev/null
     _ops-docker network rm ops_services &> /dev/null
+
+    # create networks
+    _ops-docker network create --subnet="$OPS_SERVICES_SUBNET" ops_services &> /dev/null
+    # _ops-docker network create ops_services &> /dev/null
+    _ops-docker network create ops_backend &> /dev/null
+    _ops-docker network create ops_gateway &> /dev/null
 }
 
 system-start() {
     system-reset
+
+    # refresh config
+    sed \
+        -e "s/OPS_DOMAIN/$OPS_DOMAIN/" \
+        -e "s/OPS_SERVICES_TRAEFIK_IP/$OPS_SERVICES_TRAEFIK_IP/" \
+        $OPS_HOME/dnsmasq/dnsmasq.conf.tmpl > $OPS_HOME/dnsmasq/dnsmasq.conf
+
+    sed \
+        -e "s/OPS_MINIO_ACCESS_KEY/$OPS_MINIO_ACCESS_KEY/" \
+        -e "s/OPS_MINIO_SECRET_KEY/$OPS_MINIO_SECRET_KEY/" \
+        $OPS_HOME/minio/config.json.tmpl > $OPS_HOME/minio/config.json
 
     # start all services
     system-docker-compose up -d --remove-orphans
@@ -1057,6 +1074,9 @@ main() {
 
         validate-config
     fi
+
+    declare -x OPS_SERVICES_DNS_IP="$(echo -n $OPS_SERVICES_SUBNET | cut -f1,2 -d'.' | sed 's/$/.10.10/')"
+    declare -x OPS_SERVICES_TRAEFIK_IP="$(echo -n $OPS_SERVICES_SUBNET | cut -f1,2 -d'.' | sed 's/$/.10.11/')"
 
     cmd-run ops "$@"
     exit
@@ -1084,7 +1104,7 @@ fi
 declare -x OPS_ENV="dev"
 declare -x OPS_DEBUG="${OPS_DEBUG}"
 declare -x OPS_BACKENDS=${OPS_BACKENDS-"apache-php73"}
-declare -x OPS_SERVICES=${OPS_SERVICES-"dnsmasq portainer dashboard mariadb postgres redis adminer"}
+declare -x OPS_SERVICES=${OPS_SERVICES-"portainer dashboard mariadb postgres redis adminer"}
 declare -x OPS_DOCKER_COMPOSER_IMAGE=${OPS_DOCKER_COMPOSER_IMAGE-"imarcagency/ops-php73:latest"}
 declare -x OPS_DOCKER_NODE_IMAGE=${OPS_DOCKER_NODE_IMAGE-"imarcagency/ops-node:$OPS_VERSION"}
 declare -x OPS_DOCKER_UTILS_IMAGE=${OPS_DOCKER_UTILS_IMAGE-"imarcagency/ops-utils:$OPS_VERSION"}
@@ -1096,6 +1116,7 @@ declare -x OPS_DOMAIN=${OPS_DOMAIN-"imarc.io"}
 declare -x OPS_MINIO_ACCESS_KEY=${OPS_MINIO_ACCESS_KEY-"minio-access"}
 declare -x OPS_MINIO_SECRET_KEY=${OPS_MINIO_SECRET_KEY-"minio-secret"}
 declare -x OPS_SITES_DIR=${OPS_SITES_DIR-"$HOME/Sites"}
+declare -x OPS_SERVICES_SUBNET=${OPS_SERVICES_SUBNET-"172.23.0.0/16"}
 declare -x OPS_ACME_EMAIL=${OPS_ACME_EMAIL-""}
 declare -x OPS_ACME_DNS_PROVIDER=${OPS_ACME_DNS_PROVIDER-""}
 declare -x OPS_ACME_PRODUCTION=${OPS_ACME_PRODUCTION-"0"}
@@ -1139,6 +1160,7 @@ declare -x OPS_PROJECT_SYNC_DIRS="${OPS_PROJECT_SYNC_DIRS}"
 declare -x OPS_PROJECT_SYNC_NODB="${OPS_PROJECT_SYNC_NODB-0}"
 declare -x OPS_PROJECT_SYNC_EXCLUDES="${OPS_PROJECT_SYNC_EXCLUDES}"
 declare -x OPS_PROJECT_SYNC_MAXSIZE="${OPS_PROJECT_SYNC_MAXSIZE}"
+declare -x OPS_PROJECT_REMOTE_OPS="${OPS_PROJECT_REMOTE_OPS-0}"
 declare -x OPS_PROJECT_REMOTE_USER="${OPS_PROJECT_REMOTE_USER}"
 declare -x OPS_PROJECT_REMOTE_HOST="${OPS_PROJECT_REMOTE_HOST}"
 declare -x OPS_PROJECT_REMOTE_PATH="${OPS_PROJECT_REMOTE_PATH}"

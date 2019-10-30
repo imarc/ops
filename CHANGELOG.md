@@ -5,6 +5,38 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/)
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.11.2] - 2019-08-07
+
+### Fixed
+- Issue with Dashboard and linked containers
+- Issue with `OPS_PROJECT_REMOTE_OPS` config
+
+### Added
+- `mariadb list` command
+- `psql list` command
+
+## [0.11.1] - 2019-08-06
+
+### Changed
+- Modernize dashboard code
+
+### Fixed
+- Bug with `ops system install` and new dashboard code
+- Bug with X-Ops-Project-Name header
+
+## [0.11.0] - 2019-08-06
+
+### Changed
+- Upgraded all php7 images to latest minor versions
+- dnsmasq now a default base service
+
+### Fixed
+- Remote ops database syncing
+- IP whitelisting for services
+
+### Added
+- `mysql-client` and `postgres-client` to all php7 images
+
 ## [0.9.4] - 2019-04-09
 
 ### Added

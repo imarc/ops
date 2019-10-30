@@ -9,7 +9,6 @@ services:
       - "traefik.docker.network=ops_gateway"
       - "traefik.frontend.rule=Host:ops.${OPS_DOMAIN},dashboard.ops.${OPS_DOMAIN}"
       - "traefik.frontend.priority=1"
-      - "traefik.frontend.whiteList.sourceRange=172.22.0.0/16"
       - "traefik.port=80"
       - "${OPS_ADMIN_AUTH_LABEL_PREFIX}traefik.frontend.auth.basic.users=${OPS_ADMIN_AUTH}"
     environment:
