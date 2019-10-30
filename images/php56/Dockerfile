@@ -95,7 +95,7 @@ RUN docker-php-ext-install \
 RUN pecl install \
     imagick \
     memcached-2.2.0 \
-    redis \
+    redis-4.3.0 \
     xdebug-2.5.5
 #
 RUN docker-php-ext-enable \
