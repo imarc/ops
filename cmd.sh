@@ -34,7 +34,7 @@ cmd-get-doc() {
     fi
 
     declare -f $1 | \
-        awk '/^\s*cmd-doc /{print;}' | \
+        awk '/^[ \s]*cmd-doc /{print;}' | \
         sed -E 's/^ *cmd-doc +(.*);$/\1/' | \
         sed -e 's/^"//' -e 's/"$//' -e "s/^'//" -e "s/'$//" | \
         sed -e "s/^/$pad/"
@@ -43,7 +43,7 @@ cmd-get-doc() {
 cmd-help() {
     local name=$1
     local prefix=$2
-    local commands="$(compgen -A function | awk "/--/{next;} /^$prefix-/{sub(\"$prefix-\",\"\"); print;}")"
+    local commands=$(compgen -A function | awk "/--/{next;} /^$prefix-/{sub(\"$prefix-\",\"\"); print;}")
     local verbose=0
 
     echo

@@ -1030,9 +1030,13 @@ system-reset() {
     _ops-docker network rm ops_gateway &> /dev/null
     _ops-docker network rm ops_services &> /dev/null
 
+
+    # TODO inspect networks and point
+    # docker network inspect -f '{{range .IPAM.Config}}{{ $.Name }} {{.Subnet}}{{end}}' $(docker network ls -q) | sed '/^$/d'
+
+
     # create networks
     _ops-docker network create --subnet="$OPS_SERVICES_SUBNET" ops_services &> /dev/null
-    # _ops-docker network create ops_services &> /dev/null
     _ops-docker network create ops_backend &> /dev/null
     _ops-docker network create ops_gateway &> /dev/null
 }
