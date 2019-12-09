@@ -1130,7 +1130,7 @@ declare -x OPS_ADMIN_AUTH_LABEL_PREFIX=""
 declare -x OPS_DEFAULT_BACKEND=${OPS_DEFAULT_BACKEND-"apache-php73"}
 declare -x OPS_DEFAULT_DOCROOT=${OPS_DEFAULT_DOCROOT-"public"}
 declare -x OPS_DASHBOARD_URL="https://ops.${OPS_DOMAIN}"
-declare -x OPS_MKCERT_VERSION="1.3.0"
+declare -x OPS_MKCERT_VERSION="1.4.1"
 
 if [[ ! $OPS_ADMIN_AUTH ]]; then
     OPS_ADMIN_AUTH_LABEL_PREFIX="disabled-"
