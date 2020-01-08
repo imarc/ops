@@ -10,6 +10,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Added ffmpeg to PHP 7.4
 - Updated default backend to PHP 7.4
 
+## [0.12.2] - 2019-01-08
+
+### Added
+- Added proper localtunnel support and OPS_LOCALTUNNEL_HOST config option
+
 ## [0.12.1] - 2019-12-09
 
 ### Fixed
