@@ -1,6 +1,6 @@
 # Ops
 
-**Version 0.12.1**
+**Version 0.12.2**
 
 - A local development environment focused on PHP-based projects.
 - Create a new host by making a directory.
@@ -157,6 +157,11 @@ The following options can be set within your $HOME/.ops/config file.
     #
     # Default: public
     OPS_DEFAULT_DOCROOT="public"
+
+    # A localtunnel (localtunnel.me) host. If you run your own server, configure it here.
+    #
+    # Default: https://localtunnel.me
+    OPS_LOCALTUNNEL_HOST="https://localtunnel.me"
 
 ## Connect to Services
 

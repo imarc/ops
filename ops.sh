@@ -365,20 +365,21 @@ ops-psql() {
     cmd-run psql "$@"
 }
 
-_ops-lt() {
+ops-lt() {
+    cmd-doc "Create a localtunnel to your project"
+
     local project="$(ops project name)"
 
-    echo "$project.$OPS_DOMAIN"
+    echo "Creating a localtunnel to $project.$OPS_DOMAIN"
+    echo
 
     ops docker run \
         --rm --init -itP \
         --label=ops.project="$project" \
-        --network=host \
-        efrecon/localtunnel \
-            --local-host="$project.$OPS_DOMAIN" \
-            --port=80
-
-        #ops-utils:$OPS_VERSION bash \
+        --network="ops_services" \
+        --dns="$OPS_SERVICES_DNS_IP" \
+        imarcagency/ops-localtunnel:latest \
+           --host="$OPS_LOCALTUNNEL_HOST" --local-host="$project.$OPS_DOMAIN" --port=80
 }
 
 _ops-gulp() {
@@ -1030,10 +1031,8 @@ system-reset() {
     _ops-docker network rm ops_gateway &> /dev/null
     _ops-docker network rm ops_services &> /dev/null
 
-
     # TODO inspect networks and point
     # docker network inspect -f '{{range .IPAM.Config}}{{ $.Name }} {{.Subnet}}{{end}}' $(docker network ls -q) | sed '/^$/d'
-
 
     # create networks
     _ops-docker network create --subnet="$OPS_SERVICES_SUBNET" ops_services &> /dev/null
@@ -1126,6 +1125,7 @@ declare -x OPS_ACME_DNS_PROVIDER=${OPS_ACME_DNS_PROVIDER-""}
 declare -x OPS_ACME_PRODUCTION=${OPS_ACME_PRODUCTION-"0"}
 declare -x OPS_ADMIN_AUTH=${OPS_ADMIN_AUTH-""}
 declare -x OPS_ADMIN_AUTH_LABEL_PREFIX=""
+declare -x OPS_LOCALTUNNEL_HOST=${OPS_LOCALTUNNEL_HOST-"https://localtunnel.me"}
 
 declare -x OPS_DEFAULT_BACKEND=${OPS_DEFAULT_BACKEND-"apache-php73"}
 declare -x OPS_DEFAULT_DOCROOT=${OPS_DEFAULT_DOCROOT-"public"}
