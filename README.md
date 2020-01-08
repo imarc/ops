@@ -1,6 +1,6 @@
 # Ops
 
-**Version 0.11.3**
+**Version 0.12.1**
 
 - A local development environment focused on PHP-based projects.
 - Create a new host by making a directory.
@@ -111,10 +111,10 @@ The following options can be set within your $HOME/.ops/config file.
 
     # A space separated list of application backends that
     # should be enabled. Available options are:
-    #  apache-php56, apache-php71, apache-php72, apache-php73
+    #  apache-php71, apache-php72, apache-php73
     #
-    # Default: apache-php73 apache-php72 apache-php71 apache-php56
-    OPS_BACKENDS="apache-php73 apache-php56"
+    # Default: apache-php73 apache-php72 apache-php71
+    OPS_BACKENDS="apache-php73"
 
     # A linux user id that a backend process should attempt to run as.
     #

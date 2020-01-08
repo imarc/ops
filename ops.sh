@@ -1109,7 +1109,7 @@ declare -x OPS_ENV="dev"
 declare -x OPS_DEBUG="${OPS_DEBUG}"
 declare -x OPS_BACKENDS=${OPS_BACKENDS-"apache-php73"}
 declare -x OPS_SERVICES=${OPS_SERVICES-"portainer dashboard mariadb postgres redis adminer"}
-declare -x OPS_DOCKER_COMPOSER_IMAGE=${OPS_DOCKER_COMPOSER_IMAGE-"imarcagency/ops-php73:latest"}
+declare -x OPS_DOCKER_COMPOSER_IMAGE=${OPS_DOCKER_COMPOSER_IMAGE-"imarcagency/ops-apache-php73:$OPS_VERSION"}
 declare -x OPS_DOCKER_NODE_IMAGE=${OPS_DOCKER_NODE_IMAGE-"imarcagency/ops-node:$OPS_VERSION"}
 declare -x OPS_DOCKER_UTILS_IMAGE=${OPS_DOCKER_UTILS_IMAGE-"imarcagency/ops-utils:$OPS_VERSION"}
 declare -x OPS_DOCKER_GID=${OPS_DOCKER_GID-""}
@@ -1130,7 +1130,7 @@ declare -x OPS_ADMIN_AUTH_LABEL_PREFIX=""
 declare -x OPS_DEFAULT_BACKEND=${OPS_DEFAULT_BACKEND-"apache-php73"}
 declare -x OPS_DEFAULT_DOCROOT=${OPS_DEFAULT_DOCROOT-"public"}
 declare -x OPS_DASHBOARD_URL="https://ops.${OPS_DOMAIN}"
-declare -x OPS_MKCERT_VERSION="1.3.0"
+declare -x OPS_MKCERT_VERSION="1.4.1"
 
 if [[ ! $OPS_ADMIN_AUTH ]]; then
     OPS_ADMIN_AUTH_LABEL_PREFIX="disabled-"

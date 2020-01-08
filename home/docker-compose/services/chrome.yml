@@ -8,7 +8,7 @@ services:
     environment:
       CHROMEDRIVER_WHITELISTED_IPS: ""
       CHROMEDRIVER_PORT: "9515"
-    dns: 172.18.1.1
+    dns: $OPS_SERVICES_DNS_IP
     shm_size: '2gb'
     cap_add:
        - "SYS_ADMIN"

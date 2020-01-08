@@ -26,7 +26,6 @@ class DashboardHandler extends Handler
                 'apache-php73' => 'PHP 7.3',
                 'apache-php72' => 'PHP 7.2',
                 'apache-php71' => 'PHP 7.1',
-                'apache-php56' => 'PHP 5.6',
             ]
         ];
 
