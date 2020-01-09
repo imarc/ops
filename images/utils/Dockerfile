@@ -28,4 +28,5 @@ RUN curl -L https://github.com/docker/compose/releases/download/1.24.0/docker-co
 RUN chmod +x /usr/local/bin/docker-compose
 
 # install npm dependencies
-# RUN npm install broken-link-checker -g
+#RUN npm install broken-link-checker -g
+RUN npm install -g localtunnel
