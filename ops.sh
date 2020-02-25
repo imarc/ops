@@ -413,7 +413,8 @@ ops-restart() {
 ops-shell() {
     cmd-doc "Enter shell or execute a command within the webserver's container."
 
-    local id=$(system-docker-compose ps -q $OPS_SHELL_BACKEND)
+    local id=$(system-docker-compose ps -q $OPS_SHELL_BACKEND 2> /dev/null)
+    local project_id=$(project-docker-compose ps -q $OPS_SHELL_BACKEND 2> /dev/null)
     local project=$(project-name)
     local command="$OPS_SHELL_COMMAND"
 
@@ -436,7 +437,15 @@ ops-shell() {
         command="$@"
     fi
 
-    _ops-docker exec -w "/var/www/html/$project" -u "$OPS_SHELL_USER" -it $id $command
+    if [[ ! -z $id ]]; then
+        _ops-docker exec -w "/var/www/html/$project" -u "$OPS_SHELL_USER" -it $id $command
+    elif [[ ! -z $project_id ]]; then
+        _ops-docker exec -u "$OPS_SHELL_USER" -it $project_id $command
+    else
+        echo "ERROR: No such service: $OPS_SHELL_BACKEND"
+        exit 1
+
+    fi
 }
 
 ops-link() {
