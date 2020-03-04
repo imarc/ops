@@ -5,6 +5,76 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/)
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.13.1] - 2019-02-03
+
+### Fixed
+- PHP container warnings on dashboard.
+
+## [0.13.0] - 2019-01-09
+
+### Added
+- Added PHP 7.4 backend
+- Added ffmpeg to PHP 7.4 backend
+
+### Changed
+- Changed default backend to PHP 7.4
+
+## [0.12.2] - 2019-01-08
+
+### Added
+- Added proper localtunnel support and OPS_LOCALTUNNEL_HOST config option
+
+## [0.12.1] - 2019-12-09
+
+### Fixed
+- Updated mkcert for OSX Catalina
+
+## [0.12.0] - 2019-12-06
+
+### Removed
+- PHP 5.6 Support
+
+### Added
+- LDAP Extension to PHP 7.2 and 7.3
+
+## [0.11.3] - 2019-08-08
+
+### Fixed
+- Issue with cli docs and bash 3
+- Issue with an older version of awk
+
+## [0.11.2] - 2019-08-07
+
+### Fixed
+- Issue with Dashboard and linked containers
+- Issue with `OPS_PROJECT_REMOTE_OPS` config
+
+### Added
+- `mariadb list` command
+- `psql list` command
+
+## [0.11.1] - 2019-08-06
+
+### Changed
+- Modernize dashboard code
+
+### Fixed
+- Bug with `ops system install` and new dashboard code
+- Bug with X-Ops-Project-Name header
+
+## [0.11.0] - 2019-08-06
+
+### Changed
+- Upgraded all php7 images to latest minor versions
+- dnsmasq now a default base service
+
+### Fixed
+- Remote ops database syncing
+- IP whitelisting for services
+
+### Added
+- `mysql-client` and `postgres-client` to all php7 images
+
 ## [0.9.4] - 2019-04-09
 
 ### Added

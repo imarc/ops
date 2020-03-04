@@ -30,7 +30,7 @@ services:
     networks:
       gateway:
       services:
-        ipv4_address: 172.23.10.11
+        ipv4_address: $OPS_SERVICES_TRAEFIK_IP
     userns_mode: 'host'
     labels:
       - "ops.project=ops"
@@ -40,22 +40,31 @@ services:
       - ${OPS_HOME}/certs/:/etc/traefik-certs
       - ${OPS_HOME}/traefik/acme.json:/etc/traefik/acme/acme.json
 
+  dnsmasq:
+    image: jpillora/dnsmasq:1.1.0
+    labels:
+      - "traefik.port=8080"
+      - "traefik.enable=true"
+      - "traefik.docker.network=ops_gateway"
+      - "${OPS_ADMIN_AUTH_LABEL_PREFIX}traefik.frontend.auth.basic.users=${OPS_ADMIN_AUTH}"
+    networks:
+      gateway:
+      backend:
+      services:
+        ipv4_address: $OPS_SERVICES_DNS_IP
+    volumes:
+      - ${OPS_HOME}/dnsmasq/dnsmasq.conf:/etc/dnsmasq.conf
+
 networks:
   gateway:
-    ipam:
-      driver: default
-      config:
-        - subnet: 172.22.0.0/16
+    external:
+      name: ops_gateway
   backend:
-    ipam:
-      driver: default
-      config:
-        - subnet: 172.24.0.0/16
+    external:
+      name: ops_backend
   services:
-    ipam:
-      driver: default
-      config:
-        - subnet: 172.23.0.0/16
+    external:
+      name: ops_services
 
 volumes:
   minio:

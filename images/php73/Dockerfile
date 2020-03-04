@@ -1,6 +1,10 @@
-FROM php:7.3.3-apache-stretch
+FROM php:7.3.7-apache-stretch
 
 MAINTAINER Imarc <info@imarc.com>
+
+# fix for postgresql-client
+RUN mkdir -p /usr/share/man/man1 && \
+    mkdir -p /usr/share/man/man7
 
 # install supporting packages
 RUN apt-get update && apt-get install -y --fix-missing \
@@ -19,6 +23,7 @@ RUN apt-get update && apt-get install -y --fix-missing \
     libcurl4-openssl-dev \
     libdbd-freetds \
     libjpeg62-turbo-dev \
+    libldap2-dev \
     libmagickwand-dev \
     libmcrypt-dev \
     libmemcached-dev \
@@ -28,9 +33,11 @@ RUN apt-get update && apt-get install -y --fix-missing \
     libpspell-dev \
     libsqlite3-dev \
     libzip-dev \
+    mysql-client \
     netcat \
     net-tools \
     pkg-config \
+    postgresql-client \
     python \
     unixodbc-dev \
     vim \
@@ -52,12 +59,17 @@ RUN ln -s /usr/lib/x86_64-linux-gnu/libsybdb.a /usr/lib/libsybdb.a
 # Configure GD with jpeg
 RUN docker-php-ext-configure gd --with-freetype-dir=/usr/include/ --with-jpeg-dir=/usr/include/
 
+# Configure LDAP
+RUN docker-php-ext-configure ldap --with-libdir=lib/x86_64-linux-gnu/
+
 # install officially supported php extensions
 RUN docker-php-ext-install \
     bcmath \
     curl \
+    exif \
     gd \
     iconv \
+    ldap \
     mysqli \
     opcache \
     pcntl \
@@ -84,6 +96,7 @@ RUN pecl install \
 RUN docker-php-ext-enable \
     imagick \
     memcached \
+    exif \
     redis \
     xdebug \
     sqlsrv \

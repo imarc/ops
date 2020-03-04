@@ -8,7 +8,6 @@ services:
       - "traefik.enable=true"
       - "traefik.docker.network=ops_gateway"
       - "traefik.port=9000"
-      - "traefik.frontend.whiteList.sourceRange=172.22.0.0/16"
     command: server --address ":9000" /data
     environment:
       - "MINIO_ACCESS_KEY=${OPS_MINIO_ACCESS_KEY}"
