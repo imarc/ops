@@ -1117,7 +1117,7 @@ fi
 declare -x OPS_ENV="dev"
 declare -x OPS_DEBUG="${OPS_DEBUG}"
 declare -x OPS_BACKENDS=${OPS_BACKENDS-"apache-php74"}
-declare -x OPS_SERVICES=${OPS_SERVICES-"dnsmasq portainer dashboard mariadb postgres redis adminer"}
+declare -x OPS_SERVICES=${OPS_SERVICES-"portainer dashboard mariadb postgres redis adminer"}
 declare -x OPS_DOCKER_COMPOSER_IMAGE=${OPS_DOCKER_COMPOSER_IMAGE-"imarcagency/ops-apache-php74:$OPS_VERSION"}
 declare -x OPS_DOCKER_NODE_IMAGE=${OPS_DOCKER_NODE_IMAGE-"imarcagency/ops-node:$OPS_VERSION"}
 declare -x OPS_DOCKER_UTILS_IMAGE=${OPS_DOCKER_UTILS_IMAGE-"imarcagency/ops-utils:$OPS_VERSION"}
