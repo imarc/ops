@@ -5,12 +5,17 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/)
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [0.13.1] - 2019-02-03
+## [0.14.0] - 2020-04-16
+
+### Added
+- OPS_DOMAIN_ALIASES config option
+
+## [0.13.1] - 2020-02-03
 
 ### Fixed
 - PHP container warnings on dashboard.
 
-## [0.13.0] - 2019-01-09
+## [0.13.0] - 2020-01-09
 
 ### Added
 - Added PHP 7.4 backend
@@ -19,7 +24,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Changed
 - Changed default backend to PHP 7.4
 
-## [0.12.2] - 2019-01-08
+## [0.12.2] - 2020-01-08
 
 ### Added
 - Added proper localtunnel support and OPS_LOCALTUNNEL_HOST config option

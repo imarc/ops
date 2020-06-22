@@ -823,7 +823,6 @@ system-docker-compose() {
 	    COMPOSE_FILE="$COMPOSE_FILE:$OPS_HOME/docker-compose/system/private.yml"
     fi
 
-
     COMPOSE_PROJECT_NAME="ops" \
     COMPOSE_FILE=$COMPOSE_FILE \
     docker-compose "$@"
@@ -1126,6 +1125,7 @@ declare -x OPS_DOCKER_UID=${OPS_DOCKER_UID-""}
 declare -x OPS_DOCKER_VERSION="18"
 declare -x OPS_DOCKER_COMPOSE_VERSION="1.22"
 declare -x OPS_DOMAIN=${OPS_DOMAIN-"imarc.io"}
+declare -x OPS_DOMAIN_ALIASES=${OPS_DOMAIN_ALIASES-""}
 declare -x OPS_MINIO_ACCESS_KEY=${OPS_MINIO_ACCESS_KEY-"minio-access"}
 declare -x OPS_MINIO_SECRET_KEY=${OPS_MINIO_SECRET_KEY-"minio-secret"}
 declare -x OPS_SITES_DIR=${OPS_SITES_DIR-"$HOME/Sites"}
