@@ -1,6 +1,6 @@
 # Ops
 
-**Version 0.13.1**
+**Version 0.14.0**
 
 - A local development environment focused on PHP-based projects.
 - Create a new host by making a directory.
@@ -140,6 +140,17 @@ The following options can be set within your $HOME/.ops/config file.
     #
     # Default: "imarc.io"
     OPS_DOMAIN="imarc.io"
+
+    # Configure domain aliases for a particular project
+    #
+    # Set up space separated key value pairs to use a real domain
+    # Also requires a host override in /etc/hosts to 127.0.0.1
+    #
+    # Example:
+    #   OPS_DOMAIN_ALIASES="myrealdomain.com:project"
+    #
+    # Default: (none)
+    OPS_DOMAIN_ALIASES=""
 
     # Set the diretory where projects live.
     #
