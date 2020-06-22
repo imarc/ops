@@ -13,4 +13,4 @@ services:
     ports:
       - "127.0.0.1:5432:5432"
     volumes:
-      - "postgres:/var/lib/postgresql/data/pgdata"
+      - "postgres:/var/lib/postgresql/data/pgdata:delegated"

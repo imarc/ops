@@ -18,5 +18,5 @@ services:
       - gateway
       - backend
     volumes:
-      - minio:/data
+      - "minio:/data:delegated"
 
