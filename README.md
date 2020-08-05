@@ -351,7 +351,7 @@ Everything else can be customized to whatever your app requires.
 If you are contributing to ops, debugging, or want to try out bleeding edge features, It is recommended you install like so:
 
     # clone into a local dir and enter dir
-    git clone git@gitlab.imarc.net:imarc/ops.git
+    git clone git@github.com:imarc/ops.git
     cd ops
 
     # create 'ops' symlink to your repo
