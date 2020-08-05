@@ -1,6 +1,6 @@
 # Ops
 
-**Version 0.11.1**
+**Version 0.14.1**
 
 - A local development environment focused on PHP-based projects.
 - Create a new host by making a directory.
@@ -111,10 +111,10 @@ The following options can be set within your $HOME/.ops/config file.
 
     # A space separated list of application backends that
     # should be enabled. Available options are:
-    #  apache-php56, apache-php71, apache-php72, apache-php73
+    #  apache-php71, apache-php72, apache-php73
     #
-    # Default: apache-php73 apache-php72 apache-php71 apache-php56
-    OPS_BACKENDS="apache-php73 apache-php56"
+    # Default: apache-php73 apache-php72 apache-php71
+    OPS_BACKENDS="apache-php73"
 
     # A linux user id that a backend process should attempt to run as.
     #
@@ -141,6 +141,17 @@ The following options can be set within your $HOME/.ops/config file.
     # Default: "imarc.io"
     OPS_DOMAIN="imarc.io"
 
+    # Configure domain aliases for a particular project
+    #
+    # Set up space separated key value pairs to use a real domain
+    # Also requires a host override in /etc/hosts to 127.0.0.1
+    #
+    # Example:
+    #   OPS_DOMAIN_ALIASES="myrealdomain.com:project"
+    #
+    # Default: (none)
+    OPS_DOMAIN_ALIASES=""
+
     # Set the diretory where projects live.
     #
     # Default: $HOME/Sites
@@ -157,6 +168,11 @@ The following options can be set within your $HOME/.ops/config file.
     #
     # Default: public
     OPS_DEFAULT_DOCROOT="public"
+
+    # A localtunnel (localtunnel.me) host. If you run your own server, configure it here.
+    #
+    # Default: https://localtunnel.me
+    OPS_LOCALTUNNEL_HOST="https://localtunnel.me"
 
 ## Connect to Services
 
@@ -335,7 +351,7 @@ Everything else can be customized to whatever your app requires.
 If you are contributing to ops, debugging, or want to try out bleeding edge features, It is recommended you install like so:
 
     # clone into a local dir and enter dir
-    git clone git@gitlab.imarc.net:imarc/ops.git
+    git clone git@github.com:imarc/ops.git
     cd ops
 
     # create 'ops' symlink to your repo

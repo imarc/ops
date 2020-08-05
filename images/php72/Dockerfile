@@ -8,17 +8,21 @@ RUN mkdir -p /usr/share/man/man1 && \
 
 # install supporting packages
 RUN apt-get update && apt-get install -y --fix-missing \
+    apt-transport-https \
     autoconf \
     build-essential \
     chrpath \
     curl \
+    dnsutils \
     freetds-dev \
     g++ \
     git-core \
+    gnupg \
     imagemagick \
     libcurl4-openssl-dev \
     libdbd-freetds \
     libjpeg62-turbo-dev \
+    libldap2-dev \
     libmagickwand-dev \
     libmcrypt-dev \
     libmemcached-dev \
@@ -44,12 +48,16 @@ RUN ln -s /usr/lib/x86_64-linux-gnu/libsybdb.a /usr/lib/libsybdb.a
 # Configure GD with jpeg
 RUN docker-php-ext-configure gd --with-freetype-dir=/usr/include/ --with-jpeg-dir=/usr/include/
 
+# Configure LDAP
+RUN docker-php-ext-configure ldap --with-libdir=lib/x86_64-linux-gnu/
+
 # install officially supported php extensions
 RUN docker-php-ext-install \
     bcmath \
     curl \
     gd \
     iconv \
+    ldap \
     mysqli \
     opcache \
     pcntl \

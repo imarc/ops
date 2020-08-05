@@ -2,7 +2,7 @@ version: '3'
 
 services:
   mariadb:
-    image: "mariadb:10.3"
+    image: "mariadb:10.5.1"
     environment:
       - "MYSQL_ALLOW_EMPTY_PASSWORD=yes"
     networks:
@@ -12,4 +12,4 @@ services:
     ports:
       - "127.0.0.1:3306:3306"
     volumes:
-      - "mariadb:/var/lib/mysql"
+      - "mariadb:/var/lib/mysql:delegated"

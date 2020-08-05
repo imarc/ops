@@ -150,13 +150,19 @@
 
         <ul>
             <?php foreach ($backends as $key => $name): ?>
+                    <?php
+                    if (!isset($containers['data']['ops'][$key])) {
+                        continue;
+                    } 
+                    ?>
+
                     <?php if (isset($containers['data']['ops'][$key])): ?>
                     <li>
                         <?= $name ?>
                         <?= sprintf(
                             '<small> / <a href="%s">logs</a> / <a href="%s">console</a></small>',
-                            $containers['data']['ops']['apache-php73']['logs_link'],
-                            $containers['data']['ops']['apache-php73']['console_link']
+                            $containers['data']['ops'][$key]['logs_link'],
+                            $containers['data']['ops'][$key]['console_link']
                         ) ?>
                     </li>
                     <?php endif ?>

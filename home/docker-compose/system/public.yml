@@ -10,6 +10,7 @@ services:
       --acme.domains='${OPS_DOMAIN}'
       --acme.domains='*.${OPS_DOMAIN}'
       --acme.domains='*.ops.${OPS_DOMAIN}'
+      --acme.domains='${OPS_ACME_DOMAINS}'
     env_file:
       - "${OPS_HOME}/config.literal"
     ports:
