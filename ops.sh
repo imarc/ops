@@ -1141,6 +1141,7 @@ declare -x OPS_DOCKER_GID=${OPS_DOCKER_GID-""}
 declare -x OPS_DOCKER_UID=${OPS_DOCKER_UID-""}
 declare -x OPS_DOCKER_VERSION="18"
 declare -x OPS_DOCKER_COMPOSE_VERSION="1.22"
+declare -x OPS_PHP_XDEBUG=${OPS_PHP_XDEBUG-"0"}
 declare -x OPS_DOMAIN=${OPS_DOMAIN-"imarc.io"}
 declare -x OPS_DOMAIN_ALIASES=${OPS_DOMAIN_ALIASES-""}
 declare -x OPS_MINIO_ACCESS_KEY=${OPS_MINIO_ACCESS_KEY-"minio-access"}
