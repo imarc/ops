@@ -1,6 +1,6 @@
 # Ops
 
-**Version 0.14.1**
+**Version 0.15.0**
 
 - A local development environment focused on PHP-based projects.
 - Create a new host by making a directory.
@@ -49,6 +49,8 @@ If you use Firefox, you should install `nss` with homebrew.
 - [Install Docker Client](https://medium.com/@sebagomez/installing-the-docker-client-on-ubuntus-windows-subsystem-for-linux-612b392a44c4)
 
 ## How To Install
+
+When installing global npm scripts, ensure you can do this as a non-superuser [through one of these solutions](https://github.com/imarc/ops/issues/22#issuecomment-728979823).
 
 Install/Update ops:
 
@@ -173,6 +175,14 @@ The following options can be set within your $HOME/.ops/config file.
     #
     # Default: https://localtunnel.me
     OPS_LOCALTUNNEL_HOST="https://localtunnel.me"
+
+
+    # Enable XDebug extension for PHP containers
+    #
+    # Requires restart to take effect.
+    #
+    # Default: 0
+    OPS_PHP_XDEBUG="1"
 
 ## Connect to Services
 
