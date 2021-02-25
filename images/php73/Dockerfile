@@ -1,4 +1,4 @@
-FROM php:7.3.7-apache-stretch
+FROM php:7.3.27-apache-stretch
 
 MAINTAINER Imarc <info@imarc.com>
 

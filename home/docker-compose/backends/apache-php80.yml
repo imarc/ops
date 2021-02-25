@@ -1,8 +1,8 @@
 version: '3'
 
 services:
-  apache-php56:
-    image: imarcagency/ops-apache-php56:${OPS_VERSION}
+  apache-php80:
+    image: imarcagency/ops-apache-php80:${OPS_VERSION}
     labels:
       - "ops.project=ops"
     environment:
@@ -12,6 +12,7 @@ services:
       - OPS_ENABLED=1
       - OPS_SITES_DIR=${OPS_SITES_DIR}
       - OPS_VERSION=${OPS_VERSION}
+      - OPS_PHP_XDEBUG=${OPS_PHP_XDEBUG}
 
     dns: $OPS_SERVICES_DNS_IP
 

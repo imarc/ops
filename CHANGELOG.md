@@ -5,6 +5,19 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/)
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+
+## [0.15.1] - 2021-02-25
+
+### Added
+- PHP 8.0 Support (apache-php80)
+
+### Changed
+- PHP 7.3.7 upgraded to 7.3.27
+- PHP 7.4.x upgraded to 7.4.15
+
+### Removed
+- PHP 7.1.x
+
 ## [0.15.0] - 2020-11-18
 
 ### Added

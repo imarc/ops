@@ -75,9 +75,9 @@ RUN docker-php-ext-install \
 RUN pecl install \
     imagick \
     memcached \
-    pdo_sqlsrv \
+    sqlsrv-5.8.0 \
+    pdo_sqlsrv-5.8.0 \
     redis \
-    sqlsrv \
     xdebug
 
 RUN docker-php-ext-enable \
