@@ -1,6 +1,6 @@
 # Ops
 
-**Version 0.15.0**
+**Version 0.15.1**
 
 - A local development environment focused on PHP-based projects.
 - Create a new host by making a directory.
@@ -83,7 +83,7 @@ Within your project's .env file you can set the following options:
     # Valid values are the OPS_BACKENDS global option
     #
     # Default: value of OPS_DEFAULT_BACKEND global option
-    OPS_PROJECT_BACKEND="apache-php71"
+    OPS_PROJECT_BACKEND="apache-php74"
 
     # set the project document root
     #
@@ -113,7 +113,7 @@ The following options can be set within your $HOME/.ops/config file.
 
     # A space separated list of application backends that
     # should be enabled. Available options are:
-    #  apache-php71, apache-php72, apache-php73, apache-php74
+    #  apache-php72, apache-php73, apache-php74, apache-php80
     #
     # Default: apache-php74
     OPS_BACKENDS="apache-php74 apache-php73"
@@ -179,10 +179,10 @@ The following options can be set within your $HOME/.ops/config file.
 
     # Enable XDebug extension for PHP containers
     #
-    # Requires restart to take effect.
+    # Requires restart to take effect. Set to 1 to enable.
     #
     # Default: 0
-    OPS_PHP_XDEBUG="1"
+    OPS_PHP_XDEBUG="0"
 
 ## Connect to Services
 
@@ -373,4 +373,4 @@ This means your global ops script will point directly to the repo and you can ma
 
 MIT License
 
-Copyright (c) 2019 Imarc
+Copyright (c) 2021 Imarc
