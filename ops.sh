@@ -603,17 +603,24 @@ ops-sync() {
         elif [[ "$OPS_PROJECT_REMOTE_DB_TYPE" = "mariadb" ]]; then
             echo "Syncing remote mariadb '$OPS_PROJECT_REMOTE_DB_NAME' to local '$OPS_PROJECT_DB_NAME'"
 
-            local mysqldump_password="$([[ ! -z $OPS_PROJECT_REMOTE_DB_PASSWORD ]] && echo "-p$OPS_PROJECT_REMOTE_DB_PASSWORD")"
-            local mysqldump_host="$([[ ! -z $OPS_PROJECT_REMOTE_DB_HOST ]] && echo "-h $OPS_PROJECT_REMOTE_DB_HOST")"
-            local mysqldump_port="$([[ ! -z $OPS_PROJECT_REMOTE_DB_PORT ]] && echo "-P $OPS_PROJECT_REMOTE_DB_PORT")"
-            local mysqldump_user="$([[ ! -z $OPS_PROJECT_REMOTE_DB_USER ]] && echo "-u $OPS_PROJECT_REMOTE_DB_USER")"
+                local mysqldump_password="$([[ ! -z $OPS_PROJECT_REMOTE_DB_PASSWORD ]] && echo "-p$OPS_PROJECT_REMOTE_DB_PASSWORD")"
+                local mysqldump_host="$([[ ! -z $OPS_PROJECT_REMOTE_DB_HOST ]] && echo "-h $OPS_PROJECT_REMOTE_DB_HOST")"
+                local mysqldump_port="$([[ ! -z $OPS_PROJECT_REMOTE_DB_PORT ]] && echo "-P $OPS_PROJECT_REMOTE_DB_PORT")"
+                local mysqldump_user="$([[ ! -z $OPS_PROJECT_REMOTE_DB_USER ]] && echo "-u $OPS_PROJECT_REMOTE_DB_USER")"
+       
+            for TABLE in $OPS_PROJECT_SYNC_EXCLUDES_TABLES
+            do
+                IGNORED_TABLES_STRING+=" --ignore-table=$OPS_PROJECT_REMOTE_DB_NAME.$TABLE"
+            done
 
             ssh -C "$ssh_host" "mysqldump --single-transaction \
                 $mysqldump_port \
                 $mysqldump_host \
                 $mysqldump_user \
                 $mysqldump_password \
-                $OPS_PROJECT_REMOTE_DB_NAME" 2>/dev/null | \
+                $OPS_PROJECT_REMOTE_DB_NAME
+                $IGNORED_TABLES_STRING
+                " 2>/dev/null | \
                     mariadb-import "$OPS_PROJECT_DB_NAME"
 
         elif [[ "$OPS_PROJECT_REMOTE_DB_TYPE" = "psql" ]]; then
