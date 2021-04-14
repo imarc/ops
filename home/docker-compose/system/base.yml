@@ -23,6 +23,7 @@ services:
       - backend
     volumes:
       - ${OPS_HOME}/nginx/nginx.conf:/usr/local/openresty/nginx/conf/nginx.conf
+      - ${OPS_HOME}/nginx/errors:/var/www/errors
       - ${OPS_SITES_DIR}:/var/www/html:cached
 
   traefik:
