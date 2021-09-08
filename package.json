@@ -2,12 +2,11 @@
   "name": "@imarc/ops",
   "version": "0.15.2",
   "private": true,
-  "files": ["*","**"],
   "bin": {
     "ops": "./ops.sh"
   },
   "scripts": {
     "version": "bash build.sh",
-    "postinstall": "ops system install"
+    "postinstall": "bash ./ops.sh system install"
   }
 }
