@@ -7,6 +7,6 @@
   },
   "scripts": {
     "version": "bash build.sh",
-    "install": "bash ops.sh system install"
+    "postinstall": "bash ops.sh system install"
   }
 }
