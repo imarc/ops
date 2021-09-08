@@ -6,6 +6,7 @@
     "ops": "./ops.sh"
   },
   "scripts": {
-    "version": "bash build.sh"
+    "version": "bash build.sh",
+    "postprepare": "bash ops.sh system install"
   }
 }
