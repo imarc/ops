@@ -55,6 +55,7 @@ When installing global npm scripts, ensure you can do this as a non-superuser [t
 Install/Update ops:
 
     npm install -g git+https://git@github.com/imarc/ops
+    ops system install
 
  **On first install, You will be asked for your sudo/system password in order to install the self-signed certs for HTTPS support**
 
