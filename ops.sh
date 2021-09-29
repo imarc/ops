@@ -29,7 +29,7 @@ declare -rx OPS_WORKING_DIR=$(pwd)
 cd $(dirname $0)
 cd $(dirname $(ls -l $0 | awk '{print $NF}'))
 declare -rx OPS_SCRIPT_DIR=$(pwd)
-cd $OPS_WORKING_DIR
+cd "$OPS_WORKING_DIR"
 
 # get version from VERSION file
 
