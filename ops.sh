@@ -911,10 +911,19 @@ system-config() {
 
 system-install() {
     if [[ ! -d $OPS_HOME ]]; then
+        mkdir -p $(dirname $OPS_HOME)
         cp -R $OPS_SCRIPT_DIR/home $OPS_HOME
 
+        if [ -n "$XDG_CURRENT_DESKTOP" ]; then
+            OPS_BIN="${OPS_BIN-"$HOME/.local/bin"}"
+        fi
+
+        if [ -n "$OPS_BIN" ]; then
+            ln -s $OPS_HOME/ops.sh $OPS_BIN/ops
+        fi
+
         if [[ ! -d $OPS_CONFIG ]]; then
-            mkdir $OPS_CONFIG
+            mkdir -p $OPS_CONFIG
             mv $OPS_HOME/config $OPS_CONFIG/config
         fi
 
@@ -1103,11 +1112,11 @@ main() {
 # options that can be overidden by environment
 
 if [ -n "$XDG_CURRENT_DESKTOP" ]; then
-    export OPS_HOME="${OPS_HOME-"$HOME/.local/ops"}"
-    export OPS_CONFIG="${OPS_CONFIG-"$HOME/.config/ops"}"
+    export OPS_HOME="${OPS_HOME-"${XDG_DATA_HOME-"$HOME/.local/share/ops"}"}"
+    export OPS_CONFIG="${OPS_CONFIG-"${XDG_CONFIG_HOME-"$HOME/.config/ops"}"}"
 else
     export OPS_HOME="${OPS_HOME-"$HOME/.ops"}"
-    export OPS_CONFIG="${OPS_CONFIG-"$HOME/.ops/config"}"
+    export OPS_CONFIG="${OPS_CONFIG-"$HOME/.ops"}"
 fi
 
 # load config
