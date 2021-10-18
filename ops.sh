@@ -446,6 +446,11 @@ ops-shell() {
         command="$@"
     fi
 
+    local t=''
+    if [[ -t 1 ]]; then
+        t='t'
+    fi
+
     if [[ ! -z $id ]]; then
         _ops-docker exec -w "/var/www/html/$project" -u "$OPS_SHELL_USER" -it $id $command
     elif [[ ! -z $project_id ]]; then
