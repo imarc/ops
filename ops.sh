@@ -1204,6 +1204,10 @@ declare -x OPS_SHELL_USER=${OPS_SHELL_USER-"www-data"}
 
 # load custom commands
 
+if [[ -f "$OPS_CONFIG/ops-commands.sh" ]]; then
+    source "$OPS_CONFIG/ops-commands.sh"
+fi
+
 if [[ -f "$OPS_SITES_DIR/$OPS_PROJECT_NAME/ops-commands.sh" ]]; then
     source "$OPS_SITES_DIR/$OPS_PROJECT_NAME/ops-commands.sh"
 fi
