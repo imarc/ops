@@ -29,7 +29,7 @@ declare -rx OPS_WORKING_DIR=$(pwd)
 cd $(dirname $0)
 cd $(dirname $(ls -l $0 | awk '{print $NF}'))
 declare -rx OPS_SCRIPT_DIR=$(pwd)
-cd $OPS_WORKING_DIR
+cd "$OPS_WORKING_DIR"
 
 # get version from VERSION file
 
@@ -269,13 +269,13 @@ mariadb-www() {
 
 _ops-node() {
     ops docker run \
-        --rm -itP --init \
+        --rm -iP --init \
         -v "$(pwd):/usr/src/app" \
         -w "/usr/src/app" \
         --label=ops.project="$(ops project id)" \
         --user "node" \
         --entrypoint "node" \
-        ops-node:$OPS_VERSION \
+        imarcagency/ops-node:$OPS_VERSION \
         "$@"
 }
 
@@ -306,7 +306,7 @@ ops-npm() {
         --label=ops.project="$project" \
         --user "$OPS_DOCKER_UID:$OPS_DOCKER_GID" \
         --entrypoint "npm" \
-        ops-node:$OPS_VERSION \
+        imarcagency/ops-node:$OPS_VERSION \
         "$@"
 }
 
@@ -395,31 +395,32 @@ psql-www() {
     fi
 }
 
-_ops-lt() {
+ops-lt() {
+    cmd-doc "Create a localtunnel to your project"
+
     local project="$(ops project name)"
 
-    echo "$project.$OPS_DOMAIN"
+    echo "Creating a localtunnel to $project.$OPS_DOMAIN"
+    echo
 
     ops docker run \
         --rm --init -itP \
         --label=ops.project="$project" \
-        --network=host \
-        efrecon/localtunnel \
-            --local-host="$project.$OPS_DOMAIN" \
-            --port=80
-
-        #ops-utils:$OPS_VERSION bash \
+        --network="ops_services" \
+        --dns="$OPS_SERVICES_DNS_IP" \
+        imarcagency/ops-localtunnel:latest \
+           --host="$OPS_LOCALTUNNEL_HOST" --local-host="$project.$OPS_DOMAIN" --port=80
 }
 
 _ops-gulp() {
     ops docker run \
-        --rm -itP --init \
+        --rm -iP --init \
         -v "$(pwd):/usr/src/app" \
         -w "/usr/src/app" \
         --label=ops.project="$(ops project id)" \
         --user "node" \
         --entrypoint "gulp" \
-        ops-node:$OPS_VERSION \
+        imarcagency/ops-node:$OPS_VERSION \
         "$@"
 }
 
@@ -439,19 +440,29 @@ ops-restart() {
 ops-shell() {
     cmd-doc "Enter shell or execute command"
 
-    local id=$(system-docker-compose ps -q $OPS_SHELL_BACKEND)
+    local id=$(system-docker-compose ps -q $OPS_SHELL_BACKEND 2> /dev/null)
+    local project_id=$(project-docker-compose ps -q $OPS_SHELL_BACKEND 2> /dev/null)
     local project=$(project-name)
     local command="$OPS_SHELL_COMMAND"
-
-    if [[ -z $id ]]; then
-        exit
-    fi
 
     if [[ ! -z "$1" ]]; then
         command="$@"
     fi
 
-    _ops-docker exec -w "/var/www/html/$project" -u "$OPS_SHELL_USER" -it $id $command
+    local t=''
+    if [[ -t 1 ]]; then
+        t='t'
+    fi
+
+    if [[ ! -z $id ]]; then
+        _ops-docker exec -w "/var/www/html/$project" -u "$OPS_SHELL_USER" -i$t $id $command
+    elif [[ ! -z $project_id ]]; then
+        _ops-docker exec -u "$OPS_SHELL_USER" -i$t $project_id $command
+    else
+        echo "ERROR: No such service: $OPS_SHELL_BACKEND"
+        exit 1
+
+    fi
 }
 
 ops-www() {
@@ -726,13 +737,13 @@ ops-version() {
 
 _ops-yarn() {
     ops docker run \
-        --rm -itP --init \
+        --rm -iP --init \
         -v "$(pwd):/usr/src/app" \
         -w "/usr/src/app" \
         --label=ops.project="$(ops project name)" \
         --user "node" \
         --entrypoint "yarn" \
-        ops-node:$OPS_VERSION \
+        imarcagency/ops-node:$OPS_VERSION \
         "$@"
 }
 
@@ -848,7 +859,6 @@ system-docker-compose() {
     else
 	    COMPOSE_FILE="$COMPOSE_FILE:$OPS_HOME/docker-compose/system/private.yml"
     fi
-
 
     COMPOSE_PROJECT_NAME="ops" \
     COMPOSE_FILE=$COMPOSE_FILE \
@@ -1067,10 +1077,8 @@ system-reset() {
     _ops-docker network rm ops_gateway &> /dev/null
     _ops-docker network rm ops_services &> /dev/null
 
-
     # TODO inspect networks and point
     # docker network inspect -f '{{range .IPAM.Config}}{{ $.Name }} {{.Subnet}}{{end}}' $(docker network ls -q) | sed '/^$/d'
-
 
     # create networks
     _ops-docker network create --subnet="$OPS_SERVICES_SUBNET" ops_services &> /dev/null
@@ -1144,30 +1152,34 @@ fi
 
 declare -x OPS_ENV="dev"
 declare -x OPS_DEBUG="${OPS_DEBUG}"
-declare -x OPS_BACKENDS=${OPS_BACKENDS-"apache-php73"}
+declare -x OPS_BACKENDS=${OPS_BACKENDS-"apache-php74"}
 declare -x OPS_SERVICES=${OPS_SERVICES-"portainer dashboard mariadb postgres redis adminer"}
-declare -x OPS_DOCKER_COMPOSER_IMAGE=${OPS_DOCKER_COMPOSER_IMAGE-"imarcagency/ops-php73:latest"}
+declare -x OPS_DOCKER_COMPOSER_IMAGE=${OPS_DOCKER_COMPOSER_IMAGE-"imarcagency/ops-apache-php74:$OPS_VERSION"}
 declare -x OPS_DOCKER_NODE_IMAGE=${OPS_DOCKER_NODE_IMAGE-"imarcagency/ops-node:$OPS_VERSION"}
 declare -x OPS_DOCKER_UTILS_IMAGE=${OPS_DOCKER_UTILS_IMAGE-"imarcagency/ops-utils:$OPS_VERSION"}
 declare -x OPS_DOCKER_GID=${OPS_DOCKER_GID-""}
 declare -x OPS_DOCKER_UID=${OPS_DOCKER_UID-""}
 declare -x OPS_DOCKER_VERSION="18"
 declare -x OPS_DOCKER_COMPOSE_VERSION="1.22"
+declare -x OPS_PHP_XDEBUG=${OPS_PHP_XDEBUG-"0"}
 declare -x OPS_DOMAIN=${OPS_DOMAIN-"imarc.io"}
+declare -x OPS_DOMAIN_ALIASES=${OPS_DOMAIN_ALIASES-""}
 declare -x OPS_MINIO_ACCESS_KEY=${OPS_MINIO_ACCESS_KEY-"minio-access"}
 declare -x OPS_MINIO_SECRET_KEY=${OPS_MINIO_SECRET_KEY-"minio-secret"}
 declare -x OPS_SITES_DIR=${OPS_SITES_DIR-"$HOME/Sites"}
 declare -x OPS_SERVICES_SUBNET=${OPS_SERVICES_SUBNET-"172.23.0.0/16"}
 declare -x OPS_ACME_EMAIL=${OPS_ACME_EMAIL-""}
+declare -x OPS_ACME_DOMAINS=${OPS_ACME_DOMAINS-""}
 declare -x OPS_ACME_DNS_PROVIDER=${OPS_ACME_DNS_PROVIDER-""}
 declare -x OPS_ACME_PRODUCTION=${OPS_ACME_PRODUCTION-"0"}
 declare -x OPS_ADMIN_AUTH=${OPS_ADMIN_AUTH-""}
 declare -x OPS_ADMIN_AUTH_LABEL_PREFIX=""
+declare -x OPS_LOCALTUNNEL_HOST=${OPS_LOCALTUNNEL_HOST-"https://localtunnel.me"}
 
-declare -x OPS_DEFAULT_BACKEND=${OPS_DEFAULT_BACKEND-"apache-php73"}
+declare -x OPS_DEFAULT_BACKEND=${OPS_DEFAULT_BACKEND-"apache-php74"}
 declare -x OPS_DEFAULT_DOCROOT=${OPS_DEFAULT_DOCROOT-"public"}
 declare -x OPS_DASHBOARD_URL="https://ops.${OPS_DOMAIN}"
-declare -x OPS_MKCERT_VERSION="1.3.0"
+declare -x OPS_MKCERT_VERSION="1.4.1"
 
 if [[ ! $OPS_ADMIN_AUTH ]]; then
     OPS_ADMIN_AUTH_LABEL_PREFIX="disabled-"

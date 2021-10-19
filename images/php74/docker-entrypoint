@@ -18,4 +18,8 @@ if [[ -f '/usr/local/bin/docker-configure' ]]; then
     bash /usr/local/bin/docker-configure
 fi
 
+if [[ $OPS_PHP_XDEBUG != "1" ]]; then
+    rm /usr/local/etc/php/conf.d/docker-php-ext-xdebug.ini
+fi
+
 exec "$@"

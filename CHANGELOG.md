@@ -5,6 +5,71 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/)
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.15.2] - 2021-09-07
+
+### Added
+- WebP support in 7.3.x
+
+### Changed
+- Upgraded all PHP versions to latest minor version
+
+## [0.15.1] - 2021-02-25
+
+### Added
+- PHP 8.0 Support (apache-php80)
+
+### Changed
+- PHP 7.3.7 upgraded to 7.3.27
+- PHP 7.4.x upgraded to 7.4.15
+
+### Removed
+- PHP 7.1.x
+
+## [0.15.0] - 2020-11-18
+
+### Added
+- OPS_PHP_XDEBUG config option
+
+### Changed
+- XDebug no longer enabled by default in php 7.x images
+
+## [0.14.0] - 2020-04-16
+
+### Added
+- OPS_DOMAIN_ALIASES config option
+
+## [0.13.1] - 2020-02-03
+
+### Fixed
+- PHP container warnings on dashboard.
+
+## [0.13.0] - 2020-01-09
+
+### Added
+- Added PHP 7.4 backend
+- Added ffmpeg to PHP 7.4 backend
+
+### Changed
+- Changed default backend to PHP 7.4
+
+## [0.12.2] - 2020-01-08
+
+### Added
+- Added proper localtunnel support and OPS_LOCALTUNNEL_HOST config option
+
+## [0.12.1] - 2019-12-09
+
+### Fixed
+- Updated mkcert for OSX Catalina
+
+## [0.12.0] - 2019-12-06
+
+### Removed
+- PHP 5.6 Support
+
+### Added
+- LDAP Extension to PHP 7.2 and 7.3
+
 ## [0.11.3] - 2019-08-08
 
 ### Fixed

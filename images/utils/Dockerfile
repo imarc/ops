@@ -1,4 +1,4 @@
-FROM alpine:3.9.3
+FROM alpine:3.14.2
 
 MAINTAINER Imarc <info@imarc.com>
 
@@ -28,4 +28,5 @@ RUN curl -L https://github.com/docker/compose/releases/download/1.24.0/docker-co
 RUN chmod +x /usr/local/bin/docker-compose
 
 # install npm dependencies
-# RUN npm install broken-link-checker -g
+#RUN npm install broken-link-checker -g
+RUN npm install -g localtunnel

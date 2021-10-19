@@ -5,6 +5,7 @@ services:
     image: "postgres:9.6"
     environment:
         PGDATA: "/var/lib/postgresql/data/pgdata"
+        POSTGRES_HOST_AUTH_METHOD: 'trust'
     networks:
       - backend
     labels:
@@ -12,4 +13,4 @@ services:
     ports:
       - "127.0.0.1:5432:5432"
     volumes:
-      - "postgres:/var/lib/postgresql/data/pgdata"
+      - "postgres:/var/lib/postgresql/data/pgdata:delegated"

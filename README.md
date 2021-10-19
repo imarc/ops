@@ -1,6 +1,6 @@
 # Ops
 
-**Version 0.11.3**
+**Version 0.15.2**
 
 - A local development environment focused on PHP-based projects.
 - Create a new host by making a directory.
@@ -50,9 +50,12 @@ If you use Firefox, you should install `nss` with homebrew.
 
 ## How To Install
 
+When installing global npm scripts, ensure you can do this as a non-superuser [through one of these solutions](https://github.com/imarc/ops/issues/22#issuecomment-728979823).
+
 Install/Update ops:
 
     npm install -g git+https://git@github.com/imarc/ops
+    ops system install
 
  **On first install, You will be asked for your sudo/system password in order to install the self-signed certs for HTTPS support**
 
@@ -81,7 +84,7 @@ Within your project's .env file you can set the following options:
     # Valid values are the OPS_BACKENDS global option
     #
     # Default: value of OPS_DEFAULT_BACKEND global option
-    OPS_PROJECT_BACKEND="apache-php71"
+    OPS_PROJECT_BACKEND="apache-php74"
 
     # set the project document root
     #
@@ -111,10 +114,10 @@ The following options can be set within your $HOME/.ops/config file.
 
     # A space separated list of application backends that
     # should be enabled. Available options are:
-    #  apache-php56, apache-php71, apache-php72, apache-php73
+    #  apache-php72, apache-php73, apache-php74, apache-php80
     #
-    # Default: apache-php73 apache-php72 apache-php71 apache-php56
-    OPS_BACKENDS="apache-php73 apache-php56"
+    # Default: apache-php74
+    OPS_BACKENDS="apache-php74 apache-php73"
 
     # A linux user id that a backend process should attempt to run as.
     #
@@ -141,6 +144,17 @@ The following options can be set within your $HOME/.ops/config file.
     # Default: "imarc.io"
     OPS_DOMAIN="imarc.io"
 
+    # Configure domain aliases for a particular project
+    #
+    # Set up space separated key value pairs to use a real domain
+    # Also requires a host override in /etc/hosts to 127.0.0.1
+    #
+    # Example:
+    #   OPS_DOMAIN_ALIASES="myrealdomain.com:project"
+    #
+    # Default: (none)
+    OPS_DOMAIN_ALIASES=""
+
     # Set the diretory where projects live.
     #
     # Default: $HOME/Sites
@@ -157,6 +171,19 @@ The following options can be set within your $HOME/.ops/config file.
     #
     # Default: public
     OPS_DEFAULT_DOCROOT="public"
+
+    # A localtunnel (localtunnel.me) host. If you run your own server, configure it here.
+    #
+    # Default: https://localtunnel.me
+    OPS_LOCALTUNNEL_HOST="https://localtunnel.me"
+
+
+    # Enable XDebug extension for PHP containers
+    #
+    # Requires restart to take effect. Set to 1 to enable.
+    #
+    # Default: 0
+    OPS_PHP_XDEBUG="0"
 
 ## Connect to Services
 
@@ -347,4 +374,4 @@ This means your global ops script will point directly to the repo and you can ma
 
 MIT License
 
-Copyright (c) 2019 Imarc
+Copyright (c) 2021 Imarc

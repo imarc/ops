@@ -1,6 +1,8 @@
-FROM php:7.1.30-apache-stretch
+FROM php:8.0.10-apache-buster
 
 MAINTAINER Imarc <info@imarc.com>
+
+ARG IMAGICK_COMMIT="448c1cd0d58ba2838b9b6dff71c9b7e70a401b90"
 
 # fix for postgresql-client
 RUN mkdir -p /usr/share/man/man1 && \
@@ -8,17 +10,23 @@ RUN mkdir -p /usr/share/man/man1 && \
 
 # install supporting packages
 RUN apt-get update && apt-get install -y --fix-missing \
+    apt-transport-https \
     autoconf \
     build-essential \
     chrpath \
     curl \
+    dnsutils \
+    ffmpeg \
     freetds-dev \
     g++ \
     git-core \
+    gnupg \
     imagemagick \
+    iproute2 \
     libcurl4-openssl-dev \
     libdbd-freetds \
     libjpeg62-turbo-dev \
+    libldap2-dev \
     libmagickwand-dev \
     libmcrypt-dev \
     libmemcached-dev \
@@ -27,30 +35,53 @@ RUN apt-get update && apt-get install -y --fix-missing \
     libpq-dev \
     libpspell-dev \
     libsqlite3-dev \
-    mysql-client \
+    libwebp-dev \
+    libzip-dev \
+    default-mysql-client \
     netcat \
+    net-tools \
     pkg-config \
     postgresql-client \
     python \
-    subversion \
     unixodbc-dev \
     vim \
     wget
+
+RUN curl https://packages.microsoft.com/keys/microsoft.asc | apt-key add -
+RUN curl https://packages.microsoft.com/config/debian/9/prod.list > /etc/apt/sources.list.d/mssql-release.list
+
+RUN apt-get update
+
+RUN ACCEPT_EULA=y apt-get install -y \
+    msodbcsql17 \
+    mssql-tools
 
 # link libsysbdb libs. (required for sqlsrv extension)
 RUN ln -s /usr/lib/x86_64-linux-gnu/libsybdb.so /usr/lib/libsybdb.so
 RUN ln -s /usr/lib/x86_64-linux-gnu/libsybdb.a /usr/lib/libsybdb.a
 
 # Configure GD with jpeg
-RUN docker-php-ext-configure gd --with-freetype-dir=/usr/include/ --with-jpeg-dir=/usr/include/
+RUN docker-php-ext-configure gd --with-freetype --with-jpeg --with-webp
+
+# Configure LDAP
+RUN docker-php-ext-configure ldap --with-libdir=lib/x86_64-linux-gnu/
+
+# Enable Exif
+RUN docker-php-ext-configure exif --enable-exif
+
+# Install Imagick extension from source until there is pecl support
+RUN mkdir -p /usr/src/php/ext/imagick; \
+    curl -fsSL https://github.com/Imagick/imagick/archive/${IMAGICK_COMMIT}.tar.gz | tar xvz -C "/usr/src/php/ext/imagick" --strip 1
 
 # install officially supported php extensions
 RUN docker-php-ext-install \
     bcmath \
     curl \
+    exif \
     gd \
     iconv \
-    mcrypt \
+    imagick \
+    ldap \
     mysqli \
     opcache \
     pcntl \
@@ -64,22 +95,21 @@ RUN docker-php-ext-install \
     soap \
     zip
 
-# install redis / xdebug extensions
+# install pecl extensions
 RUN pecl install \
-    imagick \
     memcached \
-    pdo_sqlsrv \
     redis \
+    xdebug \
     sqlsrv \
-    xdebug
+    pdo_sqlsrv
 
+# enable pecl extensions
 RUN docker-php-ext-enable \
-    imagick \
     memcached \
-    pdo_sqlsrv \
     redis \
+    xdebug \
     sqlsrv \
-    xdebug
+    pdo_sqlsrv
 
 # cleanup apt
 RUN apt-get clean

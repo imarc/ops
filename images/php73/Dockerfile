@@ -1,4 +1,4 @@
-FROM php:7.3.7-apache-stretch
+FROM php:7.3.30-apache-buster
 
 MAINTAINER Imarc <info@imarc.com>
 
@@ -23,6 +23,7 @@ RUN apt-get update && apt-get install -y --fix-missing \
     libcurl4-openssl-dev \
     libdbd-freetds \
     libjpeg62-turbo-dev \
+    libldap2-dev \
     libmagickwand-dev \
     libmcrypt-dev \
     libmemcached-dev \
@@ -31,8 +32,9 @@ RUN apt-get update && apt-get install -y --fix-missing \
     libpq-dev \
     libpspell-dev \
     libsqlite3-dev \
+    libwebp-dev \
     libzip-dev \
-    mysql-client \
+    default-mysql-client \
     netcat \
     net-tools \
     pkg-config \
@@ -55,15 +57,24 @@ RUN ACCEPT_EULA=y apt-get install -y \
 RUN ln -s /usr/lib/x86_64-linux-gnu/libsybdb.so /usr/lib/libsybdb.so
 RUN ln -s /usr/lib/x86_64-linux-gnu/libsybdb.a /usr/lib/libsybdb.a
 
-# Configure GD with jpeg
-RUN docker-php-ext-configure gd --with-freetype-dir=/usr/include/ --with-jpeg-dir=/usr/include/
+# Configure GD with jpeg and webp
+RUN docker-php-ext-configure gd --with-freetype-dir=/usr/include/ --with-jpeg-dir=/usr/include/ --with-webp-dir=/usr/include/
+
+# Configure LDAP
+RUN docker-php-ext-configure ldap --with-libdir=lib/x86_64-linux-gnu/
+
+# Enable Exif
+RUN docker-php-ext-configure exif --enable-exif
+
 
 # install officially supported php extensions
 RUN docker-php-ext-install \
     bcmath \
     curl \
+    exif \
     gd \
     iconv \
+    ldap \
     mysqli \
     opcache \
     pcntl \
@@ -90,6 +101,7 @@ RUN pecl install \
 RUN docker-php-ext-enable \
     imagick \
     memcached \
+    exif \
     redis \
     xdebug \
     sqlsrv \
