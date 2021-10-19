@@ -201,6 +201,7 @@ _ops-mc() {
 
 ops-mariadb() {
     cmd-doc "MariaDB-specific commands"
+    cmd-alias my
 
     cmd-run mariadb "$@"
 }
@@ -211,6 +212,7 @@ mariadb-help() {
 }
 
 mariadb-cli() {
+    cmd-alias sh
     system-shell-exec mariadb mysql "${@}"
 }
 
@@ -229,6 +231,7 @@ mariadb-create() {
 }
 
 mariadb-list() {
+    cmd-alias ls
     ops-exec mariadb mysql --column-names=FALSE -e "show databases;" | \
         grep -v "^information_schema$" | \
         grep -v "^performance_schema$" | \
@@ -331,6 +334,7 @@ ops-ps() {
 }
 
 psql-cli() {
+    cmd-alias sh
     system-shell-exec postgres psql -U postgres "$@"
 }
 
@@ -349,6 +353,7 @@ psql-run() {
 }
 
 psql-list() {
+    cmd-alias ls
     ops-exec postgres psql -U postgres -t -c "SELECT datname FROM pg_database WHERE datname NOT IN ('template0', 'template1', 'postgres')" | \
     sed -e "s/^ *//" -e "/^$/d"
 }
@@ -379,6 +384,7 @@ psql-help() {
 
 ops-psql() {
     cmd-doc "PostreSQL-specific commands"
+    cmd-alias pg
 
     cmd-run psql "$@"
 }
@@ -439,6 +445,7 @@ ops-restart() {
 
 ops-shell() {
     cmd-doc "Enter shell or execute command"
+    cmd-alias sh
 
     local id=$(system-docker-compose ps -q $OPS_SHELL_BACKEND 2> /dev/null)
     local project_id=$(project-docker-compose ps -q $OPS_SHELL_BACKEND 2> /dev/null)
@@ -474,6 +481,7 @@ ops-www() {
 
 ops-link() {
     cmd-doc "Link and start project-specific containers"
+    cmd-alias ln
 
     local project_name=$(project-name)
 
@@ -522,6 +530,7 @@ ops-stats() {
 
 ops-start() {
     cmd-doc "Start services"
+    cmd-alias up
 
     echo 'Starting ops services...'
     echo
@@ -553,6 +562,7 @@ ops-start() {
 
 ops-stop() {
     cmd-doc "Stop services"
+    cmd-alias down
 
     system-stop
 
@@ -725,6 +735,7 @@ _ops-jq() {
 
 ops-system() {
     cmd-doc "System-specific commands"
+    cmd-alias sys
 
     cmd-run system "$@"
 }
