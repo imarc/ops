@@ -177,6 +177,12 @@ The following options can be set within your $HOME/.ops/config file.
     # Default: https://localtunnel.me
     OPS_LOCALTUNNEL_HOST="https://localtunnel.me"
 
+    # Command to launch a browser for 'ops www'. You can override the browser here.
+    #
+    # Default (mac): open
+    # Default (linux): xdg-open
+    # Default (WSL): explorer.exe
+    OPS_BROWSER=firefox
 
     # Enable XDebug extension for PHP containers
     #
