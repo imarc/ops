@@ -29,7 +29,7 @@ declare -rx OPS_WORKING_DIR=$(pwd)
 cd $(dirname $0)
 cd $(dirname $(ls -l $0 | awk '{print $NF}'))
 declare -rx OPS_SCRIPT_DIR=$(pwd)
-cd $OPS_WORKING_DIR
+cd "$OPS_WORKING_DIR"
 
 # get version from VERSION file
 
@@ -126,6 +126,12 @@ ops-composer() {
         composer -n "$@"
 }
 
+ops-dashboard() {
+    cmd-doc "Open dashboard in your web browser."
+
+    cmd-www $OPS_DASHBOARD_URL
+}
+
 _ops-docker() {
     docker "$@"
 }
@@ -198,6 +204,7 @@ _ops-mc() {
 
 ops-mariadb() {
     cmd-doc "MariaDB-specific commands."
+    cmd-alias my
 
     cmd-run mariadb "$@"
 }
@@ -208,6 +215,7 @@ mariadb-help() {
 }
 
 mariadb-cli() {
+    cmd-alias sh
     system-shell-exec mariadb mysql "${@}"
 }
 
@@ -226,6 +234,7 @@ mariadb-create() {
 }
 
 mariadb-list() {
+    cmd-alias ls
     ops-exec mariadb mysql --column-names=FALSE -e "show databases;" | \
         grep -v "^information_schema$" | \
         grep -v "^performance_schema$" | \
@@ -250,6 +259,18 @@ mariadb-import() {
     ) </dev/null
 
     cat "$sqlfile" | ops-exec mariadb mysql "$db"
+}
+
+mariadb-www() {
+    cmd-doc "Open MariaDB in Adminer."
+
+    local url="https://adminer.ops.$OPS_DOMAIN/?server=mariadb&username=root"
+
+    if [[ -n "$1" ]]; then
+        cmd-www "$url&db=$1"
+    else
+        cmd-www "$url"
+    fi
 }
 
 _ops-node() {
@@ -316,6 +337,7 @@ ops-ps() {
 }
 
 psql-cli() {
+    cmd-alias sh
     system-shell-exec postgres psql -U postgres "$@"
 }
 
@@ -334,6 +356,7 @@ psql-run() {
 }
 
 psql-list() {
+    cmd-alias ls
     ops-exec postgres psql -U postgres -t -c "SELECT datname FROM pg_database WHERE datname NOT IN ('template0', 'template1', 'postgres')" | \
     sed -e "s/^ *//" -e "/^$/d"
 }
@@ -364,8 +387,21 @@ psql-help() {
 
 ops-psql() {
     cmd-doc "PostreSQL-specific commands."
+    cmd-alias pg
 
     cmd-run psql "$@"
+}
+
+psql-www() {
+    cmd-doc "Open PostgreSQL in Adminer."
+
+    local url="https://adminer.ops.$OPS_DOMAIN/?pgsql=postgres&username=postgres"
+
+    if [[ -n "$1" ]]; then
+        cmd-www "$url&db=$1"
+    else
+        cmd-www "$url"
+    fi
 }
 
 ops-lt() {
@@ -412,6 +448,7 @@ ops-restart() {
 
 ops-shell() {
     cmd-doc "Enter shell or execute a command within the webserver's container."
+    cmd-alias sh
 
     local id=$(system-docker-compose ps -q $OPS_SHELL_BACKEND 2> /dev/null)
     local project_id=$(project-docker-compose ps -q $OPS_SHELL_BACKEND 2> /dev/null)
@@ -452,9 +489,9 @@ ops-shell() {
     fi
 
     if [[ ! -z $id ]]; then
-        _ops-docker exec -w "/var/www/html/$project" -u "$OPS_SHELL_USER" -it $id $command
+        _ops-docker exec -w "/var/www/html/$project" -u "$OPS_SHELL_USER" -i$t $id $command
     elif [[ ! -z $project_id ]]; then
-        _ops-docker exec -u "$OPS_SHELL_USER" -it $project_id $command
+        _ops-docker exec -u "$OPS_SHELL_USER" -i$t $project_id $command
     else
         echo "ERROR: No such service: $OPS_SHELL_BACKEND"
         exit 1
@@ -462,8 +499,16 @@ ops-shell() {
     fi
 }
 
+ops-www() {
+    cmd-doc "Open current project in web browser."
+    local project=$(project-name)
+
+    cmd-www "https://$project.$OPS_DOMAIN/"
+}
+
 ops-link() {
     cmd-doc "Link and start project-specific containers."
+    cmd-alias ln
 
     local project_name=$(project-name)
 
@@ -511,7 +556,12 @@ ops-stats() {
 }
 
 ops-start() {
+<<<<<<< HEAD
     cmd-doc "Start services."
+=======
+    cmd-doc "Start services"
+    cmd-alias up
+>>>>>>> master
 
     echo 'Starting ops services...'
     echo
@@ -542,7 +592,12 @@ ops-start() {
 }
 
 ops-stop() {
+<<<<<<< HEAD
     cmd-doc "Stop services."
+=======
+    cmd-doc "Stop services"
+    cmd-alias down
+>>>>>>> master
 
     system-stop
 
@@ -715,6 +770,7 @@ _ops-jq() {
 
 ops-system() {
     cmd-doc "System-specific commands"
+    cmd-alias sys
 
     cmd-run system "$@"
 }

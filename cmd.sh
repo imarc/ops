@@ -23,6 +23,10 @@ cmd-doc() {
     return;
 }
 
+cmd-alias() {
+    return;
+}
+
 cmd-get-doc() {
     # callee
     # echo ${FUNCNAME[1]}
@@ -45,10 +49,14 @@ cmd-help() {
     local name=$1
     local prefix=$2
     local commands=$(compgen -A function | awk "/--/{next;} /^$prefix-/{sub(\"$prefix-\",\"\"); print;}")
+    local prefix_aliases=$(cmd-get-aliases ops-$prefix)
     local verbose=0
 
     echo
     echo "Usage: $name ${UNDERLINE}command${RESTORE}"
+    if [[ -n "$prefix_aliases" ]]; then
+        echo "Aliases: $prefix_aliases"
+    fi
     echo
     echo "Available commands:"
 
@@ -56,11 +64,37 @@ cmd-help() {
         local IFS=$'\n'
         for line in $commands
         do
-            echo -e "  ${LGREEN}$line${RESTORE}\t$(cmd-get-doc $prefix-$line | head -n 1)"
+            local aliases="$(cmd-get-aliases $prefix-$line)"
+            if [[ -n "$aliases" ]]; then
+                echo -e "  ${LGREEN}$line ($aliases)${RESTORE}\t$(cmd-get-doc $prefix-$line | head -n 1)"
+            else
+                echo -e "  ${LGREEN}$line${RESTORE}\t$(cmd-get-doc $prefix-$line | head -n 1)"
+            fi
         done
     ) | column -t -s $'\t'
 
     echo
+}
+
+cmd-get-aliases() {
+    declare -f $1 \ |
+        awk '/^[ \s]*cmd-alias /{print;}' | \
+        sed -E 's/^ *cmd-alias +(.*);$/\1/'
+}
+
+find-alias() {
+    local prefix=$1
+    local name=$2
+    local commands=$(compgen -A function | awk "/--/{next;} /^$prefix-/{sub(\"$prefix-\",\"\"); print;}")
+
+    local IFS=$'\n'
+    for cmd in $commands
+    do
+        if [[ "$(cmd-get-aliases $prefix-$cmd)" == @(|* )"$name"@(| *) ]]; then
+            echo $cmd
+            exit
+        fi
+    done
 }
 
 cmd-run() {
@@ -68,6 +102,13 @@ cmd-run() {
     local command="$2"
     shift
     shift
+
+    if [[ -n $command ]]; then
+        alias=$(find-alias $prefix $command)
+        if [[ -n $alias ]]; then
+            command=$alias
+        fi
+    fi
 
     [[ $(type -t $prefix-help) != 'function' ]]
     local has_help=$?
@@ -109,4 +150,19 @@ cmd-run() {
     if [[ $has_after_command != 0 ]]; then
         $prefix-$command--after "$@"
     fi
+}
+
+cmd-www() {
+    echo "Opening $1..."
+    case $OS in
+        linux)
+            exo-open $1
+            ;;
+        mac)
+            open $1
+            ;;
+        linux-wsl)
+            explorer.exe $1
+            ;;
+    esac
 }
