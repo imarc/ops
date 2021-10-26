@@ -556,12 +556,8 @@ ops-stats() {
 }
 
 ops-start() {
-<<<<<<< HEAD
     cmd-doc "Start services."
-=======
-    cmd-doc "Start services"
     cmd-alias up
->>>>>>> master
 
     echo 'Starting ops services...'
     echo
@@ -592,12 +588,8 @@ ops-start() {
 }
 
 ops-stop() {
-<<<<<<< HEAD
     cmd-doc "Stop services."
-=======
-    cmd-doc "Stop services"
     cmd-alias down
->>>>>>> master
 
     system-stop
 
