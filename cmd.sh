@@ -153,15 +153,19 @@ cmd-run() {
 
 cmd-www() {
     echo "Opening $1..."
-    case $OS in
-        linux)
-            exo-open $1
-            ;;
-        mac)
-            open $1
-            ;;
-        linux-wsl)
-            explorer.exe $1
-            ;;
-    esac
+    if [ -n "$OPS_BROWSER" ]; then
+        $OPS_BROWSER $1
+    else
+        case $OS in
+            linux)
+                xdg-open $1
+                ;;
+            mac)
+                open $1
+                ;;
+            linux-wsl)
+                explorer.exe $1
+                ;;
+        esac
+    fi
 }
