@@ -75,6 +75,7 @@ RUN docker-php-ext-install \
     gd \
     iconv \
     ldap \
+    intl \
     mysqli \
     opcache \
     pcntl \
