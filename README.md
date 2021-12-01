@@ -1,6 +1,6 @@
 # Ops
 
-**Version 0.15.3**
+**Version 0.15.4**
 
 - A local development environment focused on PHP-based projects.
 - Create a new host by making a directory.
@@ -217,8 +217,8 @@ port: 11211
 
 **Minio**<br>
 hostname: minio<br>
-access key: minio-access<br>
-secret key: minio-secret<br>
+root user: minio-user<br>
+root password: minio-password<br>
 
 **Mailhog**<br>
 *SMTP Config:*<br>

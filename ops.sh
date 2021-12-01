@@ -1106,10 +1106,10 @@ system-start() {
         -e "s/OPS_SERVICES_TRAEFIK_IP/$OPS_SERVICES_TRAEFIK_IP/" \
         $OPS_HOME/dnsmasq/dnsmasq.conf.tmpl > $OPS_HOME/dnsmasq/dnsmasq.conf
 
-    sed \
-        -e "s/OPS_MINIO_ACCESS_KEY/$OPS_MINIO_ACCESS_KEY/" \
-        -e "s/OPS_MINIO_SECRET_KEY/$OPS_MINIO_SECRET_KEY/" \
-        $OPS_HOME/minio/config.json.tmpl > $OPS_HOME/minio/config.json
+    #sed \
+    #    -e "s/OPS_MINIO_ACCESS_KEY/$OPS_MINIO_ACCESS_KEY/" \
+    #    -e "s/OPS_MINIO_SECRET_KEY/$OPS_MINIO_SECRET_KEY/" \
+    #    $OPS_HOME/minio/config.json.tmpl > $OPS_HOME/minio/config.json
 
     # start all services
     system-docker-compose up -d --remove-orphans
@@ -1175,8 +1175,8 @@ declare -x OPS_DOCKER_COMPOSE_VERSION="1.22"
 declare -x OPS_PHP_XDEBUG=${OPS_PHP_XDEBUG-"0"}
 declare -x OPS_DOMAIN=${OPS_DOMAIN-"imarc.io"}
 declare -x OPS_DOMAIN_ALIASES=${OPS_DOMAIN_ALIASES-""}
-declare -x OPS_MINIO_ACCESS_KEY=${OPS_MINIO_ACCESS_KEY-"minio-access"}
-declare -x OPS_MINIO_SECRET_KEY=${OPS_MINIO_SECRET_KEY-"minio-secret"}
+declare -x OPS_MINIO_ROOT_USER=${OPS_MINIO_ROOT_USER-"minio-user"}
+declare -x OPS_MINIO_ROOT_PASSWORD=${OPS_MINIO_ROOT_PASSWORD-"minio-password"}
 declare -x OPS_SITES_DIR=${OPS_SITES_DIR-"$HOME/Sites"}
 declare -x OPS_SERVICES_SUBNET=${OPS_SERVICES_SUBNET-"172.23.0.0/16"}
 declare -x OPS_ACME_EMAIL=${OPS_ACME_EMAIL-""}
