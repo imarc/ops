@@ -1,7 +1,7 @@
 version: '3'
 
 services:
-  apache-php80:
+  apache-php81:
     image: imarcagency/ops-apache-php81:${OPS_VERSION}
     labels:
       - "ops.project=ops"
