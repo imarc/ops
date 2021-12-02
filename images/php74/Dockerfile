@@ -1,4 +1,4 @@
-FROM php:7.4.23-apache-buster
+FROM php:7.4.26-apache-buster
 
 MAINTAINER Imarc <info@imarc.com>
 

@@ -1,8 +1,6 @@
-FROM php:8.0.10-apache-buster
+FROM php:8.0.13-apache-buster
 
 MAINTAINER Imarc <info@imarc.com>
-
-ARG IMAGICK_COMMIT="448c1cd0d58ba2838b9b6dff71c9b7e70a401b90"
 
 # fix for postgresql-client
 RUN mkdir -p /usr/share/man/man1 && \
@@ -70,8 +68,8 @@ RUN docker-php-ext-configure ldap --with-libdir=lib/x86_64-linux-gnu/
 RUN docker-php-ext-configure exif --enable-exif
 
 # Install Imagick extension from source until there is pecl support
-RUN mkdir -p /usr/src/php/ext/imagick; \
-    curl -fsSL https://github.com/Imagick/imagick/archive/${IMAGICK_COMMIT}.tar.gz | tar xvz -C "/usr/src/php/ext/imagick" --strip 1
+#RUN mkdir -p /usr/src/php/ext/imagick; \
+#    curl -fsSL https://github.com/Imagick/imagick/archive/${IMAGICK_COMMIT}.tar.gz | tar xvz -C "/usr/src/php/ext/imagick" --strip 1
 
 # install officially supported php extensions
 RUN docker-php-ext-install \
@@ -80,7 +78,7 @@ RUN docker-php-ext-install \
     exif \
     gd \
     iconv \
-    imagick \
+    intl \
     ldap \
     mysqli \
     opcache \
@@ -98,6 +96,7 @@ RUN docker-php-ext-install \
 # install pecl extensions
 RUN pecl install \
     memcached \
+    imagick \
     redis \
     xdebug \
     sqlsrv \

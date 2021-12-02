@@ -1,4 +1,4 @@
-FROM php:7.3.33-apache-buster
+FROM php:8.1.0-apache-buster
 
 MAINTAINER Imarc <info@imarc.com>
 
@@ -14,6 +14,7 @@ RUN apt-get update && apt-get install -y --fix-missing \
     chrpath \
     curl \
     dnsutils \
+    ffmpeg \
     freetds-dev \
     g++ \
     git-core \
@@ -57,8 +58,8 @@ RUN ACCEPT_EULA=y apt-get install -y \
 RUN ln -s /usr/lib/x86_64-linux-gnu/libsybdb.so /usr/lib/libsybdb.so
 RUN ln -s /usr/lib/x86_64-linux-gnu/libsybdb.a /usr/lib/libsybdb.a
 
-# Configure GD with jpeg and webp
-RUN docker-php-ext-configure gd --with-freetype-dir=/usr/include/ --with-jpeg-dir=/usr/include/ --with-webp-dir=/usr/include/
+# Configure GD with jpeg
+RUN docker-php-ext-configure gd --with-freetype --with-jpeg --with-webp
 
 # Configure LDAP
 RUN docker-php-ext-configure ldap --with-libdir=lib/x86_64-linux-gnu/
@@ -66,6 +67,9 @@ RUN docker-php-ext-configure ldap --with-libdir=lib/x86_64-linux-gnu/
 # Enable Exif
 RUN docker-php-ext-configure exif --enable-exif
 
+# Install Imagick extension from source until there is pecl support
+#RUN mkdir -p /usr/src/php/ext/imagick; \
+#    curl -fsSL https://github.com/Imagick/imagick/archive/${IMAGICK_COMMIT}.tar.gz | tar xvz -C "/usr/src/php/ext/imagick" --strip 1
 
 # install officially supported php extensions
 RUN docker-php-ext-install \
@@ -91,18 +95,16 @@ RUN docker-php-ext-install \
 
 # install pecl extensions
 RUN pecl install \
-    imagick \
     memcached \
+    imagick \
     redis \
     xdebug \
-    sqlsrv \
-    pdo_sqlsrv
+    sqlsrv-5.10.0beta1 \
+    pdo_sqlsrv-5.10.0beta1
 
 # enable pecl extensions
 RUN docker-php-ext-enable \
-    imagick \
     memcached \
-    exif \
     redis \
     xdebug \
     sqlsrv \
