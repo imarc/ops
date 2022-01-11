@@ -945,22 +945,37 @@ system-config() {
 
     if [[ -n $key && -n $val ]]; then
         if [[ -n $(system-config $key) ]]; then
-            sed -i '' -e "s#^$key=.*#$key=\"$val\"#" "$OPS_HOME/config"
+            sed -i '' -e "s#^$key=.*#$key=\"$val\"#" "$OPS_CONFIG/config"
         else
-            echo "$key=\"$val\"" >> $OPS_HOME/config
+            mkdir -p $OPS_CONFIG
+            echo "$key=\"$val\"" >> $OPS_CONFIG/config
         fi
     elif [[ -n $key ]]; then
-        cat $OPS_HOME/config | awk "/^$key=(.*)/ { sub(/$key=/, \"\", \$0); print }"
+        cat $OPS_CONFIG/config | awk "/^$key=(.*)/ { sub(/$key=/, \"\", \$0); print }"
     else
-        cat $OPS_HOME/config
+        cat $OPS_CONFIG/config
     fi
 }
 
 system-install() {
     if [[ ! -d $OPS_HOME ]]; then
+        mkdir -p $(dirname $OPS_HOME)
         cp -R $OPS_SCRIPT_DIR/home $OPS_HOME
 
-        source $OPS_HOME/config
+        if [ -n "$XDG_CURRENT_DESKTOP" ]; then
+            OPS_BIN="${OPS_BIN-"$HOME/.local/bin"}"
+        fi
+
+        if [ -n "$OPS_BIN" ]; then
+            ln -s $OPS_HOME/ops.sh $OPS_BIN/ops
+        fi
+
+        if [[ ! -d $OPS_CONFIG ]]; then
+            mkdir -p $OPS_CONFIG
+            mv $OPS_HOME/config $OPS_CONFIG/config
+        fi
+
+        source $OPS_CONFIG/config
 
         if [[ "$OS" == linux ]]; then
             local whoami="$(whoami)"
@@ -983,7 +998,7 @@ system-install() {
 
     echo $OPS_VERSION > $OPS_HOME/VERSION
 
-    source $OPS_HOME/config
+    source $OPS_CONFIG/config
 
     system-install-mkcert
 
@@ -1144,16 +1159,22 @@ main() {
 
 # options that can be overidden by environment
 
-export OPS_HOME=${OPS_HOME-"$HOME/.ops"}
+if [ -n "$XDG_CURRENT_DESKTOP" ]; then
+    export OPS_HOME="${OPS_HOME-"${XDG_DATA_HOME-"$HOME/.local/share/ops"}"}"
+    export OPS_CONFIG="${OPS_CONFIG-"${XDG_CONFIG_HOME-"$HOME/.config/ops"}"}"
+else
+    export OPS_HOME="${OPS_HOME-"$HOME/.ops"}"
+    export OPS_CONFIG="${OPS_CONFIG-"$HOME/.ops"}"
+fi
 
 # load config
 
-if [[ -f "$OPS_HOME/config" ]]; then
-    source $OPS_HOME/config
+if [[ -f "$OPS_CONFIG/config" ]]; then
+    source $OPS_CONFIG/config
 
     # generate a literal (non-quoted) version for docker-compose
     # https://github.com/docker/compose/issues/3702
-    cat $OPS_HOME/config |
+    cat $OPS_CONFIG/config |
         sed -e '/^$/d' -e '/^#/d' |
 	xargs -n1 echo > $OPS_HOME/config.literal
 fi
@@ -1240,6 +1261,10 @@ declare -x OPS_SHELL_COMMAND=${OPS_SHELL_COMMAND-"bash"}
 declare -x OPS_SHELL_USER=${OPS_SHELL_USER-"www-data"}
 
 # load custom commands
+
+if [[ -f "$OPS_CONFIG/ops-commands.sh" ]]; then
+    source "$OPS_CONFIG/ops-commands.sh"
+fi
 
 if [[ -f "$OPS_SITES_DIR/$OPS_PROJECT_NAME/ops-commands.sh" ]]; then
     source "$OPS_SITES_DIR/$OPS_PROJECT_NAME/ops-commands.sh"
