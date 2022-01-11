@@ -447,10 +447,10 @@ ops-shell() {
     cmd-doc "Enter shell or execute command"
     cmd-alias sh
 
-    local id=$(system-docker-compose ps -q $OPS_SHELL_BACKEND 2> /dev/null)
-    local project_id=$(project-docker-compose ps -q $OPS_SHELL_BACKEND 2> /dev/null)
+    local id=$(system-docker-compose ps -q $OPS_PROJECT_SHELL_BACKEND 2> /dev/null)
+    local project_id=$(project-docker-compose ps -q $OPS_PROJECT_SHELL_BACKEND 2> /dev/null)
     local project=$(project-name)
-    local command="$OPS_SHELL_COMMAND"
+    local command="$OPS_PROJECT_SHELL_COMMAND"
 
     if [[ ! -z "$1" ]]; then
         command="$@"
@@ -462,11 +462,11 @@ ops-shell() {
     fi
 
     if [[ ! -z $id ]]; then
-        _ops-docker exec -w "/var/www/html/$project" -u "$OPS_SHELL_USER" -i$t $id $command
+        _ops-docker exec -w "/var/www/html/$project" -u "$OPS_PROJECT_SHELL_USER" -i$t $id $command
     elif [[ ! -z $project_id ]]; then
-        _ops-docker exec -u "$OPS_SHELL_USER" -i$t $project_id $command
+        _ops-docker exec -u "$OPS_PROJECT_SHELL_USER" -i$t $project_id $command
     else
-        echo "ERROR: No such service: $OPS_SHELL_BACKEND"
+        echo "ERROR: No such service: $OPS_PROJECT_SHELL_BACKEND"
         exit 1
 
     fi
@@ -1207,7 +1207,9 @@ declare -x OPS_ACME_PRODUCTION=${OPS_ACME_PRODUCTION-"0"}
 declare -x OPS_ADMIN_AUTH=${OPS_ADMIN_AUTH-""}
 declare -x OPS_ADMIN_AUTH_LABEL_PREFIX=""
 declare -x OPS_LOCALTUNNEL_HOST=${OPS_LOCALTUNNEL_HOST-"https://localtunnel.me"}
-declare -x OPS_BROWSER="${OPS_BROWSER=""}"
+declare -x OPS_BROWSER=${OPS_BROWSER-""}
+declare -x OPS_SHELL_COMMAND=${OPS_SHELL_COMMAND-"bash"}
+declare -x OPS_SHELL_USER=${OPS_SHELL_USER-"www-data"}
 
 declare -x OPS_DEFAULT_BACKEND=${OPS_DEFAULT_BACKEND-"apache-php80"}
 declare -x OPS_DEFAULT_DOCROOT=${OPS_DEFAULT_DOCROOT-"public"}
@@ -1256,9 +1258,11 @@ declare -x OPS_PROJECT_REMOTE_DB_NAME="${OPS_PROJECT_REMOTE_DB_NAME}"
 declare -x OPS_PROJECT_REMOTE_DB_USER="${OPS_PROJECT_REMOTE_DB_USER}"
 declare -x OPS_PROJECT_REMOTE_DB_PASSWORD="${OPS_PROJECT_REMOTE_DB_PASSWORD}"
 declare -x OPS_PROJECT_REMOTE_DB_PORT="${OPS_PROJECT_REMOTE_DB_PORT}"
-declare -x OPS_SHELL_BACKEND=${OPS_SHELL_BACKEND-$OPS_PROJECT_BACKEND}
-declare -x OPS_SHELL_COMMAND=${OPS_SHELL_COMMAND-"bash"}
-declare -x OPS_SHELL_USER=${OPS_SHELL_USER-"www-data"}
+declare -x OPS_PROJECT_SHELL_BACKEND=${OPS_PROJECT_SHELL_BACKEND-$OPS_PROJECT_BACKEND}
+declare -x OPS_PROJECT_SHELL_BACKEND=${OPS_PROJECT_SHELL_BACKEND%:*}
+# ^^^ Removing port from OPS_PROJECT_SHELL_BACKEND
+declare -x OPS_PROJECT_SHELL_COMMAND=${OPS_PROJECT_SHELL_COMMAND-$OPS_SHELL_COMMAND}
+declare -x OPS_PROJECT_SHELL_USER=${OPS_PROJECT_SHELL_USER-$OPS_SHELL_USER}
 
 # load custom commands
 
