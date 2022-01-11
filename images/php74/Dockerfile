@@ -1,4 +1,4 @@
-FROM php:7.4.15-apache-buster
+FROM php:7.4.26-apache-buster
 
 MAINTAINER Imarc <info@imarc.com>
 
@@ -58,7 +58,7 @@ RUN ACCEPT_EULA=y apt-get install -y \
 RUN ln -s /usr/lib/x86_64-linux-gnu/libsybdb.so /usr/lib/libsybdb.so
 RUN ln -s /usr/lib/x86_64-linux-gnu/libsybdb.a /usr/lib/libsybdb.a
 
-# Configure GD with jpeg
+# Configure GD with jpeg and webp
 RUN docker-php-ext-configure gd --with-freetype --with-jpeg --with-webp
 
 # Configure LDAP
@@ -75,6 +75,7 @@ RUN docker-php-ext-install \
     gd \
     iconv \
     ldap \
+    intl \
     mysqli \
     opcache \
     pcntl \

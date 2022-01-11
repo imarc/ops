@@ -29,7 +29,7 @@ declare -rx OPS_WORKING_DIR=$(pwd)
 cd $(dirname $0)
 cd $(dirname $(ls -l $0 | awk '{print $NF}'))
 declare -rx OPS_SCRIPT_DIR=$(pwd)
-cd $OPS_WORKING_DIR
+cd "$OPS_WORKING_DIR"
 
 # get version from VERSION file
 
@@ -131,6 +131,12 @@ ops-composer() {
         composer -n "$@"
 }
 
+ops-dashboard() {
+    cmd-doc "Open dashboard in your web browser."
+
+    cmd-www $OPS_DASHBOARD_URL
+}
+
 _ops-docker() {
     docker "$@"
 }
@@ -204,6 +210,7 @@ _ops-mc() {
 
 ops-mariadb() {
     cmd-doc "MariaDB-specific commands"
+    cmd-alias my
 
     cmd-run mariadb "$@"
 }
@@ -214,6 +221,7 @@ mariadb-help() {
 }
 
 mariadb-cli() {
+    cmd-alias sh
     system-shell-exec mariadb mysql "${@}"
 }
 
@@ -232,6 +240,7 @@ mariadb-create() {
 }
 
 mariadb-list() {
+    cmd-alias ls
     ops-exec mariadb mysql --column-names=FALSE -e "show databases;" | \
         grep -v "^information_schema$" | \
         grep -v "^performance_schema$" | \
@@ -256,6 +265,18 @@ mariadb-import() {
     ) </dev/null
 
     cat "$sqlfile" | ops-exec mariadb mysql "$db"
+}
+
+mariadb-www() {
+    cmd-doc "Open MariaDB in Adminer."
+
+    local url="https://adminer.ops.$OPS_DOMAIN/?server=mariadb&username=root"
+
+    if [[ -n "$1" ]]; then
+        cmd-www "$url&db=$1"
+    else
+        cmd-www "$url"
+    fi
 }
 
 _ops-node() {
@@ -322,6 +343,7 @@ ops-ps() {
 }
 
 psql-cli() {
+    cmd-alias sh
     system-shell-exec postgres psql -U postgres "$@"
 }
 
@@ -340,6 +362,7 @@ psql-run() {
 }
 
 psql-list() {
+    cmd-alias ls
     ops-exec postgres psql -U postgres -t -c "SELECT datname FROM pg_database WHERE datname NOT IN ('template0', 'template1', 'postgres')" | \
     sed -e "s/^ *//" -e "/^$/d"
 }
@@ -370,8 +393,21 @@ psql-help() {
 
 ops-psql() {
     cmd-doc "PostreSQL-specific commands"
+    cmd-alias pg
 
     cmd-run psql "$@"
+}
+
+psql-www() {
+    cmd-doc "Open PostgreSQL in Adminer."
+
+    local url="https://adminer.ops.$OPS_DOMAIN/?pgsql=postgres&username=postgres"
+
+    if [[ -n "$1" ]]; then
+        cmd-www "$url&db=$1"
+    else
+        cmd-www "$url"
+    fi
 }
 
 ops-lt() {
@@ -418,6 +454,7 @@ ops-restart() {
 
 ops-shell() {
     cmd-doc "Enter shell or execute command"
+    cmd-alias sh
 
     # remove port
     local backend="${OPS_SHELL_BACKEND/:*/}"
@@ -446,8 +483,16 @@ ops-shell() {
     fi
 }
 
+ops-www() {
+    cmd-doc "Open current project in web browser."
+    local project=$(project-name)
+
+    cmd-www "https://$project.$OPS_DOMAIN/"
+}
+
 ops-link() {
     cmd-doc "Link and start project-specific containers"
+    cmd-alias ln
 
     local project_name=$(project-name)
 
@@ -496,6 +541,7 @@ ops-stats() {
 
 ops-start() {
     cmd-doc "Start services"
+    cmd-alias up
 
     echo 'Starting ops services...'
     echo
@@ -527,6 +573,7 @@ ops-start() {
 
 ops-stop() {
     cmd-doc "Stop services"
+    cmd-alias down
 
     system-stop
 
@@ -699,6 +746,7 @@ _ops-jq() {
 
 ops-system() {
     cmd-doc "System-specific commands"
+    cmd-alias sys
 
     cmd-run system "$@"
 }
@@ -908,22 +956,37 @@ system-config() {
 
     if [[ -n $key && -n $val ]]; then
         if [[ -n $(system-config $key) ]]; then
-            sed -i '' -e "s#^$key=.*#$key=\"$val\"#" "$OPS_HOME/config"
+            sed -i '' -e "s#^$key=.*#$key=\"$val\"#" "$OPS_CONFIG/config"
         else
-            echo "$key=\"$val\"" >> $OPS_HOME/config
+            mkdir -p $OPS_CONFIG
+            echo "$key=\"$val\"" >> $OPS_CONFIG/config
         fi
     elif [[ -n $key ]]; then
-        cat $OPS_HOME/config | awk "/^$key=(.*)/ { sub(/$key=/, \"\", \$0); print }"
+        cat $OPS_CONFIG/config | awk "/^$key=(.*)/ { sub(/$key=/, \"\", \$0); print }"
     else
-        cat $OPS_HOME/config
+        cat $OPS_CONFIG/config
     fi
 }
 
 system-install() {
     if [[ ! -d $OPS_HOME ]]; then
+        mkdir -p $(dirname $OPS_HOME)
         cp -R $OPS_SCRIPT_DIR/home $OPS_HOME
 
-        source $OPS_HOME/config
+        if [ -n "$XDG_CURRENT_DESKTOP" ]; then
+            OPS_BIN="${OPS_BIN-"$HOME/.local/bin"}"
+        fi
+
+        if [ -n "$OPS_BIN" ]; then
+            ln -s $OPS_HOME/ops.sh $OPS_BIN/ops
+        fi
+
+        if [[ ! -d $OPS_CONFIG ]]; then
+            mkdir -p $OPS_CONFIG
+            mv $OPS_HOME/config $OPS_CONFIG/config
+        fi
+
+        source $OPS_CONFIG/config
 
         if [[ "$OS" == linux ]]; then
             local whoami="$(whoami)"
@@ -946,7 +1009,7 @@ system-install() {
 
     echo $OPS_VERSION > $OPS_HOME/VERSION
 
-    source $OPS_HOME/config
+    source $OPS_CONFIG/config
 
     system-install-mkcert
 
@@ -1069,10 +1132,10 @@ system-start() {
         -e "s/OPS_SERVICES_TRAEFIK_IP/$OPS_SERVICES_TRAEFIK_IP/" \
         $OPS_HOME/dnsmasq/dnsmasq.conf.tmpl > $OPS_HOME/dnsmasq/dnsmasq.conf
 
-    sed \
-        -e "s/OPS_MINIO_ACCESS_KEY/$OPS_MINIO_ACCESS_KEY/" \
-        -e "s/OPS_MINIO_SECRET_KEY/$OPS_MINIO_SECRET_KEY/" \
-        $OPS_HOME/minio/config.json.tmpl > $OPS_HOME/minio/config.json
+    #sed \
+    #    -e "s/OPS_MINIO_ACCESS_KEY/$OPS_MINIO_ACCESS_KEY/" \
+    #    -e "s/OPS_MINIO_SECRET_KEY/$OPS_MINIO_SECRET_KEY/" \
+    #    $OPS_HOME/minio/config.json.tmpl > $OPS_HOME/minio/config.json
 
     # start all services
     system-docker-compose up -d --remove-orphans
@@ -1107,16 +1170,22 @@ main() {
 
 # options that can be overidden by environment
 
-export OPS_HOME=${OPS_HOME-"$HOME/.ops"}
+if [ -n "$XDG_CURRENT_DESKTOP" ]; then
+    export OPS_HOME="${OPS_HOME-"${XDG_DATA_HOME-"$HOME/.local/share/ops"}"}"
+    export OPS_CONFIG="${OPS_CONFIG-"${XDG_CONFIG_HOME-"$HOME/.config/ops"}"}"
+else
+    export OPS_HOME="${OPS_HOME-"$HOME/.ops"}"
+    export OPS_CONFIG="${OPS_CONFIG-"$HOME/.ops"}"
+fi
 
 # load config
 
-if [[ -f "$OPS_HOME/config" ]]; then
-    source $OPS_HOME/config
+if [[ -f "$OPS_CONFIG/config" ]]; then
+    source $OPS_CONFIG/config
 
     # generate a literal (non-quoted) version for docker-compose
     # https://github.com/docker/compose/issues/3702
-    cat $OPS_HOME/config |
+    cat $OPS_CONFIG/config |
         sed -e '/^$/d' -e '/^#/d' |
 	xargs -n1 echo > $OPS_HOME/config.literal
 fi
@@ -1127,9 +1196,9 @@ fi
 declare -x OPS_ENV="dev"
 declare -x OPS_DEBUG="${OPS_DEBUG}"
 declare -x OPS_TEST_MODE="${OPS_TEST_MODE}"
-declare -x OPS_BACKENDS=${OPS_BACKENDS-"apache-php74"}
+declare -x OPS_BACKENDS=${OPS_BACKENDS-"apache-php74 apache-php80"}
 declare -x OPS_SERVICES=${OPS_SERVICES-"portainer dashboard mariadb postgres redis adminer"}
-declare -x OPS_DOCKER_COMPOSER_IMAGE=${OPS_DOCKER_COMPOSER_IMAGE-"imarcagency/ops-apache-php74:$OPS_VERSION"}
+declare -x OPS_DOCKER_COMPOSER_IMAGE=${OPS_DOCKER_COMPOSER_IMAGE-"imarcagency/ops-apache-php80:$OPS_VERSION"}
 declare -x OPS_DOCKER_NODE_IMAGE=${OPS_DOCKER_NODE_IMAGE-"imarcagency/ops-node:$OPS_VERSION"}
 declare -x OPS_DOCKER_UTILS_IMAGE=${OPS_DOCKER_UTILS_IMAGE-"imarcagency/ops-utils:$OPS_VERSION"}
 declare -x OPS_DOCKER_GID=${OPS_DOCKER_GID-""}
@@ -1139,8 +1208,8 @@ declare -x OPS_DOCKER_COMPOSE_VERSION="1.22"
 declare -x OPS_PHP_XDEBUG=${OPS_PHP_XDEBUG-"0"}
 declare -x OPS_DOMAIN=${OPS_DOMAIN-"imarc.io"}
 declare -x OPS_DOMAIN_ALIASES=${OPS_DOMAIN_ALIASES-""}
-declare -x OPS_MINIO_ACCESS_KEY=${OPS_MINIO_ACCESS_KEY-"minio-access"}
-declare -x OPS_MINIO_SECRET_KEY=${OPS_MINIO_SECRET_KEY-"minio-secret"}
+declare -x OPS_MINIO_ROOT_USER=${OPS_MINIO_ROOT_USER-"minio-user"}
+declare -x OPS_MINIO_ROOT_PASSWORD=${OPS_MINIO_ROOT_PASSWORD-"minio-password"}
 declare -x OPS_SITES_DIR=${OPS_SITES_DIR-"$HOME/Sites"}
 declare -x OPS_SERVICES_SUBNET=${OPS_SERVICES_SUBNET-"172.23.0.0/16"}
 declare -x OPS_ACME_EMAIL=${OPS_ACME_EMAIL-""}
@@ -1150,8 +1219,9 @@ declare -x OPS_ACME_PRODUCTION=${OPS_ACME_PRODUCTION-"0"}
 declare -x OPS_ADMIN_AUTH=${OPS_ADMIN_AUTH-""}
 declare -x OPS_ADMIN_AUTH_LABEL_PREFIX=""
 declare -x OPS_LOCALTUNNEL_HOST=${OPS_LOCALTUNNEL_HOST-"https://localtunnel.me"}
+declare -x OPS_BROWSER="${OPS_BROWSER=""}"
 
-declare -x OPS_DEFAULT_BACKEND=${OPS_DEFAULT_BACKEND-"apache-php74"}
+declare -x OPS_DEFAULT_BACKEND=${OPS_DEFAULT_BACKEND-"apache-php80"}
 declare -x OPS_DEFAULT_DOCROOT=${OPS_DEFAULT_DOCROOT-"public"}
 declare -x OPS_DEFAULT_SHELL_USER=${OPS_DEFAULT_SHELL_USER-"www-data"}
 declare -x OPS_DASHBOARD_URL="https://ops.${OPS_DOMAIN}"
@@ -1205,6 +1275,10 @@ declare -x OPS_SHELL_COMMAND=${OPS_SHELL_COMMAND-"bash"}
 declare -x OPS_SHELL_USER="${OPS_SHELL_USER-$OPS_PROJECT_SHELL_USER}"
 
 # load custom commands
+
+if [[ -f "$OPS_CONFIG/ops-commands.sh" ]]; then
+    source "$OPS_CONFIG/ops-commands.sh"
+fi
 
 if [[ -f "$OPS_SITES_DIR/$OPS_PROJECT_NAME/ops-commands.sh" ]]; then
     source "$OPS_SITES_DIR/$OPS_PROJECT_NAME/ops-commands.sh"

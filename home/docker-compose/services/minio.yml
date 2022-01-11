@@ -7,11 +7,12 @@ services:
       - "ops.project=ops"
       - "traefik.enable=true"
       - "traefik.docker.network=ops_gateway"
-      - "traefik.port=9000"
-    command: server --address ":9000" /data
+      - "traefik.port=8080"
+      - "${OPS_ADMIN_AUTH_LABEL_PREFIX}traefik.frontend.auth.basic.users=${OPS_ADMIN_AUTH}"
+    command: server --console-address ":8080" --address ":9000" /data
     environment:
-      - "MINIO_ACCESS_KEY=${OPS_MINIO_ACCESS_KEY}"
-      - "MINIO_SECRET_KEY=${OPS_MINIO_SECRET_KEY}"
+      - "MINIO_ROOT_USER=${OPS_MINIO_ROOT_USER}"
+      - "MINIO_ROOT_PASSWORD=${OPS_MINIO_ROOT_PASSWORD}"
     ports:
       - "127.0.0.1:9000:9000"
     networks:

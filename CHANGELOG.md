@@ -6,6 +6,34 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/)
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 
+## [0.16.0] - 2021-12-01
+
+### Changed
+- Default backend is now `apache-php80`
+- Default available backends now `apache-php74` and `apache-php80`
+
+### Added
+- PHP 8.1 support (`apache-php81`)
+
+## [0.15.4] - 2021-11-16
+
+### Changed
+- Minio vars changed to MINIO_ROOT_USER and MINIO_ROOT_PASSWORD
+
+## [0.15.3] - 2021-11-03
+
+### Added
+- intl extension to 7.3.x and 7.4.x
+- alias support
+
+## [0.15.2] - 2021-09-07
+
+### Added
+- WebP support in 7.3.x
+
+### Changed
+- Upgraded all PHP versions to latest minor version
+
 ## [0.15.1] - 2021-02-25
 
 ### Added

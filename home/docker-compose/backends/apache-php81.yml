@@ -1,8 +1,8 @@
 version: '3'
 
 services:
-  apache-php72:
-    image: imarcagency/ops-apache-php72:${OPS_VERSION}
+  apache-php81:
+    image: imarcagency/ops-apache-php81:${OPS_VERSION}
     labels:
       - "ops.project=ops"
     environment:
