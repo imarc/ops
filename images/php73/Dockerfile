@@ -95,8 +95,8 @@ RUN pecl install \
     memcached \
     redis \
     xdebug \
-    sqlsrv \
-    pdo_sqlsrv
+    sqlsrv-5.9.0 \
+    pdo_sqlsrv-5.9.0
 
 # enable pecl extensions
 RUN docker-php-ext-enable \
