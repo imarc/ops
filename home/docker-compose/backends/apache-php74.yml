@@ -26,4 +26,5 @@ services:
       - ${OPS_HOME}/apache/apache2.conf:/etc/apache2/apache2.conf
       - ${OPS_HOME}/apache/configure:/usr/local/bin/docker-configure
       - ${OPS_HOME}/apache/set_docroot.lua:/etc/apache2/set_docroot.lua
+      - ${OPS_HOME}/php/php74.ini:/usr/local/etc/php/conf.d/php.ini
       - ${OPS_SITES_DIR}:/var/www/html:cached

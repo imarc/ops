@@ -88,6 +88,14 @@ get-version() {
     awk 'match($0, /([0-9][0-9\.a-z-]+)/) { print substr($0, RSTART, RLENGTH) }'
 }
 
+run() {
+    if [[ $OPS_TEST_MODE == 1 ]]; then
+        echo $@
+    else
+        $@
+    fi
+}
+
 # Main Commands
 
 ops-composer() {
@@ -181,7 +189,8 @@ ops-env() {
             echo "$key=\"$val\"" >> .env
         fi
     elif [[ -n $key ]]; then
-        cat .env | awk "/^$key=(.*)/ { sub(/$key=/, \"\", \$0); print }"
+        cat .env | awk "/^$key=(.*)/ { sub(/$key=/, \"\", \$0); print }" \
+            | sed -e 's/^"//g' -e "s/^'//g" -e 's/"$//g' -e "s/'$//g"
     else
         cat .env
     fi
@@ -447,8 +456,10 @@ ops-shell() {
     cmd-doc "Enter shell or execute command"
     cmd-alias sh
 
-    local id=$(system-docker-compose ps -q $OPS_SHELL_BACKEND 2> /dev/null)
-    local project_id=$(project-docker-compose ps -q $OPS_SHELL_BACKEND 2> /dev/null)
+    # remove port
+    local backend="${OPS_SHELL_BACKEND/:*/}"
+    local id=$(system-docker-compose ps -q $backend 2> /dev/null)
+    local project_id=$(project-docker-compose ps -q $backend 2> /dev/null)
     local project=$(project-name)
     local command="$OPS_SHELL_COMMAND"
 
@@ -1184,6 +1195,7 @@ fi
 
 declare -x OPS_ENV="dev"
 declare -x OPS_DEBUG="${OPS_DEBUG}"
+declare -x OPS_TEST_MODE="${OPS_TEST_MODE}"
 declare -x OPS_BACKENDS=${OPS_BACKENDS-"apache-php74 apache-php80"}
 declare -x OPS_SERVICES=${OPS_SERVICES-"portainer dashboard mariadb postgres redis adminer"}
 declare -x OPS_DOCKER_COMPOSER_IMAGE=${OPS_DOCKER_COMPOSER_IMAGE-"imarcagency/ops-apache-php80:$OPS_VERSION"}
@@ -1211,6 +1223,7 @@ declare -x OPS_BROWSER="${OPS_BROWSER=""}"
 
 declare -x OPS_DEFAULT_BACKEND=${OPS_DEFAULT_BACKEND-"apache-php80"}
 declare -x OPS_DEFAULT_DOCROOT=${OPS_DEFAULT_DOCROOT-"public"}
+declare -x OPS_DEFAULT_SHELL_USER=${OPS_DEFAULT_SHELL_USER-"www-data"}
 declare -x OPS_DASHBOARD_URL="https://ops.${OPS_DOMAIN}"
 declare -x OPS_MKCERT_VERSION="1.4.1"
 
@@ -1228,6 +1241,7 @@ declare -rx OPS_ACME_CA_SERVER
 
 declare -x OPS_PROJECT_NAME="$(project-name)"
 declare -x OPS_PROJECT_BACKEND="${OPS_DEFAULT_BACKEND}"
+declare -x OPS_PROJECT_SHELL_USER="${OPS_DEFAULT_SHELL_USER}"
 declare -x OPS_PROJECT_DOCROOT="${OPS_DEFAULT_DOCROOT}"
 
 # load project config
@@ -1258,7 +1272,7 @@ declare -x OPS_PROJECT_REMOTE_DB_PASSWORD="${OPS_PROJECT_REMOTE_DB_PASSWORD}"
 declare -x OPS_PROJECT_REMOTE_DB_PORT="${OPS_PROJECT_REMOTE_DB_PORT}"
 declare -x OPS_SHELL_BACKEND=${OPS_SHELL_BACKEND-$OPS_PROJECT_BACKEND}
 declare -x OPS_SHELL_COMMAND=${OPS_SHELL_COMMAND-"bash"}
-declare -x OPS_SHELL_USER=${OPS_SHELL_USER-"www-data"}
+declare -x OPS_SHELL_USER="${OPS_SHELL_USER-$OPS_PROJECT_SHELL_USER}"
 
 # load custom commands
 
