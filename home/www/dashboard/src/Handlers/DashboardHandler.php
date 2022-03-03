@@ -23,6 +23,7 @@ class DashboardHandler extends Handler
             'errors' => [],
             'sites' => [],
             'backends' => [
+                'apache-php81' => 'PHP 8.1',
                 'apache-php80' => 'PHP 8.0',
                 'apache-php74' => 'PHP 7.4',
                 'apache-php73' => 'PHP 7.3',
