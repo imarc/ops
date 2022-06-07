@@ -780,6 +780,10 @@ project-docker-compose() {
     docker-compose --project-directory "$OPS_SITES_DIR/$project_name" "$@"
 }
 
+project-dotenv-linter() {
+    ops docker run --rm -v $OPS_SITES_DIR/$(ops project name):/app -w /app dotenvlinter/dotenv-linter "$@"
+}
+
 project-ls() {
     cmd-doc "List all projects in OPS_SITES_DIR"
 
