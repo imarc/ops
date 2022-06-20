@@ -14,9 +14,16 @@ case "$(uname -s)" in
         fi
         ;;
     Darwin*)
-        OS="mac"
+        if [[ "$(uname -m)" == 'arm64' ]]; then
+            OS="mac-arm"
+        else
+            OS="mac"
+        fi
         ;;
 esac
+
+
+
 
 if [[ -z "$OS" ]]; then
     echo "Upsupported OS. Use Macintosh, Linux, or WSL"
@@ -184,7 +191,8 @@ ops-env() {
 
     if [[ -n $key && -n $val ]]; then
         if [[ -n $(grep -E "^$key=" .env) ]]; then
-            sed -i -e "s#^$key=.*#$key=\"$val\"#" .env
+            sed -e "s#^$key=.*#$key=\"$val\"#" .env > .env.ops.new
+            mv .env.ops.new .env
         else
             echo "$key=\"$val\"" >> .env
         fi
@@ -960,7 +968,7 @@ system-config() {
 
     if [[ -n $key && -n $val ]]; then
         if [[ -n $(system-config $key) ]]; then
-            sed -i '' -e "s#^$key=.*#$key=\"$val\"#" "$OPS_CONFIG/config"
+            sed -i'' -e "s#^$key=.*#$key=\"$val\"#" "$OPS_CONFIG/config"
         else
             mkdir -p $OPS_CONFIG
             echo "$key=\"$val\"" >> $OPS_CONFIG/config
@@ -1038,6 +1046,8 @@ system-install-mkcert() {
 
     if [[ "$OS" == linux ]]; then
         MKCERT_URL="https://github.com/FiloSottile/mkcert/releases/download/v$OPS_MKCERT_VERSION/mkcert-v$OPS_MKCERT_VERSION-linux-amd64"
+    elif [[ "$OS" == "mac-arm" ]]; then
+        MKCERT_URL="https://github.com/FiloSottile/mkcert/releases/download/v$OPS_MKCERT_VERSION/mkcert-v$OPS_MKCERT_VERSION-darwin-arm64"
     elif [[ "$OS" == mac ]]; then
         MKCERT_URL="https://github.com/FiloSottile/mkcert/releases/download/v$OPS_MKCERT_VERSION/mkcert-v$OPS_MKCERT_VERSION-darwin-amd64"
     fi
@@ -1229,7 +1239,7 @@ declare -x OPS_DEFAULT_BACKEND=${OPS_DEFAULT_BACKEND-"apache-php80"}
 declare -x OPS_DEFAULT_DOCROOT=${OPS_DEFAULT_DOCROOT-"public"}
 declare -x OPS_DEFAULT_SHELL_USER=${OPS_DEFAULT_SHELL_USER-"www-data"}
 declare -x OPS_DASHBOARD_URL="https://ops.${OPS_DOMAIN}"
-declare -x OPS_MKCERT_VERSION="1.4.1"
+declare -x OPS_MKCERT_VERSION="1.4.4"
 
 if [[ ! $OPS_ADMIN_AUTH ]]; then
     OPS_ADMIN_AUTH_LABEL_PREFIX="disabled-"
