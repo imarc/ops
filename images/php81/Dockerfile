@@ -108,7 +108,8 @@ RUN docker-php-ext-enable \
     redis \
     xdebug \
     sqlsrv \
-    pdo_sqlsrv
+    pdo_sqlsrv \
+    imagick
 
 # cleanup apt
 RUN apt-get clean
