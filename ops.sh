@@ -229,6 +229,7 @@ mariadb-help() {
 }
 
 mariadb-cli() {
+    cmd-doc "run mysql cli command"
     cmd-alias sh
     system-shell-exec mariadb mysql "${@}"
 }
@@ -238,12 +239,26 @@ mariadb-run() {
 }
 
 mariadb-create() {
+    cmd-doc "Create a mariadb database"
+
     local db="$1"
 
     mariadb-cli -e "CREATE DATABASE $1"
 
     if [[ $? == 0 ]]; then
         echo "Created mariadb database: $1"
+    fi
+}
+
+mariadb-drop() {
+    cmd-doc "Drop a mariadb database"
+
+    local db="$1"
+
+    mariadb-cli -e "DROP DATABASE $1"
+
+    if [[ $? == 0 ]]; then
+        echo "Dropped mariadb database: $1"
     fi
 }
 
@@ -256,6 +271,8 @@ mariadb-list() {
 }
 
 mariadb-export() {
+    cmd-doc "Export a mariadb database via mysqldump"
+
     local db="$1"
 
     ops-exec mariadb mysqldump --single-transaction --add-drop-table "$db"
@@ -356,6 +373,8 @@ psql-cli() {
 }
 
 psql-create() {
+    cmd-doc "Create a postgres database"
+
     local db="$1"
 
     psql-cli -c "CREATE DATABASE $1" 1> /dev/null
@@ -364,6 +383,19 @@ psql-create() {
         echo "Created postgres database: $1"
     fi
 }
+
+psql-drop() {
+    cmd-doc "Drop a postgres database"
+
+    local db="$1"
+
+    psql-cli -c "DROP DATABASE $1" 1> /dev/null
+
+    if [[ $? == 0 ]]; then
+        echo "Dropped postgres database: $1"
+    fi
+}
+
 
 psql-run() {
     ops-exec postgres psql -U postgres "${@}"
@@ -376,6 +408,8 @@ psql-list() {
 }
 
 psql-export() {
+    cmd-doc "export a postgres database"
+
     local db="$1"
 
     ops-exec postgres pg_dump -U postgres "$db"
