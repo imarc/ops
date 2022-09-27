@@ -78,6 +78,7 @@ RUN docker-php-ext-install \
     exif \
     gd \
     iconv \
+    imagick \
     intl \
     ldap \
     mysqli \
@@ -108,7 +109,8 @@ RUN docker-php-ext-enable \
     redis \
     xdebug \
     sqlsrv \
-    pdo_sqlsrv
+    pdo_sqlsrv \
+    imagick
 
 # cleanup apt
 RUN apt-get clean
