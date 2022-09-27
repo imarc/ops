@@ -78,6 +78,7 @@ RUN docker-php-ext-install \
     exif \
     gd \
     iconv \
+    imagick \
     intl \
     ldap \
     mysqli \
