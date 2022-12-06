@@ -59,14 +59,11 @@ services:
 
 networks:
   gateway:
-    external:
-      name: ops_gateway
+    name: ops_gateway
   backend:
-    external:
-      name: ops_backend
+    name: ops_backend
   services:
-    external:
-      name: ops_services
+    name: ops_services
 
 volumes:
   minio:

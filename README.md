@@ -1,6 +1,6 @@
 # Ops
 
-**Version 0.16.1**
+**Version 0.16.2**
 
 - A local development environment focused on PHP-based projects.
 - Create a new host by making a directory.
@@ -13,40 +13,25 @@
 
 ## Prerequisites
 
-Ops supports Linux, Mac, and *almost supports* Windows Subshell Linux (WSL)
+Ops supports Linux, Mac, and Windows Subshell Linux (WSL)
 
 `bash`, `npm`, `docker`, `docker-compose`, `ssh`, and `rsync` are required.
-
-On linux `certutil` is required.
 
 ### Linux Installation Instructions
 
 - [Install Docker CE](https://docs.docker.com/engine/installation/linux/)
 - [Install Docker Compose](https://docs.docker.com/compose/install/)
 
-Install `certutil`
-
-    # Ubuntu/Debian
-    sudo apt install libnss3-tools
-
-    # CentOS/Redhat
-    sudo yum install nss-tools
-
-    # Arch
-    sudo pacman -S nss
-
 ### Mac Installation Instructions
 
 - [Install Docker Desktop](https://docs.docker.com/docker-for-mac/install/)
 
-If you use Firefox, you should install `nss` with homebrew.
-
-    brew install nss
 
 ### Windows Subshell for Linux
 
 - [Install Docker Desktop](https://docs.docker.com/docker-for-windows/install/)
-- [Install Docker Client](https://medium.com/@sebagomez/installing-the-docker-client-on-ubuntus-windows-subsystem-for-linux-612b392a44c4)
+
+For HTTPS support in Firefox on Windows, go to `about:config` and change `security.enterprise_roots.enabled` to `true`
 
 ## How To Install
 
@@ -57,7 +42,7 @@ Install/Update ops:
     npm install -g git+https://git@github.com/imarc/ops
     ops system install
 
- **On first install, You will be asked for your sudo/system password in order to install the self-signed certs for HTTPS support**
+**On first install, You will be asked for your sudo/system password in order to install the self-signed certs for HTTPS support**
 
 ## Create Your First Project
 
