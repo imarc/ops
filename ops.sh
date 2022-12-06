@@ -7,7 +7,7 @@ shopt -s extglob
 OS=""
 case "$(uname -s)" in
     Linux*)
-        if $(grep -q Microsoft /proc/version); then
+        if $(grep -q microsoft /proc/version); then
             OS="linux-wsl"
         else
             OS="linux"
