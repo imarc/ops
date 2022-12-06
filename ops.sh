@@ -7,7 +7,7 @@ shopt -s extglob
 OS=""
 case "$(uname -s)" in
     Linux*)
-        if $(grep -q microsoft /proc/version); then
+        if $(grep -iq wsl2 /proc/version); then
             OS="linux-wsl"
         else
             OS="linux"
@@ -978,15 +978,6 @@ system-check() {
     else
         echo "found"
     fi
-
-    if [[ "$OS" == linux ]]; then
-        echo -n "certutil: "
-        if [[ -z $(which certutil) ]]; then
-            echo "not found"
-        else
-            echo "found"
-        fi
-    fi
 }
 
 system-config() {
@@ -1084,6 +1075,8 @@ system-install-mkcert() {
         MKCERT_URL="https://github.com/FiloSottile/mkcert/releases/download/v$OPS_MKCERT_VERSION/mkcert-v$OPS_MKCERT_VERSION-darwin-arm64"
     elif [[ "$OS" == mac ]]; then
         MKCERT_URL="https://github.com/FiloSottile/mkcert/releases/download/v$OPS_MKCERT_VERSION/mkcert-v$OPS_MKCERT_VERSION-darwin-amd64"
+    elif [[ "$OS" == linux-wsl ]]; then
+        MKCERT_URL="https://github.com/FiloSottile/mkcert/releases/download/v$OPS_MKCERT_VERSION/mkcert-v$OPS_MKCERT_VERSION-windows-amd64.exe"
     fi
 
     echo "Downloading mkcert v$OPS_MKCERT_VERSION"
@@ -1134,7 +1127,11 @@ system-refresh-certs() {
         mv "localhost+$domain_count.pem" self-signed-cert.crt
     )
 
-
+    if [[ "$OS" == linux-wsl ]]; then
+        openssl x509 -inform $(wslpath $($OPS_HOME/bin/mkcert-$OPS_MKCERT_VERSION -CAROOT))/rootCA.pem -out $OPS_HOME/certs/rootCA.pem
+        sudo cp $OPS_HOME/certs/rootCA.pem /usr/local/share/ca-certificates/rootCA.crt
+        sudo update-ca-certificates
+    fi
 }
 
 system-refresh-services() {
