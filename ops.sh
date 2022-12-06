@@ -1128,7 +1128,7 @@ system-refresh-certs() {
     )
 
     if [[ "$OS" == linux-wsl ]]; then
-        openssl x509 -inform $(wslpath $($OPS_HOME/bin/mkcert-$OPS_MKCERT_VERSION -CAROOT))/rootCA.pem -out $OPS_HOME/certs/rootCA.pem
+        openssl x509 -inform PEM -in $(wslpath $($OPS_HOME/bin/mkcert-$OPS_MKCERT_VERSION -CAROOT))/rootCA.pem -out $OPS_HOME/certs/rootCA.pem
         sudo cp $OPS_HOME/certs/rootCA.pem /usr/local/share/ca-certificates/rootCA.crt
         sudo update-ca-certificates
     fi
