@@ -1,4 +1,4 @@
-FROM --platform=$BUILDPLATFORM php:7.2.34-apache-stretch
+FROM --platform=$BUILDPLATFORM php:8.2.0-apache-buster
 
 MAINTAINER Imarc <info@imarc.com>
 
@@ -14,11 +14,13 @@ RUN apt-get update && apt-get install -y --fix-missing \
     chrpath \
     curl \
     dnsutils \
+    ffmpeg \
     freetds-dev \
     g++ \
     git-core \
     gnupg \
     imagemagick \
+    iproute2 \
     libcurl4-openssl-dev \
     libdbd-freetds \
     libjpeg62-turbo-dev \
@@ -31,32 +33,48 @@ RUN apt-get update && apt-get install -y --fix-missing \
     libpq-dev \
     libpspell-dev \
     libsqlite3-dev \
-    mysql-client \
+    libwebp-dev \
+    libzip-dev \
+    default-mysql-client \
     netcat \
+    net-tools \
     pkg-config \
     postgresql-client \
     python \
-    subversion \
     unixodbc-dev \
     vim \
     wget
+
+RUN curl -sSL https://packages.microsoft.com/keys/microsoft.asc | apt-key add -
+RUN curl -sSL https://packages.microsoft.com/config/debian/9/prod.list > /etc/apt/sources.list.d/mssql-release.list
+
+RUN apt-get update
+
+RUN ACCEPT_EULA=y apt-get install -y \
+    msodbcsql17 \
+    mssql-tools
 
 # link libsysbdb libs. (required for sqlsrv extension)
 RUN ln -s /usr/lib/x86_64-linux-gnu/libsybdb.so /usr/lib/libsybdb.so
 RUN ln -s /usr/lib/x86_64-linux-gnu/libsybdb.a /usr/lib/libsybdb.a
 
 # Configure GD with jpeg
-RUN docker-php-ext-configure gd --with-freetype-dir=/usr/include/ --with-jpeg-dir=/usr/include/
+RUN docker-php-ext-configure gd --with-freetype --with-jpeg --with-webp
 
 # Configure LDAP
 RUN docker-php-ext-configure ldap --with-libdir=lib/x86_64-linux-gnu/
+
+# Enable Exif
+RUN docker-php-ext-configure exif --enable-exif
 
 # install officially supported php extensions
 RUN docker-php-ext-install \
     bcmath \
     curl \
+    exif \
     gd \
     iconv \
+    intl \
     ldap \
     mysqli \
     opcache \
@@ -71,22 +89,22 @@ RUN docker-php-ext-install \
     soap \
     zip
 
-# install redis / xdebug extensions
+# install pecl extensions
 RUN pecl install \
-    imagick \
     memcached \
-    sqlsrv-5.8.0 \
-    pdo_sqlsrv-5.8.0 \
-    redis \
-    xdebug-3.1.6
-
-RUN docker-php-ext-enable \
     imagick \
-    memcached \
-    pdo_sqlsrv \
     redis \
+    xdebug-3.2.0RC2 \
     sqlsrv \
-    xdebug
+    pdo_sqlsrv
+
+# enable pecl extensions
+RUN docker-php-ext-enable \
+    memcached \
+    redis \
+    xdebug \
+    sqlsrv \
+    pdo_sqlsrv
 
 # cleanup apt
 RUN apt-get clean

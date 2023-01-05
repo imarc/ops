@@ -1,4 +1,4 @@
-FROM php:7.4.26-apache-buster
+FROM --platform=$BUILDPLATFORM php:7.4.26-apache-buster
 
 MAINTAINER Imarc <info@imarc.com>
 
@@ -94,7 +94,7 @@ RUN pecl install \
     imagick \
     memcached \
     redis \
-    xdebug \
+    xdebug-3.1.6 \
     sqlsrv-5.7.1preview \
     pdo_sqlsrv-5.7.1preview
 

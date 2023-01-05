@@ -1,4 +1,4 @@
-FROM debian:buster
+FROM --platform=$BUILDPLATFORM debian:buster
 
 MAINTAINER Imarc <info@imarc.com>
 

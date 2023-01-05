@@ -1,4 +1,4 @@
-FROM php:8.0.13-apache-buster
+FROM --platform=$BUILDPLATFORM php:8.0.13-apache-buster
 
 MAINTAINER Imarc <info@imarc.com>
 
