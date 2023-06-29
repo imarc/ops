@@ -60,10 +60,13 @@ services:
 networks:
   gateway:
     name: ops_gateway
+    external: true
   backend:
     name: ops_backend
+    external: true
   services:
     name: ops_services
+    external: true
 
 volumes:
   minio:
