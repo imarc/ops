@@ -99,10 +99,10 @@ The following options can be set within your $HOME/.ops/config file.
 
     # A space separated list of application backends that
     # should be enabled. Available options are:
-    #  apache-php72, apache-php73, apache-php74, apache-php80
+    #  apache-php72, apache-php73, apache-php74, apache-php80, apache-php81, apache-php82
     #
-    # Default: apache-php74
-    OPS_BACKENDS="apache-php74 apache-php73"
+    # Default: apache-php74 apache-php80
+    OPS_BACKENDS="apache-php74 apache-php80"
 
     # A linux user id that a backend process should attempt to run as.
     #
