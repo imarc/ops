@@ -275,7 +275,7 @@ mariadb-export() {
 
     local db="$1"
 
-    ops-exec mariadb mysqldump --single-transaction --add-drop-table "$db"
+    ops-exec mariadb mysqldump --complete-insert --single-transaction --add-drop-table "$db"
 }
 
 mariadb-import() {
