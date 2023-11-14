@@ -708,7 +708,7 @@ ops-sync() {
             local mysqldump_port="$([[ ! -z $OPS_PROJECT_REMOTE_DB_PORT ]] && echo "-P $OPS_PROJECT_REMOTE_DB_PORT")"
             local mysqldump_user="$([[ ! -z $OPS_PROJECT_REMOTE_DB_USER ]] && echo "-u $OPS_PROJECT_REMOTE_DB_USER")"
 
-            ssh -C "$ssh_host" "mysqldump --single-transaction \
+            ssh -C "$ssh_host" "mysqldump --complete-insert --single-transaction \
                 $mysqldump_port \
                 $mysqldump_host \
                 $mysqldump_user \
