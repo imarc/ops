@@ -2,7 +2,7 @@ version: '3'
 
 services:
   apache-php83:
-    image: imarcagency/ops-apache-php83:dev
+    image: imarcagency/ops-apache-php83:${OPS_VERSION}
     labels:
       - "ops.project=ops"
     environment:
