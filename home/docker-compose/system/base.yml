@@ -27,7 +27,7 @@ services:
       - ${OPS_SITES_DIR}:/var/www/html:cached
 
   traefik:
-    image: traefik:1.7.10-alpine
+    image: traefik:1.7.34-alpine
     command: --docker.domain=${OPS_DOMAIN}
     networks:
       gateway:

@@ -5,12 +5,17 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/)
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [0.16.4] - 2023-12-11
+## [0.16.5] - 2024-02-23
 
 ### Added
 - PHP 8.3 support
     - This image uses Debian 11 (Bullseye) as it's base
     - Updated Microsoft ODBC driver from 17 to 18
+
+## [0.16.4] - 2024-01-22
+
+### Fixed
+- Use complete insert statements when creating database dumps
 
 ## [0.16.3] - 2023-01-05
 
@@ -19,7 +24,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 - PHP 8.2 support
-
 
 ## [0.16.2] - 2022-12-06
 
