@@ -69,7 +69,7 @@ Within your project's .env file you can set the following options:
     # Valid values are the OPS_BACKENDS global option
     #
     # Default: value of OPS_DEFAULT_BACKEND global option
-    OPS_PROJECT_BACKEND="apache-php74"
+    OPS_PROJECT_BACKEND="apache-php82"
 
     # set the project document root
     #
@@ -101,8 +101,8 @@ The following options can be set within your $HOME/.ops/config file.
     # should be enabled. Available options are:
     #  apache-php72, apache-php73, apache-php74, apache-php80
     #
-    # Default: apache-php74
-    OPS_BACKENDS="apache-php74 apache-php73"
+    # Default: apache-php82
+    OPS_BACKENDS="apache-php82 apache-php83"
 
     # A linux user id that a backend process should attempt to run as.
     #
