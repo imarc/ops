@@ -1,16 +1,28 @@
 # Changelog
 
 All notable changes to this project will be documented in this file.
-
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/)
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [0.16.5] - 2024-02-23
+## [0.16.5] - 2024-02-27
 
 ### Added
 - PHP 8.3 support
-    - This image uses Debian 11 (Bullseye) as it's base
-    - Updated Microsoft ODBC driver from 17 to 18
+
+### Changed
+- PHP 8.2 upgraded to 8.2.16 + Debian Bullseye
+- PHP 8.1 upgraded to 8.1.28 + Debian Bullseye
+- PHP 8.0 upgraded to 8.0.30 + Debian Bullseye
+- PHP 7.4 upgraded to 7.4.33 + Debian Bullseye
+- PHP 7.3 upgraded to Debian Bullseye
+- Node image upgraded to 21-alpine3.19
+- Utils image upgraded to alpine:3.19
+
+### Fixed
+- PHP 7.2 debian repos now pointing to archive
+
+### Removed
+- meta-Ops image. Hacky trick that was never used.
 
 ## [0.16.4] - 2024-01-22
 

@@ -6,6 +6,11 @@ MAINTAINER Imarc <info@imarc.com>
 RUN mkdir -p /usr/share/man/man1 && \
     mkdir -p /usr/share/man/man7
 
+# fix stretch repos
+RUN sed -i s/deb.debian.org/archive.debian.org/g /etc/apt/sources.list
+RUN sed -i s/security.debian.org/archive.debian.org/g /etc/apt/sources.list
+RUN sed -i s/stretch-updates/stretch/g /etc/apt/sources.list
+
 # install supporting packages
 RUN apt-get update && apt-get install -y --fix-missing \
     apt-transport-https \
@@ -49,7 +54,10 @@ RUN ln -s /usr/lib/x86_64-linux-gnu/libsybdb.a /usr/lib/libsybdb.a
 RUN docker-php-ext-configure gd --with-freetype-dir=/usr/include/ --with-jpeg-dir=/usr/include/
 
 # Configure LDAP
-RUN docker-php-ext-configure ldap --with-libdir=lib/x86_64-linux-gnu/
+RUN docker-php-ext-configure ldap --with-libdir=lib/aarch64-linux-gnu/
+
+# Configure DBLib
+RUN docker-php-ext-configure pdo_dblib --with-libdir=lib/aarch64-linux-gnu/
 
 # install officially supported php extensions
 RUN docker-php-ext-install \

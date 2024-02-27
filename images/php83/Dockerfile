@@ -1,6 +1,8 @@
-FROM --platform=$BUILDPLATFORM php:8.3.0-apache-bullseye
+FROM --platform=$BUILDPLATFORM php:8.3.3-apache-bullseye
 
 MAINTAINER Imarc <info@imarc.com>
+
+ARG IMAGICK_COMMIT="28f27044e435a2b203e32675e942eb8de620ee58"
 
 # fix for postgresql-client
 RUN mkdir -p /usr/share/man/man1 && \
@@ -47,12 +49,10 @@ RUN apt-get update && apt-get install -y --fix-missing \
 
 RUN curl -sSL https://packages.microsoft.com/keys/microsoft.asc | apt-key add -
 RUN curl -sSL https://packages.microsoft.com/config/debian/11/prod.list > /etc/apt/sources.list.d/mssql-release.list
-
 RUN apt-get update
-
 RUN ACCEPT_EULA=y apt-get install -y \
     msodbcsql18 \
-    mssql-tools
+    mssql-tools18
 
 # link libsysbdb libs. (required for sqlsrv extension)
 RUN ln -s /usr/lib/x86_64-linux-gnu/libsybdb.so /usr/lib/libsybdb.so
@@ -62,10 +62,18 @@ RUN ln -s /usr/lib/x86_64-linux-gnu/libsybdb.a /usr/lib/libsybdb.a
 RUN docker-php-ext-configure gd --with-freetype --with-jpeg --with-webp
 
 # Configure LDAP
-RUN docker-php-ext-configure ldap --with-libdir=lib/x86_64-linux-gnu/
+RUN docker-php-ext-configure ldap --with-libdir=lib/aarch64-linux-gnu/
+
+# Configure DBLib
+RUN docker-php-ext-configure pdo_dblib --with-libdir=lib/aarch64-linux-gnu/
 
 # Enable Exif
 RUN docker-php-ext-configure exif --enable-exif
+
+# Install Imagick extension from source until there is pecl support
+# for the latest version. pecl tag 3.7.0 is broken with 8.3.
+RUN mkdir -p /usr/src/php/ext/imagick; \
+    curl -fsSL https://github.com/Imagick/imagick/archive/${IMAGICK_COMMIT}.tar.gz | tar xvz -C "/usr/src/php/ext/imagick" --strip 1
 
 # install officially supported php extensions
 RUN docker-php-ext-install \
@@ -74,6 +82,7 @@ RUN docker-php-ext-install \
     exif \
     gd \
     iconv \
+    imagick \
     intl \
     ldap \
     mysqli \
@@ -92,9 +101,8 @@ RUN docker-php-ext-install \
 # install pecl extensions
 RUN pecl install \
     memcached \
-    imagick \
     redis \
-    xdebug-3.3.0 \
+    xdebug \
     sqlsrv \
     pdo_sqlsrv
 

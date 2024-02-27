@@ -1,4 +1,4 @@
-FROM --platform=$BUILDPLATFORM php:7.3.33-apache-buster
+FROM --platform=$BUILDPLATFORM php:7.3.33-apache-bullseye
 
 MAINTAINER Imarc <info@imarc.com>
 
@@ -45,13 +45,11 @@ RUN apt-get update && apt-get install -y --fix-missing \
     wget
 
 RUN curl https://packages.microsoft.com/keys/microsoft.asc | apt-key add -
-RUN curl https://packages.microsoft.com/config/debian/9/prod.list > /etc/apt/sources.list.d/mssql-release.list
-
+RUN curl https://packages.microsoft.com/config/debian/11/prod.list > /etc/apt/sources.list.d/mssql-release.list
 RUN apt-get update
-
 RUN ACCEPT_EULA=y apt-get install -y \
-    msodbcsql17 \
-    mssql-tools
+    msodbcsql18 \
+    mssql-tools18
 
 # link libsysbdb libs. (required for sqlsrv extension)
 RUN ln -s /usr/lib/x86_64-linux-gnu/libsybdb.so /usr/lib/libsybdb.so
@@ -61,7 +59,10 @@ RUN ln -s /usr/lib/x86_64-linux-gnu/libsybdb.a /usr/lib/libsybdb.a
 RUN docker-php-ext-configure gd --with-freetype-dir=/usr/include/ --with-jpeg-dir=/usr/include/ --with-webp-dir=/usr/include/
 
 # Configure LDAP
-RUN docker-php-ext-configure ldap --with-libdir=lib/x86_64-linux-gnu/
+RUN docker-php-ext-configure ldap --with-libdir=lib/aarch64-linux-gnu/
+
+# Configure DBLib
+RUN docker-php-ext-configure pdo_dblib --with-libdir=lib/aarch64-linux-gnu/
 
 # Enable Exif
 RUN docker-php-ext-configure exif --enable-exif
