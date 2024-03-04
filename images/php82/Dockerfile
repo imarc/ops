@@ -24,6 +24,7 @@ RUN apt-get update && apt-get install -y --fix-missing \
     libcurl4-openssl-dev \
     libdbd-freetds \
     libjpeg62-turbo-dev \
+    libldb-dev \
     libldap2-dev \
     libmagickwand-dev \
     libmcrypt-dev \
@@ -60,10 +61,10 @@ RUN ln -s /usr/lib/x86_64-linux-gnu/libsybdb.a /usr/lib/libsybdb.a
 RUN docker-php-ext-configure gd --with-freetype --with-jpeg --with-webp
 
 # Configure LDAP
-RUN docker-php-ext-configure ldap --with-libdir=lib/aarch64-linux-gnu/
+RUN docker-php-ext-configure ldap --with-libdir=lib/x86_64-linux-gnu/
 
 # Configure DBLib
-RUN docker-php-ext-configure pdo_dblib --with-libdir=lib/aarch64-linux-gnu/
+RUN docker-php-ext-configure pdo_dblib --with-libdir=lib/x86_64-linux-gnu/
 
 # install officially supported php extensions
 RUN docker-php-ext-install \
