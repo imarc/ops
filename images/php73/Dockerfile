@@ -59,10 +59,10 @@ RUN ln -s /usr/lib/x86_64-linux-gnu/libsybdb.a /usr/lib/libsybdb.a
 RUN docker-php-ext-configure gd --with-freetype-dir=/usr/include/ --with-jpeg-dir=/usr/include/ --with-webp-dir=/usr/include/
 
 # Configure LDAP
-RUN docker-php-ext-configure ldap --with-libdir=lib/aarch64-linux-gnu/
+RUN docker-php-ext-configure ldap --with-libdir=lib/x86_64-linux-gnu/
 
 # Configure DBLib
-RUN docker-php-ext-configure pdo_dblib --with-libdir=lib/aarch64-linux-gnu/
+RUN docker-php-ext-configure pdo_dblib --with-libdir=lib/x86_64-linux-gnu/
 
 # Enable Exif
 RUN docker-php-ext-configure exif --enable-exif
