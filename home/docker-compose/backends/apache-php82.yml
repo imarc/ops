@@ -15,6 +15,8 @@ services:
       - OPS_PHP_XDEBUG=${OPS_PHP_XDEBUG}
 
     dns: $OPS_SERVICES_DNS_IP
+    extra_hosts:
+      - host.docker.internal:host-gateway
 
     networks:
       - backend
