@@ -525,6 +525,11 @@ ops-shell() {
     fi
 }
 
+ops-ssh() {
+  cmd-doc "SSH into the project's server."
+  ssh $(ops env OPS_PROJECT_REMOTE_HOST) "$@"
+}
+
 ops-www() {
     cmd-doc "Open current project in web browser."
     local project=$(project-name)
