@@ -525,6 +525,11 @@ ops-shell() {
     fi
 }
 
+ops-root() {
+  cmd-doc "connect as root to an ops container"
+  OPS_SHELL_USER=root ops-shell
+}
+
 ops-www() {
     cmd-doc "Open current project in web browser."
     local project=$(project-name)
