@@ -1,5 +1,3 @@
-version: '3'
-
 services:
   dashboard:
     image: imarcagency/ops-apache-php73:${OPS_VERSION}
