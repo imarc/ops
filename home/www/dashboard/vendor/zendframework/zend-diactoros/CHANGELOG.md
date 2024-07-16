@@ -2,6 +2,142 @@
 
 All notable changes to this project will be documented in this file, in reverse chronological order by release.
 
+## 2.2.1 - 2019-11-13
+
+### Added
+
+- Nothing.
+
+### Changed
+
+- [#379](https://github.com/zendframework/zend-diactoros/pull/379) removes extension of `SplFileInfo` by the `UploadedFile` class. The signatures of `getSize()` are potentially incompatible, and `UploadedFile` is intended to work with arbitrary PHP and PSR-7 streams, whereas `SplFileInfo` can only model files on the filesystem. While this is technically a BC break, we are treating it as a bugfix, as the class was broken for many use cases.
+
+### Deprecated
+
+- Nothing.
+
+### Removed
+
+- Nothing.
+
+### Fixed
+
+- Nothing.
+
+## 2.2.0 - 2019-11-12
+
+### Added
+
+- [#376](https://github.com/zendframework/zend-diactoros/pull/376) adds support for using the X-Forwarded-Host header for determining the originally requested host name when marshaling the server request.
+
+### Changed
+
+- [#378](https://github.com/zendframework/zend-diactoros/pull/378) updates the `UploadedFile` class to extend `SplFileInfo`, allowing developers to make use of those features in their applications.
+
+### Deprecated
+
+- Nothing.
+
+### Removed
+
+- Nothing.
+
+### Fixed
+
+- Nothing.
+
+## 2.2.0  - 2019-11-08
+
+### Added
+
+- [#377](https://github.com/zendframework/zend-diactoros/issues/377) enables UploadedFile to stand in and be used as an SplFileInfo object.
+
+### Changed
+
+- Nothing.
+
+### Deprecated
+
+- Nothing.
+
+### Removed
+
+- Nothing.
+
+### Fixed
+
+- Nothing.
+
+## 2.1.5 - 2019-10-10
+
+### Added
+
+- Nothing.
+
+### Changed
+
+- Nothing.
+
+### Deprecated
+
+- Nothing.
+
+### Removed
+
+- Nothing.
+
+### Fixed
+
+- [#372](https://github.com/zendframework/zend-diactoros/pull/372) fixes issues that occur in the `Zend\Diactoros\Uri` class when invalid UTF-8 characters are present the user-info, path, or query string, ensuring they are URL-encoded before being consumed. Previously, such characters could result in a fatal error, which was particularly problematic when marshaling the request URI for an application request cycle.
+
+## 2.1.4 - 2019-10-08
+
+### Added
+
+- Nothing.
+
+### Changed
+
+- Nothing.
+
+### Deprecated
+
+- Nothing.
+
+### Removed
+
+- Nothing.
+
+### Fixed
+
+- [#370](https://github.com/zendframework/zend-diactoros/pull/370) updates `Zend\Diactoros\marshalHeadersFromSapi()` to ensure all underscores in header name keys are converted to dashes (fixing issues with header names such as `CONTENT_SECURITY_POLICY`, which would previously resolve improperly to `content-security_policy`).
+
+- [#370](https://github.com/zendframework/zend-diactoros/pull/370) updates `Zend\Diactoros\marshalHeadersFromSapi()` to ignore header names from the `$server` array that resolve to integers; previously, it would raise a fatal error.
+
+## 2.1.3 - 2019-07-10
+
+### Added
+
+- Nothing.
+
+### Changed
+
+- Nothing.
+
+### Deprecated
+
+- Nothing.
+
+### Removed
+
+- Nothing.
+
+### Fixed
+
+- [#363](https://github.com/zendframework/zend-diactoros/issues/363) modifies detection of HTTPS schemas via the `$_SERVER['HTTPS']` value
+  such that an empty HTTPS-key will result in a scheme of `http` and not
+  `https`.
+
 ## 2.1.2 - 2019-04-29
 
 ### Added
@@ -527,7 +663,7 @@ All notable changes to this project will be documented in this file, in reverse 
 
 - [#293](https://github.com/zendframework/zend-diactoros/pull/293) updates
   `Uri::getHost()` to cast the value via `strtolower()` before returning it.
-  While this represents a change, it is fixing a bug in our implementation: 
+  While this represents a change, it is fixing a bug in our implementation:
   the PSR-7 specification for the method, which follows IETF RFC 3986 section
   3.2.2, requires that the host name be normalized to lowercase.
 

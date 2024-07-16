@@ -80,7 +80,7 @@ function marshalUriFromSapi(array $server, array $headers) : Uri
         * @return array Array of two items, host and port, in that order (can be
         *     passed to a list() operation).
         */
-        $marshalIpv6HostAndPort = function (array $server, string $host, ?int $port) : array {
+        $marshalIpv6HostAndPort = function (array $server, ?int $port) : array {
             $host = '[' . $server['SERVER_ADDR'] . ']';
             $port = $port ?: 80;
             if ($port . ']' === substr($host, strrpos($host, ':') + 1)) {
@@ -93,8 +93,14 @@ function marshalUriFromSapi(array $server, array $headers) : Uri
 
         static $defaults = ['', null];
 
-        if ($getHeaderFromArray('host', $headers, false)) {
-            return $marshalHostAndPortFromHeader($getHeaderFromArray('host', $headers));
+        $forwardedHost = $getHeaderFromArray('x-forwarded-host', $headers, false);
+        if ($forwardedHost !== false) {
+            return $marshalHostAndPortFromHeader($forwardedHost);
+        }
+
+        $host = $getHeaderFromArray('host', $headers, false);
+        if ($host !== false) {
+            return $marshalHostAndPortFromHeader($host);
         }
 
         if (! isset($server['SERVER_NAME'])) {
@@ -112,7 +118,7 @@ function marshalUriFromSapi(array $server, array $headers) : Uri
 
         // Misinterpreted IPv6-Address
         // Reported for Safari on Windows
-        return $marshalIpv6HostAndPort($server, $host, $port);
+        return $marshalIpv6HostAndPort($server, $port);
     };
 
     /**
@@ -132,19 +138,19 @@ function marshalUriFromSapi(array $server, array $headers) : Uri
     $marshalRequestPath = function (array $server) : string {
         // IIS7 with URL Rewrite: make sure we get the unencoded url
         // (double slash problem).
-        $iisUrlRewritten = array_key_exists('IIS_WasUrlRewritten', $server) ? $server['IIS_WasUrlRewritten'] : null;
-        $unencodedUrl    = array_key_exists('UNENCODED_URL', $server) ? $server['UNENCODED_URL'] : '';
+        $iisUrlRewritten = $server['IIS_WasUrlRewritten'] ?? null;
+        $unencodedUrl    = $server['UNENCODED_URL'] ?? '';
         if ('1' === $iisUrlRewritten && ! empty($unencodedUrl)) {
             return $unencodedUrl;
         }
 
-        $requestUri = array_key_exists('REQUEST_URI', $server) ? $server['REQUEST_URI'] : null;
+        $requestUri = $server['REQUEST_URI'] ?? null;
 
         if ($requestUri !== null) {
             return preg_replace('#^[^/:]+://[^/]+#', '', $requestUri);
         }
 
-        $origPathInfo = array_key_exists('ORIG_PATH_INFO', $server) ? $server['ORIG_PATH_INFO'] : null;
+        $origPathInfo = $server['ORIG_PATH_INFO'] ?? null;
         if (empty($origPathInfo)) {
             return '/';
         }
@@ -168,7 +174,7 @@ function marshalUriFromSapi(array $server, array $headers) : Uri
             ));
         }
 
-        return 'off' !== strtolower($https);
+        return 'on' === strtolower($https);
     };
     if (array_key_exists('HTTPS', $server)) {
         $https = $marshalHttpsValue($server['HTTPS']);
