@@ -525,6 +525,11 @@ ops-shell() {
     fi
 }
 
+ops-root() {
+  cmd-doc "connect as root to an ops container"
+  OPS_SHELL_USER=root ops-shell
+}
+
 ops-ssh() {
   cmd-doc "SSH into the project's server."
   ssh $(ops env OPS_PROJECT_REMOTE_HOST) "$@"
