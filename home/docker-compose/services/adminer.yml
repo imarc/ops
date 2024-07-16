@@ -1,5 +1,3 @@
-version: '3'
-
 services:
   adminer:
     image: "clue/adminer"

@@ -1,5 +1,3 @@
-version: '3'
-
 services:
   apache-php72:
     image: imarcagency/ops-apache-php72:${OPS_VERSION}
