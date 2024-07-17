@@ -227,18 +227,20 @@ ops-mariadb() {
 }
 
 mariadb-help() {
+    cmd-doc "Show this help."
     cmd-help "ops mariadb" mariadb
     echo
 }
 
 mariadb-cli() {
-    cmd-doc "run mysql cli command"
+    cmd-doc "Run mariadb cli command interatively."
     cmd-alias sh
-    system-shell-exec mariadb mysql "${@}"
+    system-shell-exec mariadb mariadb "${@}"
 }
 
 mariadb-run() {
-    ops-exec mariadb mysql "${@}"
+    cmd-doc "Run mariadb cli command non-interactively."
+    ops-exec mariadb mariadb "${@}"
 }
 
 mariadb-create() {
@@ -266,19 +268,20 @@ mariadb-drop() {
 }
 
 mariadb-list() {
+    cmd-doc "List all mariadb databases."
     cmd-alias ls
-    ops-exec mariadb mysql --column-names=FALSE -e "show databases;" | \
+    ops-exec mariadb mariadb --column-names=FALSE -e "show databases;" | \
         grep -v "^information_schema$" | \
         grep -v "^performance_schema$" | \
         grep -v "^mysql$"
 }
 
 mariadb-export() {
-    cmd-doc "Export a mariadb database via mysqldump"
+    cmd-doc "Export a mariadb database via mariadb-dump"
 
     local db="$1"
 
-    ops-exec mariadb mysqldump --complete-insert --single-transaction --add-drop-table "$db"
+    ops-exec mariadb mariadb-dump --complete-insert --single-transaction --add-drop-table "$db"
 }
 
 mariadb-import() {
@@ -288,11 +291,11 @@ mariadb-import() {
 
     (
         # don't let these commands grab stdin
-        ops-exec mariadb mysql -e "DROP DATABASE IF EXISTS $db"
-        ops-exec mariadb mysql -e "CREATE DATABASE $db"
+        ops-exec mariadb mariadb -e "DROP DATABASE IF EXISTS $db"
+        ops-exec mariadb mariadb -e "CREATE DATABASE $db"
     ) </dev/null
 
-    cat "$sqlfile" | ops-exec mariadb mysql "$db"
+    cat "$sqlfile" | ops-exec mariadb mariadb "$db"
 }
 
 mariadb-www() {
