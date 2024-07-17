@@ -1,6 +1,6 @@
 FROM --platform=$BUILDPLATFORM php:8.3.3-apache-bullseye AS base
 
-MAINTAINER Imarc <info@imarc.com>
+LABEL AUTHOR "Imarc <info@imarc.com>"
 
 ARG IMAGICK_COMMIT="28f27044e435a2b203e32675e942eb8de620ee58"
 
@@ -63,7 +63,7 @@ RUN docker-php-ext-configure gd --with-freetype --with-jpeg --with-webp
 
 
 # AMD64 stage
-FROM base as build-amd64
+FROM base AS build-amd64
 
 # Configure LDAP
 RUN docker-php-ext-configure ldap --with-libdir=lib/x86_64-linux-gnu/
@@ -73,7 +73,7 @@ RUN docker-php-ext-configure pdo_dblib --with-libdir=lib/x86_64-linux-gnu/
 
 
 # ARM64 stage
-FROM base as build-arm64
+FROM base AS build-arm64
 
 # Configure LDAP
 RUN docker-php-ext-configure ldap --with-libdir=lib/aarch64-linux-gnu/
@@ -83,7 +83,7 @@ RUN docker-php-ext-configure pdo_dblib --with-libdir=lib/aarch64-linux-gnu/
 
 
 
-FROM build-${TARGETARCH} as final
+FROM build-${TARGETARCH} AS final
 
 # Enable Exif
 RUN docker-php-ext-configure exif --enable-exif
