@@ -1,6 +1,6 @@
 # Ops
 
-**Version 0.16.4**
+**Version 0.16.6**
 
 - A local development environment focused on PHP-based projects.
 - Create a new host by making a directory.
@@ -180,7 +180,7 @@ The following options can be set within your $HOME/.ops/config file.
 
 You can connect your app to the following shared services:
 
-**MariaDB 10.3**<br>
+**MariaDB 11.4**<br>
 hostname: mariadb<br>
 username: root<br>
 password: *none*<br>

@@ -4,6 +4,23 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/)
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.16.6] - 2024-07-17
+
+This version includes upgrading ops's MariaDB version from 10.3 to 11.4. You
+cannot downgrade after upgrading.
+
+### Added
+- `ops root`, `ops ssh` commands
+- `extra_hosts` option to docker-compose files
+- Better support for multi-platform docker image builds through Buddy.works.
+
+### Changed
+- Upgrade MariaDB from 10.3 to 11.4. Run `ops system install` and `ops system
+refresh-services` to complete the upgrade.
+- Fix obsolete notices for docker-compose 'version:' attributes.
+- Cleaned up messaging and help text.
+
+
 ## [0.16.5] - 2024-02-27
 
 ### Added

@@ -233,18 +233,18 @@ mariadb-help() {
 }
 
 mariadb-cli() {
-    cmd-doc "Run mariadb cli command interatively."
+    cmd-doc "Run mariadb interactive shell."
     cmd-alias sh
     system-shell-exec mariadb mariadb "${@}"
 }
 
 mariadb-run() {
-    cmd-doc "Run mariadb cli command non-interactively."
+    cmd-doc "Run SQL via mariadb."
     ops-exec mariadb mariadb "${@}"
 }
 
 mariadb-create() {
-    cmd-doc "Create a mariadb database"
+    cmd-doc "Create a MariaDB database."
 
     local db="$1"
 
@@ -256,7 +256,7 @@ mariadb-create() {
 }
 
 mariadb-drop() {
-    cmd-doc "Drop a mariadb database"
+    cmd-doc "Drop a MariaDB database."
 
     local db="$1"
 
@@ -277,7 +277,7 @@ mariadb-list() {
 }
 
 mariadb-export() {
-    cmd-doc "Export a mariadb database via mariadb-dump"
+    cmd-doc "Export a mariadb database via mariadb-dump."
 
     local db="$1"
 
@@ -285,6 +285,7 @@ mariadb-export() {
 }
 
 mariadb-import() {
+    cmd-doc "Import a MariaDB database."
     local db="$1"
     local sqlfile=${2--}
 
@@ -374,12 +375,13 @@ ops-ps() {
 }
 
 psql-cli() {
+    cmd-doc "Run the psql interactive shell."
     cmd-alias sh
     system-shell-exec postgres psql -U postgres "$@"
 }
 
 psql-create() {
-    cmd-doc "Create a postgres database"
+    cmd-doc "Create a PostgreSQL database."
 
     local db="$1"
 
@@ -391,7 +393,7 @@ psql-create() {
 }
 
 psql-drop() {
-    cmd-doc "Drop a postgres database"
+    cmd-doc "Drop a PostgreSQL database."
 
     local db="$1"
 
@@ -404,17 +406,19 @@ psql-drop() {
 
 
 psql-run() {
+    cmd-doc "Run SQL via psql."
     ops-exec postgres psql -U postgres "${@}"
 }
 
 psql-list() {
+    cmd-doc "List all PostgreSQL databases."
     cmd-alias ls
     ops-exec postgres psql -U postgres -t -c "SELECT datname FROM pg_database WHERE datname NOT IN ('template0', 'template1', 'postgres')" | \
     sed -e "s/^ *//" -e "/^$/d"
 }
 
 psql-export() {
-    cmd-doc "export a postgres database"
+    cmd-doc "Export a PostgresSQL database."
 
     local db="$1"
 
@@ -422,6 +426,7 @@ psql-export() {
 }
 
 psql-import() {
+    cmd-doc "Import a PostgreSQL database."
     local db="$1"
     local sqlfile=${2--}
 
@@ -435,6 +440,7 @@ psql-import() {
 }
 
 psql-help() {
+    cmd-doc "Show this help."
     cmd-help "ops psql" psql
     echo
 }
@@ -854,6 +860,7 @@ _ops-yarn() {
 # Site sub sommands
 
 project-docker-compose() {
+    cmd-doc "Run docker-compose commands for the current project."
     local project_name=$(project-name)
 
     OPS_PROJECT_NAME="$project_name" \
@@ -863,6 +870,7 @@ project-docker-compose() {
 }
 
 project-dotenv-linter() {
+    cmd-doc "Lint the current project's dotenv file using dotenvlinter/dotenv-linter."
     ops docker run --rm -v $OPS_SITES_DIR/$(ops project name):/app -w /app dotenvlinter/dotenv-linter "$@"
 }
 
@@ -877,6 +885,7 @@ project-ls() {
 }
 
 project-name() {
+    cmd-doc "Get the current project's name."
     if [[ "$(pwd)" != $OPS_SITES_DIR/* ]]; then
         exit 1
     else
@@ -892,22 +901,27 @@ project-name() {
 }
 
 project-start() {
+    cmd-doc "Start the current project."
     project-docker-compose up -d --force-recreate "$@"
 }
 
 project-stop() {
+    cmd-doc "Stop the current project."
     project-docker-compose stop
 }
 
 project-logs() {
+    cmd-doc "Tail (display) logs for this project."
     project-docker-compose logs -f "$@"
 }
 
 project-ps() {
+    cmd-doc "Display the status of this project's containers."
     project-docker-compose ps "$@"
 }
 
 project-exec() {
+    cmd-doc "Execute a command in a specific project service."
     local service=$1
     shift
 
@@ -921,11 +935,13 @@ project-exec() {
 }
 
 project-help() {
+    cmd-doc "Show this help."
     cmd-help "ops project" project "$@"
     echo
 }
 
 project-shell-exec() {
+    cmd-doc "Interactively execute a command in a specific project service."
     local id=$(project-docker-compose ps -q $1)
     shift
 
@@ -937,6 +953,7 @@ project-shell-exec() {
 }
 
 project-stats() {
+    cmd-doc "Display resource usage statistics for this project's containers."
     local ids=$(project-docker-compose ps -q)
 
     if [[ -z $id ]]; then
@@ -949,6 +966,8 @@ project-stats() {
 # System Sub-Commands
 
 system-docker-compose() {
+    cmd-doc "Run docker-compose commands for the ops system containers."
+
     COMPOSE_FILE="$OPS_HOME/docker-compose/system/base.yml"
     #COMPOSE_FILE="$COMPOSE_FILE:$OPS_HOME/docker-compose/services/traefik.yml"
 
@@ -972,6 +991,7 @@ system-docker-compose() {
 }
 
 system-shell-exec() {
+    cmd-doc "Interactively execute a command in an ops system service."
     local service=$1
     local id=$(system-docker-compose ps -q $service)
     shift
@@ -991,6 +1011,7 @@ system-shell-exec() {
 }
 
 system-check() {
+    cmd-doc "Check for ops system requirements."
     echo -n "docker: "
     if [[ -z $(which docker) ]]; then
         echo "not found"
@@ -1025,6 +1046,7 @@ system-check() {
 }
 
 system-config() {
+    cmd-doc "Display ops config settings."
     #
     # list: config
     # get:  config [key]
@@ -1050,6 +1072,8 @@ system-config() {
 }
 
 system-install() {
+    cmd-doc "Install or upgrade ops."
+
     if [[ ! -d $OPS_HOME ]]; then
         mkdir -p $(dirname $OPS_HOME)
         cp -R $OPS_SCRIPT_DIR/home $OPS_HOME
@@ -1103,6 +1127,7 @@ system-install() {
 }
 
 system-install-mkcert() {
+    cmd-doc "Install or update ops's local TLS certificate with mkcert."
     if [[ ! -d $OPS_HOME ]]; then
         return
     fi
@@ -1129,6 +1154,8 @@ system-install-mkcert() {
 }
 
 system-refresh-certs() {
+    cmd-doc "Refresh local TLS certificate with mkcert."
+
     sudo --non-interactive echo 2> /dev/null
 
     if [[ $? == 1 ]]; then
@@ -1179,9 +1206,7 @@ system-refresh-certs() {
 }
 
 system-refresh-services() {
-    #
-    # Regenerate/Restart services. (They might depend on new configs/certs)
-    #
+    cmd-doc "Regenerate and restart ops services."
 
     if [[ ! -z $(ops-ps | grep Up) ]]; then
         RUNNING=1
@@ -1195,6 +1220,8 @@ system-refresh-services() {
 }
 
 system-reset() {
+    cmd-doc "Remove all containers and re-create ops networks."
+
     # remove all containers on every start
     system-docker-compose rm -fs &> /dev/null
 
@@ -1213,6 +1240,8 @@ system-reset() {
 }
 
 system-start() {
+    cmd-doc "Internal command."
+
     system-reset
 
     # refresh config
@@ -1231,10 +1260,13 @@ system-start() {
 }
 
 system-stop() {
+    cmd-doc "Internal command."
+
     system-docker-compose stop
 }
 
 system-help() {
+    cmd-doc "Show this help."
     cmd-help "ops system" system "$@"
     echo
 }
