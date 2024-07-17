@@ -1,6 +1,6 @@
-FROM --platform=$BUILDPLATFORM php:7.3.33-apache-bullseye
+FROM --platform=$BUILDPLATFORM php:7.3.33-apache-bullseye AS base
 
-MAINTAINER Imarc <info@imarc.com>
+LABEL AUTHOR "Imarc <info@imarc.com>"
 
 # fix for postgresql-client
 RUN mkdir -p /usr/share/man/man1 && \
@@ -58,11 +58,29 @@ RUN ln -s /usr/lib/x86_64-linux-gnu/libsybdb.a /usr/lib/libsybdb.a
 # Configure GD with jpeg and webp
 RUN docker-php-ext-configure gd --with-freetype-dir=/usr/include/ --with-jpeg-dir=/usr/include/ --with-webp-dir=/usr/include/
 
+
+# AMD64 stage
+FROM base AS build-amd64
+
+# Configure LDAP
+RUN docker-php-ext-configure ldap --with-libdir=lib/x86_64-linux-gnu/
+
+# Configure DBLib
+RUN docker-php-ext-configure pdo_dblib --with-libdir=lib/x86_64-linux-gnu/
+
+
+# ARM64 stage
+FROM base AS build-arm64
+
 # Configure LDAP
 RUN docker-php-ext-configure ldap --with-libdir=lib/aarch64-linux-gnu/
 
 # Configure DBLib
 RUN docker-php-ext-configure pdo_dblib --with-libdir=lib/aarch64-linux-gnu/
+
+
+
+FROM build-${TARGETARCH} AS final
 
 # Enable Exif
 RUN docker-php-ext-configure exif --enable-exif
