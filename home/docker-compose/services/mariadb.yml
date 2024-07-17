@@ -1,8 +1,6 @@
-version: '3'
-
 services:
   mariadb:
-    image: "mariadb:10.5.1"
+    image: "mariadb:11.4"
     environment:
       - "MYSQL_ALLOW_EMPTY_PASSWORD=yes"
     networks:

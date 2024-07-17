@@ -1,0 +1,32 @@
+<html>
+    <head>
+        <title>OPS ERROR</title>
+        <link href="https://unpkg.com/tailwindcss@^2.0/dist/tailwind.min.css" rel="stylesheet">
+    </head>
+    <body>
+        <div class="container flex flex-col p-10">
+            <!--# if expr="$status = 502" -->
+                <h1 class="text-2xl font-bold justify-center pb-10">Ops Error - Bad Gateway</h1>
+                <h2 class="text-xl text-red-700">Invalid project backend: <b><!--# echo var="ops_project_backend" default="Unknown" --></b></h2>
+                <p class="mt-10 text-gray-600">You probably need to do one or both of the following:</p>
+                <ul class="mt-3 ml-5 text-gray-600 list-decimal">
+                    <li>Ensure the backend listed above is enabled in your ~/.ops/config file</li>
+                    <li>Change your project's OPS_PROJECT_BACKEND .env setting</li>
+                </ul>
+            <!--# endif -->
+
+            <!--# if expr="$error_no_docroot = 1" -->
+                <h1 class="text-2xl font-bold justify-center pb-10">Ops Error - Bad Document Root</h1>
+
+                <h2 class="text-xl text-red-700">Invalid project document root: <b><!--# echo var="ops_project_docroot" default="[EMPTY]" --></b></h2>
+                <p class="mt-10 text-gray-600">You probably need to do one or both of the following:</p>
+                <ul class="mt-3 ml-5 text-gray-600 list-decimal">
+                    <li>Ensure the document root listed above exists at <!--# echo var="ops_sites_dir" default="$OPS_SITES_DIR" -->/<!--# echo var="ops_project_name" default="Unknown" -->/<!--# echo var="ops_project_docroot" default="Unknown" --> file</li>
+                    <li>Change your project's OPS_PROJECT_DOCROOT .env setting</li>
+                </ul>
+            <!--# endif -->
+
+            <a class="mt-10 text-blue-600 underline" href="https://github.com/imarc/ops">Documentation</a>
+        </div>
+    </body>
+</html>

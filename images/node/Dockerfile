@@ -1,4 +1,4 @@
-FROM node:8.9.4
+FROM node:21-alpine3.19
 
 MAINTAINER Imarc <info@imarc.com>
 

@@ -1,6 +1,6 @@
 # Ops
 
-**Version 0.15.2**
+**Version 0.16.4**
 
 - A local development environment focused on PHP-based projects.
 - Create a new host by making a directory.
@@ -13,40 +13,25 @@
 
 ## Prerequisites
 
-Ops supports Linux, Mac, and *almost supports* Windows Subshell Linux (WSL)
+Ops supports Linux, Mac, and Windows Subshell Linux (WSL)
 
 `bash`, `npm`, `docker`, `docker-compose`, `ssh`, and `rsync` are required.
-
-On linux `certutil` is required.
 
 ### Linux Installation Instructions
 
 - [Install Docker CE](https://docs.docker.com/engine/installation/linux/)
 - [Install Docker Compose](https://docs.docker.com/compose/install/)
 
-Install `certutil`
-
-    # Ubuntu/Debian
-    sudo apt install libnss3-tools
-
-    # CentOS/Redhat
-    sudo yum install nss-tools
-
-    # Arch
-    sudo pacman -S nss
-
 ### Mac Installation Instructions
 
 - [Install Docker Desktop](https://docs.docker.com/docker-for-mac/install/)
 
-If you use Firefox, you should install `nss` with homebrew.
-
-    brew install nss
 
 ### Windows Subshell for Linux
 
 - [Install Docker Desktop](https://docs.docker.com/docker-for-windows/install/)
-- [Install Docker Client](https://medium.com/@sebagomez/installing-the-docker-client-on-ubuntus-windows-subsystem-for-linux-612b392a44c4)
+
+For HTTPS support in Firefox on Windows, go to `about:config` and change `security.enterprise_roots.enabled` to `true`
 
 ## How To Install
 
@@ -57,7 +42,7 @@ Install/Update ops:
     npm install -g git+https://git@github.com/imarc/ops
     ops system install
 
- **On first install, You will be asked for your sudo/system password in order to install the self-signed certs for HTTPS support**
+**On first install, You will be asked for your sudo/system password in order to install the self-signed certs for HTTPS support**
 
 ## Create Your First Project
 
@@ -84,7 +69,7 @@ Within your project's .env file you can set the following options:
     # Valid values are the OPS_BACKENDS global option
     #
     # Default: value of OPS_DEFAULT_BACKEND global option
-    OPS_PROJECT_BACKEND="apache-php74"
+    OPS_PROJECT_BACKEND="apache-php82"
 
     # set the project document root
     #
@@ -116,8 +101,8 @@ The following options can be set within your $HOME/.ops/config file.
     # should be enabled. Available options are:
     #  apache-php72, apache-php73, apache-php74, apache-php80
     #
-    # Default: apache-php74
-    OPS_BACKENDS="apache-php74 apache-php73"
+    # Default: apache-php82
+    OPS_BACKENDS="apache-php82 apache-php83"
 
     # A linux user id that a backend process should attempt to run as.
     #
@@ -177,6 +162,12 @@ The following options can be set within your $HOME/.ops/config file.
     # Default: https://localtunnel.me
     OPS_LOCALTUNNEL_HOST="https://localtunnel.me"
 
+    # Command to launch a browser for 'ops www'. You can override the browser here.
+    #
+    # Default (mac): open
+    # Default (linux): xdg-open
+    # Default (WSL): explorer.exe
+    OPS_BROWSER=firefox
 
     # Enable XDebug extension for PHP containers
     #
@@ -211,8 +202,8 @@ port: 11211
 
 **Minio**<br>
 hostname: minio<br>
-access key: minio-access<br>
-secret key: minio-secret<br>
+root user: minio-user<br>
+root password: minio-password<br>
 
 **Mailhog**<br>
 *SMTP Config:*<br>
@@ -362,7 +353,7 @@ Everything else can be customized to whatever your app requires.
 If you are contributing to ops, debugging, or want to try out bleeding edge features, It is recommended you install like so:
 
     # clone into a local dir and enter dir
-    git clone git@gitlab.imarc.net:imarc/ops.git
+    git clone git@github.com:imarc/ops.git
     cd ops
 
     # create 'ops' symlink to your repo

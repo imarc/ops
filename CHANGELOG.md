@@ -1,9 +1,76 @@
 # Changelog
 
 All notable changes to this project will be documented in this file.
-
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/)
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
+
+## [0.16.5] - 2024-02-27
+
+### Added
+- PHP 8.3 support
+
+### Changed
+- PHP 8.2 upgraded to 8.2.16 + Debian Bullseye
+- PHP 8.1 upgraded to 8.1.28 + Debian Bullseye
+- PHP 8.0 upgraded to 8.0.30 + Debian Bullseye
+- PHP 7.4 upgraded to 7.4.33 + Debian Bullseye
+- PHP 7.3 upgraded to Debian Bullseye
+- Node image upgraded to 21-alpine3.19
+- Utils image upgraded to alpine:3.19
+
+### Fixed
+- PHP 7.2 debian repos now pointing to archive
+
+### Removed
+- meta-Ops image. Hacky trick that was never used.
+
+## [0.16.4] - 2024-01-22
+
+### Fixed
+- Use complete insert statements when creating database dumps
+
+## [0.16.3] - 2023-01-05
+
+### Fixed
+- Docker images for ARM processors
+
+### Added
+- PHP 8.2 support
+
+## [0.16.2] - 2022-12-06
+
+### Fixed
+- Cert support in WSL
+- external.name Warnings
+
+## [0.16.1] - 2022-02-01
+
+### Added
+- Nice ops-specific error pages in nginx
+- Ability to customize php.ini from ~/.ops/php
+
+### Fixed
+- XDebug 3 settings
+
+## [0.16.0] - 2021-12-01
+
+### Changed
+- Default backend is now `apache-php80`
+- Default available backends now `apache-php74` and `apache-php80`
+
+### Added
+- PHP 8.1 support (`apache-php81`)
+
+## [0.15.4] - 2021-11-16
+
+### Changed
+- Minio vars changed to MINIO_ROOT_USER and MINIO_ROOT_PASSWORD
+
+## [0.15.3] - 2021-11-03
+
+### Added
+- intl extension to 7.3.x and 7.4.x
+- alias support
 
 ## [0.15.2] - 2021-09-07
 

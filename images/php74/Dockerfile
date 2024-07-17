@@ -1,6 +1,6 @@
-FROM php:7.4.23-apache-buster
+FROM --platform=$BUILDPLATFORM php:7.4.33-apache-bullseye AS base
 
-MAINTAINER Imarc <info@imarc.com>
+LABEL AUTHOR "Imarc <info@imarc.com>"
 
 # fix for postgresql-client
 RUN mkdir -p /usr/share/man/man1 && \
@@ -46,13 +46,11 @@ RUN apt-get update && apt-get install -y --fix-missing \
     wget
 
 RUN curl https://packages.microsoft.com/keys/microsoft.asc | apt-key add -
-RUN curl https://packages.microsoft.com/config/debian/9/prod.list > /etc/apt/sources.list.d/mssql-release.list
-
+RUN curl https://packages.microsoft.com/config/debian/11/prod.list > /etc/apt/sources.list.d/mssql-release.list
 RUN apt-get update
-
 RUN ACCEPT_EULA=y apt-get install -y \
-    msodbcsql17 \
-    mssql-tools
+    msodbcsql18 \
+    mssql-tools18
 
 # link libsysbdb libs. (required for sqlsrv extension)
 RUN ln -s /usr/lib/x86_64-linux-gnu/libsybdb.so /usr/lib/libsybdb.so
@@ -61,8 +59,29 @@ RUN ln -s /usr/lib/x86_64-linux-gnu/libsybdb.a /usr/lib/libsybdb.a
 # Configure GD with jpeg and webp
 RUN docker-php-ext-configure gd --with-freetype --with-jpeg --with-webp
 
+
+# AMD64 stage
+FROM base AS build-amd64
+
 # Configure LDAP
 RUN docker-php-ext-configure ldap --with-libdir=lib/x86_64-linux-gnu/
+
+# Configure DBLib
+RUN docker-php-ext-configure pdo_dblib --with-libdir=lib/x86_64-linux-gnu/
+
+
+# ARM64 stage
+FROM base AS build-arm64
+
+# Configure LDAP
+RUN docker-php-ext-configure ldap --with-libdir=lib/aarch64-linux-gnu/
+
+# Configure DBLib
+RUN docker-php-ext-configure pdo_dblib --with-libdir=lib/aarch64-linux-gnu/
+
+
+
+FROM build-${TARGETARCH} AS final
 
 # Enable Exif
 RUN docker-php-ext-configure exif --enable-exif
@@ -75,6 +94,7 @@ RUN docker-php-ext-install \
     gd \
     iconv \
     ldap \
+    intl \
     mysqli \
     opcache \
     pcntl \
@@ -93,7 +113,7 @@ RUN pecl install \
     imagick \
     memcached \
     redis \
-    xdebug \
+    xdebug-3.1.6 \
     sqlsrv-5.7.1preview \
     pdo_sqlsrv-5.7.1preview
 

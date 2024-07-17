@@ -1,8 +1,6 @@
-version: '3'
-
 services:
   portainer:
-    image: portainer/portainer
+    image: portainer/portainer:1.25.0
     labels:
       - "ops.project=ops"
       - "traefik.enable=true"

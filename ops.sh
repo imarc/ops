@@ -7,16 +7,23 @@ shopt -s extglob
 OS=""
 case "$(uname -s)" in
     Linux*)
-        if $(grep -q Microsoft /proc/version); then
+        if $(grep -iq wsl2 /proc/version); then
             OS="linux-wsl"
         else
             OS="linux"
         fi
         ;;
     Darwin*)
-        OS="mac"
+        if [[ "$(uname -m)" == 'arm64' ]]; then
+            OS="mac-arm"
+        else
+            OS="mac"
+        fi
         ;;
 esac
+
+
+
 
 if [[ -z "$OS" ]]; then
     echo "Unsupported operating system. Use Macintosh, Linux, or WSL."
@@ -89,6 +96,14 @@ version-greater-than() {
 
 get-version() {
     awk 'match($0, /([0-9][0-9\.a-z-]+)/) { print substr($0, RSTART, RLENGTH) }'
+}
+
+run() {
+    if [[ $OPS_TEST_MODE == 1 ]]; then
+        echo $@
+    else
+        $@
+    fi
 }
 
 # Main Commands
@@ -179,12 +194,14 @@ ops-env() {
 
     if [[ -n $key && -n $val ]]; then
         if [[ -n $(grep -E "^$key=" .env) ]]; then
-            sed -i -e "s#^$key=.*#$key=\"$val\"#" .env
+            sed -e "s#^$key=.*#$key=\"$val\"#" .env > .env.ops.new
+            mv .env.ops.new .env
         else
             echo "$key=\"$val\"" >> .env
         fi
     elif [[ -n $key ]]; then
-        cat .env | awk "/^$key=(.*)/ { sub(/$key=/, \"\", \$0); print }"
+        cat .env | awk "/^$key=(.*)/ { sub(/$key=/, \"\", \$0); print }" \
+            | sed -e 's/^"//g' -e "s/^'//g" -e 's/"$//g' -e "s/'$//g"
     else
         cat .env
     fi
@@ -215,6 +232,7 @@ mariadb-help() {
 }
 
 mariadb-cli() {
+    cmd-doc "run mysql cli command"
     cmd-alias sh
     system-shell-exec mariadb mysql "${@}"
 }
@@ -224,12 +242,26 @@ mariadb-run() {
 }
 
 mariadb-create() {
+    cmd-doc "Create a mariadb database"
+
     local db="$1"
 
     mariadb-cli -e "CREATE DATABASE $1"
 
     if [[ $? == 0 ]]; then
         echo "Created mariadb database: $1"
+    fi
+}
+
+mariadb-drop() {
+    cmd-doc "Drop a mariadb database"
+
+    local db="$1"
+
+    mariadb-cli -e "DROP DATABASE $1"
+
+    if [[ $? == 0 ]]; then
+        echo "Dropped mariadb database: $1"
     fi
 }
 
@@ -242,9 +274,11 @@ mariadb-list() {
 }
 
 mariadb-export() {
+    cmd-doc "Export a mariadb database via mysqldump"
+
     local db="$1"
 
-    ops-exec mariadb mysqldump --single-transaction --add-drop-table "$db"
+    ops-exec mariadb mysqldump --complete-insert --single-transaction --add-drop-table "$db"
 }
 
 mariadb-import() {
@@ -342,6 +376,8 @@ psql-cli() {
 }
 
 psql-create() {
+    cmd-doc "Create a postgres database"
+
     local db="$1"
 
     psql-cli -c "CREATE DATABASE $1" 1> /dev/null
@@ -350,6 +386,19 @@ psql-create() {
         echo "Created postgres database: $1"
     fi
 }
+
+psql-drop() {
+    cmd-doc "Drop a postgres database"
+
+    local db="$1"
+
+    psql-cli -c "DROP DATABASE $1" 1> /dev/null
+
+    if [[ $? == 0 ]]; then
+        echo "Dropped postgres database: $1"
+    fi
+}
+
 
 psql-run() {
     ops-exec postgres psql -U postgres "${@}"
@@ -362,6 +411,8 @@ psql-list() {
 }
 
 psql-export() {
+    cmd-doc "export a postgres database"
+
     local db="$1"
 
     ops-exec postgres pg_dump -U postgres "$db"
@@ -450,8 +501,10 @@ ops-shell() {
     cmd-doc "Enter shell or execute a command within the webserver's container."
     cmd-alias sh
 
-    local id=$(system-docker-compose ps -q $OPS_SHELL_BACKEND 2> /dev/null)
-    local project_id=$(project-docker-compose ps -q $OPS_SHELL_BACKEND 2> /dev/null)
+    # remove port
+    local backend="${OPS_SHELL_BACKEND/:*/}"
+    local id=$(system-docker-compose ps -q $backend 2> /dev/null)
+    local project_id=$(project-docker-compose ps -q $backend 2> /dev/null)
     local project=$(project-name)
     local command="$OPS_SHELL_COMMAND"
 
@@ -497,6 +550,16 @@ ops-shell() {
         exit 1
 
     fi
+}
+
+ops-root() {
+  cmd-doc "connect as root to an ops container"
+  OPS_SHELL_USER=root ops-shell
+}
+
+ops-ssh() {
+  cmd-doc "SSH into the project's server."
+  ssh $(ops env OPS_PROJECT_REMOTE_HOST) "$@"
 }
 
 ops-www() {
@@ -677,12 +740,12 @@ ops-sync() {
         elif [[ "$OPS_PROJECT_REMOTE_DB_TYPE" = "mariadb" ]]; then
             echo "Syncing remote mariadb '$OPS_PROJECT_REMOTE_DB_NAME' to local '$OPS_PROJECT_DB_NAME'..."
 
-            local mysqldump_password="$([[ ! -z $OPS_PROJECT_REMOTE_DB_PASSWORD ]] && echo "-p$OPS_PROJECT_REMOTE_DB_PASSWORD")"
+            local mysqldump_password="$([[ ! -z $OPS_PROJECT_REMOTE_DB_PASSWORD ]] && echo "-p\"$OPS_PROJECT_REMOTE_DB_PASSWORD\"")"
             local mysqldump_host="$([[ ! -z $OPS_PROJECT_REMOTE_DB_HOST ]] && echo "-h $OPS_PROJECT_REMOTE_DB_HOST")"
             local mysqldump_port="$([[ ! -z $OPS_PROJECT_REMOTE_DB_PORT ]] && echo "-P $OPS_PROJECT_REMOTE_DB_PORT")"
             local mysqldump_user="$([[ ! -z $OPS_PROJECT_REMOTE_DB_USER ]] && echo "-u $OPS_PROJECT_REMOTE_DB_USER")"
 
-            ssh -C "$ssh_host" "mysqldump --single-transaction \
+            ssh -C "$ssh_host" "mysqldump --complete-insert --single-transaction \
                 $mysqldump_port \
                 $mysqldump_host \
                 $mysqldump_user \
@@ -794,6 +857,10 @@ project-docker-compose() {
     COMPOSE_PROJECT_NAME="ops-$project_name" \
     COMPOSE_FILE="$OPS_PROJECT_COMPOSE_FILE" \
     docker-compose --project-directory "$OPS_SITES_DIR/$project_name" "$@"
+}
+
+project-dotenv-linter() {
+    ops docker run --rm -v $OPS_SITES_DIR/$(ops project name):/app -w /app dotenvlinter/dotenv-linter "$@"
 }
 
 project-ls() {
@@ -952,15 +1019,6 @@ system-check() {
     else
         echo "found"
     fi
-
-    if [[ "$OS" == linux ]]; then
-        echo -n "certutil: "
-        if [[ -z $(which certutil) ]]; then
-            echo "not found"
-        else
-            echo "found"
-        fi
-    fi
 }
 
 system-config() {
@@ -976,22 +1034,37 @@ system-config() {
 
     if [[ -n $key && -n $val ]]; then
         if [[ -n $(system-config $key) ]]; then
-            sed -i '' -e "s#^$key=.*#$key=\"$val\"#" "$OPS_HOME/config"
+            sed -i'' -e "s#^$key=.*#$key=\"$val\"#" "$OPS_CONFIG/config"
         else
-            echo "$key=\"$val\"" >> $OPS_HOME/config
+            mkdir -p $OPS_CONFIG
+            echo "$key=\"$val\"" >> $OPS_CONFIG/config
         fi
     elif [[ -n $key ]]; then
-        cat $OPS_HOME/config | awk "/^$key=(.*)/ { sub(/$key=/, \"\", \$0); print }"
+        cat $OPS_CONFIG/config | awk "/^$key=(.*)/ { sub(/$key=/, \"\", \$0); print }"
     else
-        cat $OPS_HOME/config
+        cat $OPS_CONFIG/config
     fi
 }
 
 system-install() {
     if [[ ! -d $OPS_HOME ]]; then
+        mkdir -p $(dirname $OPS_HOME)
         cp -R $OPS_SCRIPT_DIR/home $OPS_HOME
 
-        source $OPS_HOME/config
+        if [ -n "$XDG_CURRENT_DESKTOP" ]; then
+            OPS_BIN="${OPS_BIN-"$HOME/.local/bin"}"
+        fi
+
+        if [ -n "$OPS_BIN" ]; then
+            ln -s $OPS_HOME/ops.sh $OPS_BIN/ops
+        fi
+
+        if [[ ! -d $OPS_CONFIG ]]; then
+            mkdir -p $OPS_CONFIG
+            mv $OPS_HOME/config $OPS_CONFIG/config
+        fi
+
+        source $OPS_CONFIG/config
 
         if [[ "$OS" == linux ]]; then
             local whoami="$(whoami)"
@@ -1014,7 +1087,7 @@ system-install() {
 
     echo $OPS_VERSION > $OPS_HOME/VERSION
 
-    source $OPS_HOME/config
+    source $OPS_CONFIG/config
 
     system-install-mkcert
 
@@ -1039,8 +1112,12 @@ system-install-mkcert() {
 
     if [[ "$OS" == linux ]]; then
         MKCERT_URL="https://github.com/FiloSottile/mkcert/releases/download/v$OPS_MKCERT_VERSION/mkcert-v$OPS_MKCERT_VERSION-linux-amd64"
+    elif [[ "$OS" == "mac-arm" ]]; then
+        MKCERT_URL="https://github.com/FiloSottile/mkcert/releases/download/v$OPS_MKCERT_VERSION/mkcert-v$OPS_MKCERT_VERSION-darwin-arm64"
     elif [[ "$OS" == mac ]]; then
         MKCERT_URL="https://github.com/FiloSottile/mkcert/releases/download/v$OPS_MKCERT_VERSION/mkcert-v$OPS_MKCERT_VERSION-darwin-amd64"
+    elif [[ "$OS" == linux-wsl ]]; then
+        MKCERT_URL="https://github.com/FiloSottile/mkcert/releases/download/v$OPS_MKCERT_VERSION/mkcert-v$OPS_MKCERT_VERSION-windows-amd64.exe"
     fi
 
     echo "Downloading mkcert v$OPS_MKCERT_VERSION"
@@ -1091,7 +1168,11 @@ system-refresh-certs() {
         mv "localhost+$domain_count.pem" self-signed-cert.crt
     )
 
-
+    if [[ "$OS" == linux-wsl ]]; then
+        openssl x509 -inform PEM -in $(wslpath $($OPS_HOME/bin/mkcert-$OPS_MKCERT_VERSION -CAROOT))/rootCA.pem -out $OPS_HOME/certs/rootCA.pem
+        sudo cp $OPS_HOME/certs/rootCA.pem /usr/local/share/ca-certificates/rootCA.crt
+        sudo update-ca-certificates
+    fi
 }
 
 system-refresh-services() {
@@ -1137,10 +1218,10 @@ system-start() {
         -e "s/OPS_SERVICES_TRAEFIK_IP/$OPS_SERVICES_TRAEFIK_IP/" \
         $OPS_HOME/dnsmasq/dnsmasq.conf.tmpl > $OPS_HOME/dnsmasq/dnsmasq.conf
 
-    sed \
-        -e "s/OPS_MINIO_ACCESS_KEY/$OPS_MINIO_ACCESS_KEY/" \
-        -e "s/OPS_MINIO_SECRET_KEY/$OPS_MINIO_SECRET_KEY/" \
-        $OPS_HOME/minio/config.json.tmpl > $OPS_HOME/minio/config.json
+    #sed \
+    #    -e "s/OPS_MINIO_ACCESS_KEY/$OPS_MINIO_ACCESS_KEY/" \
+    #    -e "s/OPS_MINIO_SECRET_KEY/$OPS_MINIO_SECRET_KEY/" \
+    #    $OPS_HOME/minio/config.json.tmpl > $OPS_HOME/minio/config.json
 
     # start all services
     system-docker-compose up -d --remove-orphans
@@ -1175,16 +1256,22 @@ main() {
 
 # options that can be overidden by environment
 
-export OPS_HOME=${OPS_HOME-"$HOME/.ops"}
+if [ -n "$XDG_CURRENT_DESKTOP" ]; then
+    export OPS_HOME="${OPS_HOME-"${XDG_DATA_HOME-"$HOME/.local/share/ops"}"}"
+    export OPS_CONFIG="${OPS_CONFIG-"${XDG_CONFIG_HOME-"$HOME/.config/ops"}"}"
+else
+    export OPS_HOME="${OPS_HOME-"$HOME/.ops"}"
+    export OPS_CONFIG="${OPS_CONFIG-"$HOME/.ops"}"
+fi
 
 # load config
 
-if [[ -f "$OPS_HOME/config" ]]; then
-    source $OPS_HOME/config
+if [[ -f "$OPS_CONFIG/config" ]]; then
+    source $OPS_CONFIG/config
 
     # generate a literal (non-quoted) version for docker-compose
     # https://github.com/docker/compose/issues/3702
-    cat $OPS_HOME/config |
+    cat $OPS_CONFIG/config |
         sed -e '/^$/d' -e '/^#/d' |
 	xargs -n1 echo > $OPS_HOME/config.literal
 fi
@@ -1194,9 +1281,10 @@ fi
 
 declare -x OPS_ENV="dev"
 declare -x OPS_DEBUG="${OPS_DEBUG}"
-declare -x OPS_BACKENDS=${OPS_BACKENDS-"apache-php74"}
-declare -x OPS_SERVICES=${OPS_SERVICES-"portainer dashboard mariadb postgres redis adminer"}
-declare -x OPS_DOCKER_COMPOSER_IMAGE=${OPS_DOCKER_COMPOSER_IMAGE-"imarcagency/ops-apache-php74:$OPS_VERSION"}
+declare -x OPS_TEST_MODE="${OPS_TEST_MODE}"
+declare -x OPS_BACKENDS=${OPS_BACKENDS-"apache-php74 apache-php82"}
+declare -x OPS_SERVICES=${OPS_SERVICES-"portainer dashboard mariadb postgres redis adminer redis-commander"}
+declare -x OPS_DOCKER_COMPOSER_IMAGE=${OPS_DOCKER_COMPOSER_IMAGE-"imarcagency/ops-apache-php80:$OPS_VERSION"}
 declare -x OPS_DOCKER_NODE_IMAGE=${OPS_DOCKER_NODE_IMAGE-"imarcagency/ops-node:$OPS_VERSION"}
 declare -x OPS_DOCKER_UTILS_IMAGE=${OPS_DOCKER_UTILS_IMAGE-"imarcagency/ops-utils:$OPS_VERSION"}
 declare -x OPS_DOCKER_GID=${OPS_DOCKER_GID-""}
@@ -1206,8 +1294,8 @@ declare -x OPS_DOCKER_COMPOSE_VERSION="1.22"
 declare -x OPS_PHP_XDEBUG=${OPS_PHP_XDEBUG-"0"}
 declare -x OPS_DOMAIN=${OPS_DOMAIN-"imarc.io"}
 declare -x OPS_DOMAIN_ALIASES=${OPS_DOMAIN_ALIASES-""}
-declare -x OPS_MINIO_ACCESS_KEY=${OPS_MINIO_ACCESS_KEY-"minio-access"}
-declare -x OPS_MINIO_SECRET_KEY=${OPS_MINIO_SECRET_KEY-"minio-secret"}
+declare -x OPS_MINIO_ROOT_USER=${OPS_MINIO_ROOT_USER-"minio-user"}
+declare -x OPS_MINIO_ROOT_PASSWORD=${OPS_MINIO_ROOT_PASSWORD-"minio-password"}
 declare -x OPS_SITES_DIR=${OPS_SITES_DIR-"$HOME/Sites"}
 declare -x OPS_SERVICES_SUBNET=${OPS_SERVICES_SUBNET-"172.23.0.0/16"}
 declare -x OPS_ACME_EMAIL=${OPS_ACME_EMAIL-""}
@@ -1217,11 +1305,13 @@ declare -x OPS_ACME_PRODUCTION=${OPS_ACME_PRODUCTION-"0"}
 declare -x OPS_ADMIN_AUTH=${OPS_ADMIN_AUTH-""}
 declare -x OPS_ADMIN_AUTH_LABEL_PREFIX=""
 declare -x OPS_LOCALTUNNEL_HOST=${OPS_LOCALTUNNEL_HOST-"https://localtunnel.me"}
+declare -x OPS_BROWSER="${OPS_BROWSER=""}"
 
-declare -x OPS_DEFAULT_BACKEND=${OPS_DEFAULT_BACKEND-"apache-php74"}
+declare -x OPS_DEFAULT_BACKEND=${OPS_DEFAULT_BACKEND-"apache-php80"}
 declare -x OPS_DEFAULT_DOCROOT=${OPS_DEFAULT_DOCROOT-"public"}
+declare -x OPS_DEFAULT_SHELL_USER=${OPS_DEFAULT_SHELL_USER-"www-data"}
 declare -x OPS_DASHBOARD_URL="https://ops.${OPS_DOMAIN}"
-declare -x OPS_MKCERT_VERSION="1.4.1"
+declare -x OPS_MKCERT_VERSION="1.4.4"
 
 if [[ ! $OPS_ADMIN_AUTH ]]; then
     OPS_ADMIN_AUTH_LABEL_PREFIX="disabled-"
@@ -1237,6 +1327,7 @@ declare -rx OPS_ACME_CA_SERVER
 
 declare -x OPS_PROJECT_NAME="$(project-name)"
 declare -x OPS_PROJECT_BACKEND="${OPS_DEFAULT_BACKEND}"
+declare -x OPS_PROJECT_SHELL_USER="${OPS_DEFAULT_SHELL_USER}"
 declare -x OPS_PROJECT_DOCROOT="${OPS_DEFAULT_DOCROOT}"
 
 # load project config
@@ -1267,9 +1358,13 @@ declare -x OPS_PROJECT_REMOTE_DB_PASSWORD="${OPS_PROJECT_REMOTE_DB_PASSWORD}"
 declare -x OPS_PROJECT_REMOTE_DB_PORT="${OPS_PROJECT_REMOTE_DB_PORT}"
 declare -x OPS_SHELL_BACKEND=${OPS_SHELL_BACKEND-$OPS_PROJECT_BACKEND}
 declare -x OPS_SHELL_COMMAND=${OPS_SHELL_COMMAND-"bash"}
-declare -x OPS_SHELL_USER=${OPS_SHELL_USER-"www-data"}
+declare -x OPS_SHELL_USER="${OPS_SHELL_USER-$OPS_PROJECT_SHELL_USER}"
 
 # load custom commands
+
+if [[ -f "$OPS_CONFIG/ops-commands.sh" ]]; then
+    source "$OPS_CONFIG/ops-commands.sh"
+fi
 
 if [[ -f "$OPS_SITES_DIR/$OPS_PROJECT_NAME/ops-commands.sh" ]]; then
     source "$OPS_SITES_DIR/$OPS_PROJECT_NAME/ops-commands.sh"

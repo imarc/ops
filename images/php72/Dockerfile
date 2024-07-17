@@ -1,10 +1,15 @@
-FROM php:7.2.34-apache-stretch
+FROM --platform=$BUILDPLATFORM php:7.2.34-apache-stretch AS base
 
-MAINTAINER Imarc <info@imarc.com>
+LABEL AUTHOR "Imarc <info@imarc.com>"
 
 # fix for postgresql-client
 RUN mkdir -p /usr/share/man/man1 && \
     mkdir -p /usr/share/man/man7
+
+# fix stretch repos
+RUN sed -i s/deb.debian.org/archive.debian.org/g /etc/apt/sources.list
+RUN sed -i s/security.debian.org/archive.debian.org/g /etc/apt/sources.list
+RUN sed -i s/stretch-updates/stretch/g /etc/apt/sources.list
 
 # install supporting packages
 RUN apt-get update && apt-get install -y --fix-missing \
@@ -48,8 +53,29 @@ RUN ln -s /usr/lib/x86_64-linux-gnu/libsybdb.a /usr/lib/libsybdb.a
 # Configure GD with jpeg
 RUN docker-php-ext-configure gd --with-freetype-dir=/usr/include/ --with-jpeg-dir=/usr/include/
 
+
+# AMD64 stage
+FROM base AS build-amd64
+
 # Configure LDAP
 RUN docker-php-ext-configure ldap --with-libdir=lib/x86_64-linux-gnu/
+
+# Configure DBLib
+RUN docker-php-ext-configure pdo_dblib --with-libdir=lib/x86_64-linux-gnu/
+
+
+# ARM64 stage
+FROM base AS build-arm64
+
+# Configure LDAP
+RUN docker-php-ext-configure ldap --with-libdir=lib/aarch64-linux-gnu/
+
+# Configure DBLib
+RUN docker-php-ext-configure pdo_dblib --with-libdir=lib/aarch64-linux-gnu/
+
+
+
+FROM build-${TARGETARCH} AS final
 
 # install officially supported php extensions
 RUN docker-php-ext-install \
@@ -78,7 +104,7 @@ RUN pecl install \
     sqlsrv-5.8.0 \
     pdo_sqlsrv-5.8.0 \
     redis \
-    xdebug
+    xdebug-3.1.6
 
 RUN docker-php-ext-enable \
     imagick \

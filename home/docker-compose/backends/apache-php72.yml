@@ -1,5 +1,3 @@
-version: '3'
-
 services:
   apache-php72:
     image: imarcagency/ops-apache-php72:${OPS_VERSION}
@@ -22,7 +20,9 @@ services:
 
     volumes:
       - ${OPS_HOME}/certs/rootCA.pem:/usr/local/share/ca-certificates/ops.crt
-      - ${OPS_HOME}/apache/apache.conf:/etc/apache2/sites-enabled/000-default.conf
+      - ${OPS_HOME}/apache/000-default.conf:/etc/apache2/sites-enabled/000-default.conf
+      - ${OPS_HOME}/apache/apache2.conf:/etc/apache2/apache2.conf
       - ${OPS_HOME}/apache/configure:/usr/local/bin/docker-configure
       - ${OPS_HOME}/apache/set_docroot.lua:/etc/apache2/set_docroot.lua
+      - ${OPS_HOME}/php/php72.ini:/usr/local/etc/php/conf.d/php.ini
       - ${OPS_SITES_DIR}:/var/www/html:cached
