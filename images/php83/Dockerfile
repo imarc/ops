@@ -62,10 +62,22 @@ RUN ln -s /usr/lib/x86_64-linux-gnu/libsybdb.a /usr/lib/libsybdb.a
 RUN docker-php-ext-configure gd --with-freetype --with-jpeg --with-webp
 
 # Configure LDAP
-RUN docker-php-ext-configure ldap --with-libdir=lib/aarch64-linux-gnu/
+RUN if [ "${TARGETARCH}" = "amd64" ]; then \
+        docker-php-ext-configure ldap --with-libdir=lib/x86_64-linux-gnu/; \
+    elif [ "${TARGETARCH}" = "arm64" ]; then \
+        docker-php-ext-configure ldap --with-libdir=lib/aarch64-linux-gnu/; \
+    else \
+        echo "Unsupported architecture: ${TARGETARCH}"; exit 1; \
+    fi
 
 # Configure DBLib
-RUN docker-php-ext-configure pdo_dblib --with-libdir=lib/aarch64-linux-gnu/
+RUN if [ "${TARGETARCH}" = "amd64" ]; then \
+        docker-php-ext-configure pdo_dblib --with-libdir=lib/x86_64-linux-gnu/; \
+    elif [ "${TARGETARCH}" = "arm64" ]; then \
+        docker-php-ext-configure pdo_dblib --with-libdir=lib/aarch64-linux-gnu/; \
+    else \
+        echo "Unsupported architecture: ${TARGETARCH}"; exit 1; \
+    fi
 
 # Enable Exif
 RUN docker-php-ext-configure exif --enable-exif
