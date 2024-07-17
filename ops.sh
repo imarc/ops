@@ -26,7 +26,7 @@ esac
 
 
 if [[ -z "$OS" ]]; then
-    echo "Upsupported OS. Use Macintosh, Linux, or WSL"
+    echo "Unsupported operating system. Use Macintosh, Linux, or WSL."
     exit 1
 fi
 
@@ -48,32 +48,35 @@ source $OPS_SCRIPT_DIR/cmd.sh
 
 # Internal helpers
 
+bold() { echo "$(tput bold)$*$(tput sgr0)"; }
+under() { echo "$(tput smul)$*$(tput rmul)"; }
+
 validate-config() {
     errors=()
 
     if [[ ! -d $OPS_HOME ]]; then
         echo
-        echo "Ops not installed. Please run: ops system install"
+        echo "Ops not installed. Please run: $(bold ops system install)"
         echo
         exit 1
     fi
 
     if [[ -z $OPS_SITES_DIR ]]; then
-        errors+=("OPS_SITES_DIR config is not set")
+        errors+=("$(bold OPS_SITES_DIR) is not set in your ops config.")
     fi
 
     if [[ ! -d $OPS_SITES_DIR ]]; then
-        errors+=("OPS_SITES_DIR $OPS_SITES_DIR doesn't exist")
+        errors+=("$(bold OPS_SITES_DIR) \"$OPS_SITES_DIR\" doesn't exist.")
     fi
 
     if [[ -z $OPS_DOMAIN ]]; then
-        errors+=("OPS_DOMAIN config is not set")
+        errors+=("$(bold OPS_DOMAIN) is not set in your ops config.")
     fi
 
     if [[ -n $errors ]]; then
-        echo "The following items need to be addressed:"
+        echo "The following errors need to be addressed:"
         echo
-        printf "%s\n" "${errors}"
+        printf " - %s\n" "${errors[@]}"
         echo
         exit 1
     fi
@@ -106,7 +109,7 @@ run() {
 # Main Commands
 
 ops-composer() {
-    cmd-doc "Run local composer. Fallback to composer in a container"
+    cmd-doc "Run local composer. Fallback to running composer via docker."
 
     if [[ -e "$(which composer)" ]]; then
         composer "$@"
@@ -114,7 +117,7 @@ ops-composer() {
     fi
 
     if [[ $OS != 'linux' ]]; then
-        echo 'composer required. Please install.'
+        echo 'Running composer via docker is only supported on linux. Please install composer.'
         exit 1
     fi
 
@@ -149,7 +152,7 @@ _ops-docker() {
 }
 
 ops-exec() {
-    cmd-doc "Execute a non-TTY command in a container"
+    cmd-doc "Execute a non-TTY (non-interactive) command in a container."
 
     local service=$1
     shift
@@ -167,13 +170,13 @@ ops-help--after() {
 }
 
 ops-logs() {
-    cmd-doc "Follow logs"
+    cmd-doc "Tail (display) logs."
 
     system-docker-compose logs -f --tail="30" "$@"
 }
 
 ops-env() {
-    cmd-doc "Set or get a variable in project .env file"
+    cmd-doc "Set or get a variable in the current project's .env file."
 
     #
     # list: env
@@ -217,7 +220,7 @@ _ops-mc() {
 }
 
 ops-mariadb() {
-    cmd-doc "MariaDB-specific commands"
+    cmd-doc "MariaDB-specific commands."
     cmd-alias my
 
     cmd-run mariadb "$@"
@@ -317,7 +320,7 @@ _ops-node() {
 }
 
 ops-npm() {
-    cmd-doc "Run local npm. Fallback to npm in a container"
+    cmd-doc "Run local npm. Fallback to running npm via docker."
 
     if [[ -e "$(which npm)" ]]; then
         npm "$@"
@@ -325,7 +328,7 @@ ops-npm() {
     fi
 
     if [[ $OS != 'linux' ]]; then
-        echo 'npm required. Please install.'
+        echo 'Running npm via docker is only supported on linux. Please install npm.'
         exit 1
     fi
 
@@ -362,7 +365,7 @@ _ops-package() {
 }
 
 ops-ps() {
-    cmd-doc "Show process list for ops containers"
+    cmd-doc "Display the status of all ops containers."
 
     system-docker-compose ps "$@"
 }
@@ -434,7 +437,7 @@ psql-help() {
 }
 
 ops-psql() {
-    cmd-doc "PostreSQL-specific commands"
+    cmd-doc "PostreSQL-specific commands."
     cmd-alias pg
 
     cmd-run psql "$@"
@@ -482,20 +485,20 @@ _ops-gulp() {
 }
 
 ops-redis() {
-    cmd-doc "Run interactive redis cli"
+    cmd-doc "Run interactive redis cli."
 
     system-shell-exec redis redis-cli "$@"
 }
 
 ops-restart() {
-    cmd-doc "Restart all running containers"
+    cmd-doc "Restart all running containers."
     ops-stop
 
     ops-start
 }
 
 ops-shell() {
-    cmd-doc "Enter shell or execute command"
+    cmd-doc "Enter shell or execute a command within the webserver's container."
     cmd-alias sh
 
     # remove port
@@ -504,6 +507,30 @@ ops-shell() {
     local project_id=$(project-docker-compose ps -q $backend 2> /dev/null)
     local project=$(project-name)
     local command="$OPS_SHELL_COMMAND"
+
+    if [[ -z "$project" ]]; then
+        echo "$(bold ops shell) must be run from a project directory."
+        exit 1
+    fi
+
+    if [[ -z "$id" ]]; then
+        echo "Unable to determine the container ID for current project's backend."
+        exit
+    fi
+
+    if [[ ! -z "$1" ]]; then
+        command="$@"
+    fi
+
+    if [[ -z "$id" ]]; then
+        echo "Unable to determine the container ID for current project's backend."
+        exit 1
+    fi
+
+    if [[ -z "$(docker ps -qf id=$id)" ]]; then
+        echo "The project's backend container is not running. Run $(bold ops start) to start services."
+        exit 1
+    fi
 
     if [[ ! -z "$1" ]]; then
         command="$@"
@@ -543,7 +570,7 @@ ops-www() {
 }
 
 ops-link() {
-    cmd-doc "Link and start project-specific containers"
+    cmd-doc "Link and start project-specific containers."
     cmd-alias ln
 
     local project_name=$(project-name)
@@ -559,7 +586,7 @@ ops-link() {
 }
 
 ops-unlink() {
-    cmd-doc "Unlink and stop project-specific containers"
+    cmd-doc "Unlink and stop project-specific containers."
 
     local project_name=$(project-name)
 
@@ -574,13 +601,13 @@ ops-unlink() {
 }
 
 ops-project() {
-    cmd-doc "Project-specific commands"
+    cmd-doc "Project-specific commands."
 
     cmd-run project "$@"
 }
 
 ops-stats() {
-    cmd-doc "Watch service stats"
+    cmd-doc "Watch service stats."
 
     local ids=$(system-docker-compose ps -q)
 
@@ -592,7 +619,7 @@ ops-stats() {
 }
 
 ops-start() {
-    cmd-doc "Start services"
+    cmd-doc "Start services."
     cmd-alias up
 
     echo 'Starting ops services...'
@@ -619,12 +646,12 @@ ops-start() {
     done
 
     echo
-    echo "Visit your dashboard: ${OPS_DASHBOARD_URL}"
+    echo "Visit your dashboard: $(bold $OPS_DASHBOARD_URL)"
     echo
 }
 
 ops-stop() {
-    cmd-doc "Stop services"
+    cmd-doc "Stop services."
     cmd-alias down
 
     system-stop
@@ -654,7 +681,7 @@ ops-stop() {
 }
 
 ops-sync() {
-    cmd-doc "Sync remote databases/files to local project"
+    cmd-doc "Sync remote databases/files to local project."
 
     # Ops sync assumes the following:
     #
@@ -665,7 +692,7 @@ ops-sync() {
     RSYNC_BIN=$(which rsync)
 
     if [[ -z "$RSYNC_BIN" ]]; then
-        echo 'Rsync is a required dependency. Please install.'
+        echo '$(bold rsync) is a required dependency. Please install.'
         exit 1
     fi
 
@@ -675,7 +702,7 @@ ops-sync() {
     (
 
     if [[ -z "$OPS_PROJECT_NAME" ]]; then
-        echo "sync must be run from a project directory"
+        echo "$(bold ops sync) must be run from a project directory."
     fi
 
     cd "$OPS_SITES_DIR/$OPS_PROJECT_NAME"
@@ -704,14 +731,14 @@ ops-sync() {
         [[ ! -z "$OPS_PROJECT_REMOTE_DB_NAME" ]]
     then
         if [[ "$OPS_PROJECT_REMOTE_OPS" != 0 ]]; then
-            echo "Syncing remote mariadb '$OPS_PROJECT_REMOTE_DB_NAME' to local '$OPS_PROJECT_DB_NAME'"
+            echo "Syncing remote mariadb '$OPS_PROJECT_REMOTE_DB_NAME' to local '$OPS_PROJECT_DB_NAME'..."
 
             ssh -C "$ssh_host" \
                 "ops $OPS_PROJECT_REMOTE_DB_TYPE export $OPS_PROJECT_REMOTE_DB_NAME" | \
                 $OPS_PROJECT_DB_TYPE-import "$OPS_PROJECT_DB_NAME"
 
         elif [[ "$OPS_PROJECT_REMOTE_DB_TYPE" = "mariadb" ]]; then
-            echo "Syncing remote mariadb '$OPS_PROJECT_REMOTE_DB_NAME' to local '$OPS_PROJECT_DB_NAME'"
+            echo "Syncing remote mariadb '$OPS_PROJECT_REMOTE_DB_NAME' to local '$OPS_PROJECT_DB_NAME'..."
 
             local mysqldump_password="$([[ ! -z $OPS_PROJECT_REMOTE_DB_PASSWORD ]] && echo "-p\"$OPS_PROJECT_REMOTE_DB_PASSWORD\"")"
             local mysqldump_host="$([[ ! -z $OPS_PROJECT_REMOTE_DB_HOST ]] && echo "-h $OPS_PROJECT_REMOTE_DB_HOST")"
@@ -729,7 +756,7 @@ ops-sync() {
         elif [[ "$OPS_PROJECT_REMOTE_DB_TYPE" = "psql" ]]; then
             OPS_PROJECT_REMOTE_DB_PORT="${OPS_PROJECT_REMOTE_DB_PORT:-"5432"}"
 
-            echo "Importing database from $OPS_PROJECT_REMOTE_DB_NAME to '$OPS_PROJECT_DB_NAME' pgsql database"
+            echo "Importing database from $OPS_PROJECT_REMOTE_DB_NAME to '$OPS_PROJECT_DB_NAME' pgsql database..."
 
             #local pgdump_password="$([[ ! -z $OPS_PROJECT_REMOTE_DB_PASSWORD ]] && echo "-p$OPS_PROJECT_REMOTE_DB_PASSWORD")"
             local pgdump_host="$([[ ! -z $OPS_PROJECT_REMOTE_DB_HOST ]] && echo "-h $OPS_PROJECT_REMOTE_DB_HOST")"
@@ -804,7 +831,7 @@ ops-system() {
 }
 
 ops-version() {
-    cmd-doc "Show ops version"
+    cmd-doc "Show ops version."
 
     echo "ops version $OPS_VERSION"
 }
@@ -837,7 +864,7 @@ project-dotenv-linter() {
 }
 
 project-ls() {
-    cmd-doc "List all projects in OPS_SITES_DIR"
+    cmd-doc "List all projects in OPS_SITES_DIR."
 
 
     (
@@ -847,20 +874,18 @@ project-ls() {
 }
 
 project-name() {
-    (
-        if [[ "$(pwd)" != $OPS_SITES_DIR/* ]]; then
-            exit 1
-        fi
-    )
-
-    echo $(
-        local basename="$(basename $(pwd))"
-        while [[ "$(pwd)" != $OPS_SITES_DIR ]] && [[ "$(pwd)" != '/' ]]; do
-            basename=$(basename $(pwd))
-            cd ..
-        done
-        echo -n $basename
-    )
+    if [[ "$(pwd)" != $OPS_SITES_DIR/* ]]; then
+        exit 1
+    else
+        echo $(
+            local basename="$(basename $(pwd))"
+            while [[ "$(pwd)" != $OPS_SITES_DIR ]] && [[ "$(pwd)" != '/' ]]; do
+                basename=$(basename $(pwd))
+                cd ..
+            done
+            echo -n $basename
+        )
+    fi
 }
 
 project-start() {
@@ -949,9 +974,15 @@ system-shell-exec() {
     shift
 
     if [[ -z $id ]]; then
-        echo "Service $service not available. Run: ops start"
+        echo "Unable to determine container ID for the $service service."
         exit 1
     fi
+
+    if [[ -z "$(docker ps -qf id=$id)" ]]; then
+        echo "Service $service is not running. Run $(bold ops start) to start services."
+        exit 1
+    fi
+
 
     _ops-docker exec -it $id "$@"
 }
