@@ -121,7 +121,7 @@ cmd-run() {
 
     if [[ $has_help == 0 ]]; then
         eval "$prefix-help() { \
-            cmd-doc 'Show help'; \
+            cmd-doc 'Show ops help.'; \
             cmd-help '$prefix' '$prefix' \"\$@\"; \
         }"
     fi

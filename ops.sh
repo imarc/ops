@@ -456,7 +456,7 @@ psql-www() {
 }
 
 ops-lt() {
-    cmd-doc "Create a localtunnel to your project"
+    cmd-doc "Create a localtunnel to your project."
 
     local project="$(ops project name)"
 
@@ -553,7 +553,7 @@ ops-shell() {
 }
 
 ops-root() {
-  cmd-doc "connect as root to an ops container"
+  cmd-doc "Connect as root to an ops container."
   OPS_SHELL_USER=root ops-shell
 }
 
