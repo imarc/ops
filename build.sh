@@ -1,5 +1,14 @@
 #!/bin/sh
 
+################################################################################
+#
+# DEPRECATION NOTICE
+#
+# This file should still work for building images locally, however the official
+# builds of imarc/ops docker images is now been moved to a CI/CD pipeline.
+#
+################################################################################
+
 set -e
 
 if [ -z $OPS_VERSION ]; then
