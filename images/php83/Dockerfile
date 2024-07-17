@@ -1,4 +1,4 @@
-FROM --platform=$BUILDPLATFORM php:8.3.3-apache-bullseye
+FROM --platform=$BUILDPLATFORM php:8.3.3-apache-bullseye AS base
 
 MAINTAINER Imarc <info@imarc.com>
 
@@ -61,11 +61,29 @@ RUN ln -s /usr/lib/x86_64-linux-gnu/libsybdb.a /usr/lib/libsybdb.a
 # Configure GD with jpeg
 RUN docker-php-ext-configure gd --with-freetype --with-jpeg --with-webp
 
+
+# AMD64 stage
+FROM base as build-amd64
+
 # Configure LDAP
-RUN if [ "${TARGETARCH}" = "amd64" ]; then docker-php-ext-configure ldap --with-libdir=lib/x86_64-linux-gnu/; elif [ "${TARGETARCH}" = "arm64" ]; then docker-php-ext-configure ldap --with-libdir=lib/aarch64-linux-gnu/; else echo "Unsupported architecture: ${TARGETARCH}"; exit 1; fi
+RUN docker-php-ext-configure ldap --with-libdir=lib/x86_64-linux-gnu/
 
 # Configure DBLib
-RUN if [ "${TARGETARCH}" = "amd64" ]; then docker-php-ext-configure pdo_dblib --with-libdir=lib/x86_64-linux-gnu/; elif [ "${TARGETARCH}" = "arm64" ]; then docker-php-ext-configure pdo_dblib --with-libdir=lib/aarch64-linux-gnu/; else echo "Unsupported architecture: ${TARGETARCH}"; exit 1; fi
+RUN docker-php-ext-configure pdo_dblib --with-libdir=lib/x86_64-linux-gnu/
+
+
+# ARM64 stage
+FROM base as build-arm64
+
+# Configure LDAP
+RUN docker-php-ext-configure ldap --with-libdir=lib/aarch64-linux-gnu/
+
+# Configure DBLib
+RUN docker-php-ext-configure pdo_dblib --with-libdir=lib/aarch64-linux-gnu/
+
+
+
+FROM build-${TARGETARCH} as final
 
 # Enable Exif
 RUN docker-php-ext-configure exif --enable-exif
