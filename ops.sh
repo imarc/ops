@@ -860,13 +860,13 @@ _ops-yarn() {
 # Site sub sommands
 
 project-docker-compose() {
-    cmd-doc "Run docker-compose commands for the current project."
+    cmd-doc "Run docker compose commands for the current project."
     local project_name=$(project-name)
 
     OPS_PROJECT_NAME="$project_name" \
     COMPOSE_PROJECT_NAME="ops-$project_name" \
     COMPOSE_FILE="$OPS_PROJECT_COMPOSE_FILE" \
-    docker-compose --project-directory "$OPS_SITES_DIR/$project_name" "$@"
+    docker compose --project-directory "$OPS_SITES_DIR/$project_name" "$@"
 }
 
 project-dotenv-linter() {
@@ -966,7 +966,7 @@ project-stats() {
 # System Sub-Commands
 
 system-docker-compose() {
-    cmd-doc "Run docker-compose commands for the ops system containers."
+    cmd-doc "Run docker compose commands for the ops system containers."
 
     COMPOSE_FILE="$OPS_HOME/docker-compose/system/base.yml"
     #COMPOSE_FILE="$COMPOSE_FILE:$OPS_HOME/docker-compose/services/traefik.yml"
@@ -987,7 +987,7 @@ system-docker-compose() {
 
     COMPOSE_PROJECT_NAME="ops" \
     COMPOSE_FILE=$COMPOSE_FILE \
-    docker-compose "$@"
+    docker compose "$@"
 }
 
 system-shell-exec() {
@@ -1022,12 +1022,12 @@ system-check() {
     fi
 
     echo -n "docker-compose: "
-    if [[ -z $(which docker-compose) ]]; then
-        echo "not found"
-    elif ! version-greater-than $(docker-compose --version | get-version) $OPS_DOCKER_COMPOSE_VERSION; then
-        echo "version must be at least 1.22.0"
+    if docker compose version; then
+        echo "found."
+    elif ! version-greater-than $(docker compose version | get-version) $OPS_DOCKER_COMPOSE_VERSION; then
+        echo "version must be at least 1.22.0."
     else
-        echo "found"
+        echo "Error checking for docker compose version."
     fi
 
     echo -n "rsync: "
@@ -1304,7 +1304,7 @@ fi
 if [[ -f "$OPS_CONFIG/config" ]]; then
     source $OPS_CONFIG/config
 
-    # generate a literal (non-quoted) version for docker-compose
+    # generate a literal (non-quoted) version for docker compose
     # https://github.com/docker/compose/issues/3702
     cat $OPS_CONFIG/config |
         sed -e '/^$/d' -e '/^#/d' |
