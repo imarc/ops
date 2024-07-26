@@ -1,11 +1,19 @@
 {
   "name": "@imarc/ops",
-  "version": "0.16.6",
-  "private": true,
+  "version": "0.16.7",
+  "private": false,
   "bin": {
     "ops": "./ops.sh"
   },
   "scripts": {
     "version": "bash build.sh"
-  }
+  },
+  "author": "Imarc LLC",
+  "contributors": [
+    {
+      "name": "Jeff Turcote",
+      "email": "jeff@imarc.com"
+    }
+  ],
+  "license": "MIT"
 }
