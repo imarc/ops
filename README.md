@@ -192,6 +192,12 @@ username: postgres<br>
 password: *none*<br>
 port: 5432
 
+**PostgreSQL 16.3**<br>
+hostname: postgres16<br>
+username: postgres<br>
+password: *none*<br>
+port: 5432
+
 **Redis 3.2**<br>
 hostname: redis<br>
 port: 6379
