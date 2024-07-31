@@ -4,6 +4,19 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/)
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.16.7] - 2024-07-30
+
+Postgres 9 will be removed in a later version.
+
+### Added
+- Postgres 16
+- `ops system networking` debug command
+- Adminer login plugin
+
+### Changed
+- Upgraded Adminer to latest version.
+
+
 ## [0.16.6] - 2024-07-17
 
 This version includes upgrading ops's MariaDB version from 10.3 to 11.4. You

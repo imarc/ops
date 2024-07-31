@@ -70,4 +70,5 @@ volumes:
   minio:
   portainer:
   postgres:
+  postgres16:
   mariadb:

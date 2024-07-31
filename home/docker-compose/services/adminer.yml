@@ -1,6 +1,6 @@
 services:
   adminer:
-    image: "clue/adminer"
+    image: "adminer:4.8.1"
     networks:
       - backend
       - gateway
@@ -9,3 +9,5 @@ services:
       - "traefik.enable=true"
       - "traefik.docker.network=ops_gateway"
       - "${OPS_ADMIN_AUTH_LABEL_PREFIX}traefik.frontend.auth.basic.users=${OPS_ADMIN_AUTH}"
+    volumes:
+      - ${OPS_HOME}/adminer:/var/www/html/plugins-enabled:cached

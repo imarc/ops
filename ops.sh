@@ -377,7 +377,8 @@ ops-ps() {
 psql-cli() {
     cmd-doc "Run the psql interactive shell."
     cmd-alias sh
-    system-shell-exec postgres psql -U postgres "$@"
+
+    system-shell-exec "$OPS_POSTGRES_SERVICE" psql -U postgres "$@"
 }
 
 psql-create() {
@@ -407,14 +408,23 @@ psql-drop() {
 
 psql-run() {
     cmd-doc "Run SQL via psql."
-    ops-exec postgres psql -U postgres "${@}"
+    ops-exec "$OPS_POSTGRES_SERVICE" psql -U postgres "${@}"
 }
 
 psql-list() {
     cmd-doc "List all PostgreSQL databases."
     cmd-alias ls
-    ops-exec postgres psql -U postgres -t -c "SELECT datname FROM pg_database WHERE datname NOT IN ('template0', 'template1', 'postgres')" | \
+
+    ops-exec "$OPS_POSTGRES_SERVICE" psql -U postgres -t -c "SELECT datname FROM pg_database WHERE datname NOT IN ('template0', 'template1', 'postgres')" | \
     sed -e "s/^ *//" -e "/^$/d"
+}
+
+psql-backup() {
+    cmd-doc "Backup all PostgresSQL databases."
+
+    local db="$1"
+
+    ops-exec "$OPS_POSTGRES_SERVICE" pg_dumpall -U postgres
 }
 
 psql-export() {
@@ -422,7 +432,7 @@ psql-export() {
 
     local db="$1"
 
-    ops-exec postgres pg_dump -U postgres "$db"
+    ops-exec "$OPS_POSTGRES_SERVICE" pg_dump -U postgres "$db"
 }
 
 psql-import() {
@@ -432,11 +442,11 @@ psql-import() {
 
     (
         # don't let these commands capture stdin
-        ops-exec postgres psql -U postgres -c "DROP DATABASE IF EXISTS $db"
-        ops-exec postgres psql -U postgres -c "CREATE DATABASE $db"
+        ops-exec "$OPS_POSTGRES_SERVICE" psql -U postgres -c "DROP DATABASE IF EXISTS $db"
+        ops-exec "$OPS_POSTGRES_SERVICE" psql -U postgres -c "CREATE DATABASE $db"
     ) </dev/null
 
-    cat "$sqlfile" | ops-exec postgres psql -U postgres "$db"
+    cat "$sqlfile" | ops-exec "$OPS_POSTGRES_SERVICE" psql -U postgres "$db"
 }
 
 psql-help() {
@@ -990,6 +1000,31 @@ system-docker-compose() {
     docker compose "$@"
 }
 
+system-networking() {
+    # Initialize an empty array to store the results
+    results=()
+
+    # Get a list of all container IDs
+    container_ids=$(system-docker-compose ps -q)
+
+    for container_id in $container_ids; do
+        # Get the container name
+        container_name=$(docker inspect --format '{{.Name}}' $container_id | sed -e 's/^\///g' -e 's/ops-//' -e 's/-[0-9]$//')
+
+        # Get the networks the container is connected to
+        networks=$(docker inspect --format '{{range $key, $value := .NetworkSettings.Networks}}{{$key}}, {{end}}' $container_id | sed -r -e 's/ops_//g' -e 's/, $//')
+
+        # Append the result to the array
+        results+=("${container_name}: ${networks}")
+    done
+
+    # Sort the results
+    sorted_results=$(printf "%s\n" "${results[@]}" | sort)
+
+    # Print the sorted results
+    echo "${sorted_results}"
+}
+
 system-shell-exec() {
     cmd-doc "Interactively execute a command in an ops system service."
     local service=$1
@@ -1318,7 +1353,7 @@ declare -x OPS_ENV="dev"
 declare -x OPS_DEBUG="${OPS_DEBUG}"
 declare -x OPS_TEST_MODE="${OPS_TEST_MODE}"
 declare -x OPS_BACKENDS=${OPS_BACKENDS-"apache-php74 apache-php82"}
-declare -x OPS_SERVICES=${OPS_SERVICES-"portainer dashboard mariadb postgres redis adminer redis-commander"}
+declare -x OPS_SERVICES=${OPS_SERVICES-"portainer dashboard mariadb postgres postgres16 redis adminer redis-commander"}
 declare -x OPS_DOCKER_COMPOSER_IMAGE=${OPS_DOCKER_COMPOSER_IMAGE-"imarcagency/ops-apache-php80:$OPS_VERSION"}
 declare -x OPS_DOCKER_NODE_IMAGE=${OPS_DOCKER_NODE_IMAGE-"imarcagency/ops-node:$OPS_VERSION"}
 declare -x OPS_DOCKER_UTILS_IMAGE=${OPS_DOCKER_UTILS_IMAGE-"imarcagency/ops-utils:$OPS_VERSION"}
@@ -1332,6 +1367,7 @@ declare -x OPS_DOMAIN_ALIASES=${OPS_DOMAIN_ALIASES-""}
 declare -x OPS_MINIO_ROOT_USER=${OPS_MINIO_ROOT_USER-"minio-user"}
 declare -x OPS_MINIO_ROOT_PASSWORD=${OPS_MINIO_ROOT_PASSWORD-"minio-password"}
 declare -x OPS_SITES_DIR=${OPS_SITES_DIR-"$HOME/Sites"}
+declare -x OPS_POSTGRES_SERVICE=${OPS_POSTGRES_SERVICE-"postgres9"}
 declare -x OPS_SERVICES_SUBNET=${OPS_SERVICES_SUBNET-"172.23.0.0/16"}
 declare -x OPS_ACME_EMAIL=${OPS_ACME_EMAIL-""}
 declare -x OPS_ACME_DOMAINS=${OPS_ACME_DOMAINS-""}

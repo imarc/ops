@@ -19,6 +19,7 @@ class DashboardHandler extends Handler
             'databases' => [
                 'mariadb' => false,
                 'postgres' => false,
+                'postgres16' => false,
             ],
             'errors' => [],
             'sites' => [],
@@ -39,8 +40,13 @@ class DashboardHandler extends Handler
         }
 
         if (in_array('postgres', $data['services'])) {
-        	$postgres = new PDO('pgsql:host=postgres;user=postgres');
+        	$postgres = new PDO('pgsql:host=postgres9;user=postgres');
         	$data['databases']['postgres'] = $postgres->query('SELECT datname AS name FROM pg_database WHERE datistemplate = false');
+        }
+
+        if (in_array('postgres16', $data['services'])) {
+        	$postgres = new PDO('pgsql:host=postgres16;user=postgres');
+        	$data['databases']['postgres16'] = $postgres->query('SELECT datname AS name FROM pg_database WHERE datistemplate = false');
         }
 
         return $this->view('index', $data);

@@ -114,10 +114,10 @@
 
         <?php if ($databases['postgres'] !== false): ?>
             <header>
-                <h3>Postgres</h3>
+                <h3>PostgreSQL 9</h3>
                 <small>
                     /
-                <a href="https://adminer.ops.<?= $domain ?>/?pgsql=postgres&username=postgres&database=">create db</a>
+                <a href="https://adminer.ops.<?= $domain ?>/?pgsql=postgres9&username=postgres&database=">create db</a>
                 </small>
             </header>
 
@@ -129,10 +129,42 @@
                 } ?>
 
                 <li>
-                    <?php $link = "https://adminer.ops.${domain}/?pgsql=postgres&username=postgres&ns=public&db=" . $db['name'] ?>
+                    <?php $link = "https://adminer.ops.${domain}/?pgsql=postgres9&username=postgres&ns=public&db=" . $db['name'] ?>
                     <?= sprintf('<a href="%s">%s</a>', $link, $db['name']) ?>
 
-                    <?php $sqlLink = "https://adminer.ops.${domain}/?pgsql=postgres&username=postgres&ns=public&sql=&db=" . $db['name'] ?>
+                    <?php $sqlLink = "https://adminer.ops.${domain}/?pgsql=postgres9&username=postgres&ns=public&sql=&db=" . $db['name'] ?>
+                    <?= sprintf('<small> / <a href="%s">query</a></li></small>', $sqlLink) ?>
+                </li>
+                <?php $count++ ?>
+            <?php endforeach ?>
+
+            <?php if ($count === 0): ?>
+                <li><em>None</em></li>
+            <?php endif ?>
+            </ul>
+        <?php endif ?>
+
+        <?php if ($databases['postgres16'] !== false): ?>
+            <header>
+                <h3>PostgreSQL 16</h3>
+                <small>
+                    /
+                <a href="https://adminer.ops.<?= $domain ?>/?pgsql=postgres16&username=postgres&database=">create db</a>
+                </small>
+            </header>
+
+            <ul>
+            <?php $count = 0 ?>
+            <?php foreach ($databases['postgres16'] as $db): ?>
+                <?php if (in_array($db['name'], ['postgres'])) {
+                    continue;
+                } ?>
+
+                <li>
+                    <?php $link = "https://adminer.ops.${domain}/?pgsql=postgres16&username=postgres&ns=public&db=" . $db['name'] ?>
+                    <?= sprintf('<a href="%s">%s</a>', $link, $db['name']) ?>
+
+                    <?php $sqlLink = "https://adminer.ops.${domain}/?pgsql=postgres16&username=postgres&ns=public&sql=&db=" . $db['name'] ?>
                     <?= sprintf('<small> / <a href="%s">query</a></li></small>', $sqlLink) ?>
                 </li>
                 <?php $count++ ?>
@@ -153,7 +185,7 @@
                     <?php
                     if (!isset($containers['data']['ops'][$key])) {
                         continue;
-                    } 
+                    }
                     ?>
 
                     <?php if (isset($containers['data']['ops'][$key])): ?>
@@ -192,13 +224,27 @@
                     <?php endif ?>
 
                     <?php if ($databases['postgres']): ?>
+
                     <li>
-                        <a href="https://adminer.ops.<?= $domain ?>/?pgsql=postgres&amp;username=postgres">PostgreSQL</a>
+                        <a href="https://adminer.ops.<?= $domain ?>/?pgsql=postgres9&amp;username=postgres">PostgreSQL 9</a>
 
                         <?= sprintf(
                             '<small> / <a href="%s">logs</a> / <a href="%s">console</a> </small>',
-                            $containers['data']['ops']['postgres']['logs_link'],
-                            $containers['data']['ops']['postgres']['console_link']
+                            $containers['data']['ops']['postgres9']['logs_link'],
+                            $containers['data']['ops']['postgres9']['console_link']
+                        ) ?>
+                    </li>
+                    <?php endif ?>
+
+                    <?php if ($databases['postgres16']): ?>
+
+                    <li>
+                        <a href="https://adminer.ops.<?= $domain ?>/?pgsql=postgres16&amp;username=postgres">PostgreSQL 16</a>
+
+                        <?= sprintf(
+                            '<small> / <a href="%s">logs</a> / <a href="%s">console</a> </small>',
+                            $containers['data']['ops']['postgres16']['logs_link'],
+                            $containers['data']['ops']['postgres16']['console_link']
                         ) ?>
                     </li>
                     <?php endif ?>
