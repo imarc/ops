@@ -1331,8 +1331,8 @@ main() {
 # options that can be overidden by environment
 
 if [ -n "$XDG_CURRENT_DESKTOP" ]; then
-    export OPS_HOME="${OPS_HOME-"${XDG_DATA_HOME-"$HOME/.local/share/ops"}"}"
-    export OPS_CONFIG="${OPS_CONFIG-"${XDG_CONFIG_HOME-"$HOME/.config/ops"}"}"
+    export OPS_HOME="${OPS_HOME-"${XDG_DATA_HOME-"$HOME/.local/share"}/ops"}"
+    export OPS_CONFIG="${OPS_CONFIG-"${XDG_CONFIG_HOME-"$HOME/.config"}/ops"}"
 else
     export OPS_HOME="${OPS_HOME-"$HOME/.ops"}"
     export OPS_CONFIG="${OPS_CONFIG-"$HOME/.ops"}"
