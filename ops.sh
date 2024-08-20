@@ -1317,8 +1317,8 @@ main() {
         validate-config
     fi
 
-    declare -x OPS_SERVICES_DNS_IP="$(echo -n $OPS_SERVICES_SUBNET | cut -f1,2 -d'.' | sed 's/$/.10.10/')"
-    declare -x OPS_SERVICES_TRAEFIK_IP="$(echo -n $OPS_SERVICES_SUBNET | cut -f1,2 -d'.' | sed 's/$/.10.11/')"
+    declare -x OPS_SERVICES_DNS_IP="${OPS_SERVICES_DNS_IP-"$(echo -n $OPS_SERVICES_SUBNET | cut -f1,2 -d'.' | sed 's/$/.10.10/')"}"
+    declare -x OPS_SERVICES_TRAEFIK_IP="${OPS_SERVICES_TRAEFIK_IP-"$(echo -n $OPS_SERVICES_SUBNET | cut -f1,2 -d'.' | sed 's/$/.10.11/')"}"
 
     cmd-run ops "$@"
     exit
