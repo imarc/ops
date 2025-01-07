@@ -46,8 +46,11 @@ RUN apt-get update && apt-get install -y --fix-missing \
     python \
     unixodbc-dev \
     vim \
-    wget
+    wget \
+    openssl
 
+RUN openssl s_client -connect packages.microsoft.com:443
+RUN curl -vvvv https://packages.microsoft.com/keys/microsoft.asc
 RUN curl -sSL https://packages.microsoft.com/keys/microsoft.asc > /tmp/microsoft.asc 
 RUN echo /tmp/microsoft.asc
 RUN gpg --dearmor -o /etc/apt/trusted.gpg.d/microsoft.gpg /tmp/microsoft.asc
