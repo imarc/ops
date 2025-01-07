@@ -47,7 +47,7 @@ RUN apt-get update && apt-get install -y --fix-missing \
     vim \
     wget
 
-RUN curl -sSL https://packages.microsoft.com/keys/microsoft.asc | apt-key add -
+RUN curl -sSL https://packages.microsoft.com/keys/microsoft.asc | gpg --dearmor -o /etc/apt/trusted.gpg.d/microsoft.gpg
 RUN curl -sSL https://packages.microsoft.com/config/debian/11/prod.list > /etc/apt/sources.list.d/mssql-release.list
 RUN apt-get update
 RUN ACCEPT_EULA=y apt-get install -y \
