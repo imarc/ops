@@ -13,6 +13,7 @@ RUN apt-get update && apt-get install -y --fix-missing \
     apt-transport-https \
     autoconf \
     build-essential \
+    ca-certificates \
     chrpath \
     curl \
     dnsutils \
