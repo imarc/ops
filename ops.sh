@@ -985,6 +985,10 @@ system-docker-compose() {
         COMPOSE_FILE="$COMPOSE_FILE:$OPS_HOME/docker-compose/services/$service.yml"
     done
 
+    for service in $OPS_EXTRA_SERVICES; do
+        COMPOSE_FILE="$COMPOSE_FILE:$OPS_HOME/docker-compose/services/$service.yml"
+    done
+
     for backend in $OPS_BACKENDS; do
         COMPOSE_FILE="$COMPOSE_FILE:$OPS_HOME/docker-compose/backends/$backend.yml"
     done
@@ -1354,6 +1358,7 @@ declare -x OPS_DEBUG="${OPS_DEBUG}"
 declare -x OPS_TEST_MODE="${OPS_TEST_MODE}"
 declare -x OPS_BACKENDS=${OPS_BACKENDS-"apache-php74 apache-php82"}
 declare -x OPS_SERVICES=${OPS_SERVICES-"portainer dashboard mariadb postgres postgres16 redis adminer redis-commander"}
+declare -x OPS_EXTRA_SERVICES="${OPS_EXTRA_SERVICES}"
 declare -x OPS_DOCKER_COMPOSER_IMAGE=${OPS_DOCKER_COMPOSER_IMAGE-"imarcagency/ops-apache-php80:$OPS_VERSION"}
 declare -x OPS_DOCKER_NODE_IMAGE=${OPS_DOCKER_NODE_IMAGE-"imarcagency/ops-node:$OPS_VERSION"}
 declare -x OPS_DOCKER_UTILS_IMAGE=${OPS_DOCKER_UTILS_IMAGE-"imarcagency/ops-utils:$OPS_VERSION"}

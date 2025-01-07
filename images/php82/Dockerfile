@@ -140,6 +140,7 @@ RUN a2enmod \
     expires \
     headers \
     macro \
+    include \
     http2 \
     lua \
     rewrite \

@@ -149,6 +149,7 @@ RUN a2enmod \
     cache_disk \
     expires \
     headers \
+    include \
     macro \
     http2 \
     lua \

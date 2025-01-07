@@ -1,0 +1,14 @@
+services:
+  postgres13:
+    image: "postgres:13"
+    environment:
+        PGDATA: "/var/lib/postgresql/data/pgdata"
+        POSTGRES_HOST_AUTH_METHOD: 'trust'
+    networks:
+      - backend
+    labels:
+      - "ops.project=ops"
+    ports:
+      - "127.0.0.1:5434:5433"
+    volumes:
+      - "postgres13:/var/lib/postgresql/data/pgdata:delegated"
