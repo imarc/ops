@@ -48,7 +48,8 @@ RUN apt-get update && apt-get install -y --fix-missing \
     wget
 
 RUN curl -sSL https://packages.microsoft.com/keys/microsoft.asc | gpg --dearmor -o /usr/share/keyrings/microsoft.gpg
-RUN echo "deb [signed-by=/usr/share/keyrings/microsoft.gpg] https://packages.microsoft.com/config/debian/11/prod.list stable main" > /etc/apt/sources.list.d/mssql-release.list
+RUN curl -sSL https://packages.microsoft.com/config/debian/11/prod.list > /etc/apt/sources.list.d/mssql-release.list
+#RUN echo "deb [signed-by=/usr/share/keyrings/microsoft.gpg] https://packages.microsoft.com/config/debian/11/prod.list stable main" > /etc/apt/sources.list.d/mssql-release.list
 
 RUN apt-get update
 RUN ACCEPT_EULA=y apt-get install -y \
