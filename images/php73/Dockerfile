@@ -110,6 +110,8 @@ RUN docker-php-ext-install \
     zip
 
 # install pecl extensions
+RUN pecl channel-update pecl.php.net
+
 RUN pecl install \
     imagick \
     memcached \
