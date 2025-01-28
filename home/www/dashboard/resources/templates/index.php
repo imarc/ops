@@ -96,10 +96,10 @@
 
                     <li>
                         <?php
-                        $link = "https://adminer.ops.${domain}/?server=mariadb&username=root&db=" . $db[0];
+                        $link = "https://adminer.ops.{$domain}/?server=mariadb&username=root&db=" . $db[0];
                     echo sprintf('<a href="%s">%s</a>', $link, $db[0]);
 
-                    $sqlLink = "https://adminer.ops.${domain}/?server=mariadb&username=root&sql=&db=" . $db[0];
+                    $sqlLink = "https://adminer.ops.{$domain}/?server=mariadb&username=root&sql=&db=" . $db[0];
                     echo sprintf('<small> / <a href="%s">query</a></li></small>', $sqlLink); ?>
                     </li>
 
@@ -129,10 +129,10 @@
                 } ?>
 
                 <li>
-                    <?php $link = "https://adminer.ops.${domain}/?pgsql=postgres9&username=postgres&ns=public&db=" . $db['name'] ?>
+                    <?php $link = "https://adminer.ops.{$domain}/?pgsql=postgres9&username=postgres&ns=public&db=" . $db['name'] ?>
                     <?= sprintf('<a href="%s">%s</a>', $link, $db['name']) ?>
 
-                    <?php $sqlLink = "https://adminer.ops.${domain}/?pgsql=postgres9&username=postgres&ns=public&sql=&db=" . $db['name'] ?>
+                    <?php $sqlLink = "https://adminer.ops.{$domain}/?pgsql=postgres9&username=postgres&ns=public&sql=&db=" . $db['name'] ?>
                     <?= sprintf('<small> / <a href="%s">query</a></li></small>', $sqlLink) ?>
                 </li>
                 <?php $count++ ?>
@@ -161,10 +161,10 @@
                 } ?>
 
                 <li>
-                    <?php $link = "https://adminer.ops.${domain}/?pgsql=postgres16&username=postgres&ns=public&db=" . $db['name'] ?>
+                    <?php $link = "https://adminer.ops.{$domain}/?pgsql=postgres16&username=postgres&ns=public&db=" . $db['name'] ?>
                     <?= sprintf('<a href="%s">%s</a>', $link, $db['name']) ?>
 
-                    <?php $sqlLink = "https://adminer.ops.${domain}/?pgsql=postgres16&username=postgres&ns=public&sql=&db=" . $db['name'] ?>
+                    <?php $sqlLink = "https://adminer.ops.{$domain}/?pgsql=postgres16&username=postgres&ns=public&sql=&db=" . $db['name'] ?>
                     <?= sprintf('<small> / <a href="%s">query</a></li></small>', $sqlLink) ?>
                 </li>
                 <?php $count++ ?>
