@@ -98,12 +98,13 @@ RUN docker-php-ext-install \
     zip
 
 # install redis / xdebug extensions
+RUN pecl channel-update pecl.php.net
 RUN pecl install \
     imagick \
     memcached \
     sqlsrv-5.8.0 \
     pdo_sqlsrv-5.8.0 \
-    redis \
+    redis-5.3.7 \
     xdebug-3.1.6
 
 RUN docker-php-ext-enable \
