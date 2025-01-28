@@ -8,6 +8,7 @@ use Zend\Diactoros\Response;
 
 abstract class Handler implements RequestHandlerInterface
 {
+    private $config;
     private $templates;
     private $response;
 

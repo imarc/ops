@@ -1,6 +1,6 @@
 services:
   dashboard:
-    image: imarcagency/ops-apache-php73:${OPS_VERSION}
+    image: imarcagency/ops-apache-php83:${OPS_VERSION}
     labels:
       - "ops.project=ops"
       - "traefik.enable=true"
