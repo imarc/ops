@@ -115,7 +115,7 @@ RUN pecl channel-update pecl.php.net
 RUN pecl install \
     imagick \
     memcached \
-    redis \
+    redis-5.3.7 \
     xdebug-3.1.6 \
     sqlsrv-5.9.0 \
     pdo_sqlsrv-5.9.0
