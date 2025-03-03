@@ -1,4 +1,4 @@
-FROM --platform=$BUILDPLATFORM php:8.3.3-apache-bullseye AS base
+FROM --platform=$BUILDPLATFORM php:8.3.17-apache-bullseye AS base
 
 LABEL AUTHOR "Imarc <info@imarc.com>"
 
