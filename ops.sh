@@ -319,7 +319,7 @@ _ops-node() {
         --label=ops.project="$(ops project id)" \
         --user "node" \
         --entrypoint "node" \
-        imarcagency/ops-node:$OPS_VERSION \
+        imarcagency/ops-node:$OPS_CONTAINER_VERSION \
         "$@"
 }
 
@@ -350,7 +350,7 @@ ops-npm() {
         --label=ops.project="$project" \
         --user "$OPS_DOCKER_UID:$OPS_DOCKER_GID" \
         --entrypoint "npm" \
-        imarcagency/ops-node:$OPS_VERSION \
+        imarcagency/ops-node:$OPS_CONTAINER_VERSION \
         "$@"
 }
 
@@ -361,7 +361,7 @@ _ops-package() {
     cp $OPS_HOME/build/Dockerfile $project_path/_temp-ops-Dockerfile
 
     docker build -f _temp-ops-Dockerfile -t $project_name:latest --no-cache \
-        --build-arg OPS_PROJECT_IMAGE="imarcagency/ops-$OPS_PROJECT_BACKEND:$OPS_VERSION" \
+        --build-arg OPS_PROJECT_IMAGE="imarcagency/ops-$OPS_PROJECT_BACKEND:$OPS_CONTAINER_VERSION" \
         --build-arg OPS_PROJECT_DOCROOT="$OPS_PROJECT_DOCROOT" \
         $project_path
 
@@ -499,7 +499,7 @@ _ops-gulp() {
         --label=ops.project="$(ops project id)" \
         --user "node" \
         --entrypoint "gulp" \
-        imarcagency/ops-node:$OPS_VERSION \
+        imarcagency/ops-node:$OPS_CONTAINER_VERSION \
         "$@"
 }
 
@@ -863,7 +863,7 @@ _ops-yarn() {
         --label=ops.project="$(ops project name)" \
         --user "node" \
         --entrypoint "yarn" \
-        imarcagency/ops-node:$OPS_VERSION \
+        imarcagency/ops-node:$OPS_CONTAINER_VERSION \
         "$@"
 }
 
@@ -1354,14 +1354,15 @@ fi
 # options that can be overridden by global config
 
 declare -x OPS_ENV="dev"
+declare -x OPS_CONTAINER_VERSION="0.16.10"
 declare -x OPS_DEBUG="${OPS_DEBUG}"
 declare -x OPS_TEST_MODE="${OPS_TEST_MODE}"
 declare -x OPS_BACKENDS=${OPS_BACKENDS-"apache-php74 apache-php82"}
 declare -x OPS_SERVICES=${OPS_SERVICES-"portainer dashboard mariadb postgres postgres16 redis adminer redis-commander"}
 declare -x OPS_EXTRA_SERVICES="${OPS_EXTRA_SERVICES}"
-declare -x OPS_DOCKER_COMPOSER_IMAGE=${OPS_DOCKER_COMPOSER_IMAGE-"imarcagency/ops-apache-php80:$OPS_VERSION"}
-declare -x OPS_DOCKER_NODE_IMAGE=${OPS_DOCKER_NODE_IMAGE-"imarcagency/ops-node:$OPS_VERSION"}
-declare -x OPS_DOCKER_UTILS_IMAGE=${OPS_DOCKER_UTILS_IMAGE-"imarcagency/ops-utils:$OPS_VERSION"}
+declare -x OPS_DOCKER_COMPOSER_IMAGE=${OPS_DOCKER_COMPOSER_IMAGE-"imarcagency/ops-apache-php80:$OPS_CONTAINER_VERSION"}
+declare -x OPS_DOCKER_NODE_IMAGE=${OPS_DOCKER_NODE_IMAGE-"imarcagency/ops-node:$OPS_CONTAINER_VERSION"}
+declare -x OPS_DOCKER_UTILS_IMAGE=${OPS_DOCKER_UTILS_IMAGE-"imarcagency/ops-utils:$OPS_CONTAINER_VERSION"}
 declare -x OPS_DOCKER_GID=${OPS_DOCKER_GID-""}
 declare -x OPS_DOCKER_UID=${OPS_DOCKER_UID-""}
 declare -x OPS_DOCKER_VERSION="18"
@@ -1383,7 +1384,7 @@ declare -x OPS_ADMIN_AUTH_LABEL_PREFIX=""
 declare -x OPS_LOCALTUNNEL_HOST=${OPS_LOCALTUNNEL_HOST-"https://localtunnel.me"}
 declare -x OPS_BROWSER="${OPS_BROWSER=""}"
 
-declare -x OPS_DEFAULT_BACKEND=${OPS_DEFAULT_BACKEND-"apache-php80"}
+declare -x OPS_DEFAULT_BACKEND=${OPS_DEFAULT_BACKEND-"apache-php83"}
 declare -x OPS_DEFAULT_DOCROOT=${OPS_DEFAULT_DOCROOT-"public"}
 declare -x OPS_DEFAULT_SHELL_USER=${OPS_DEFAULT_SHELL_USER-"www-data"}
 declare -x OPS_DASHBOARD_URL="https://ops.${OPS_DOMAIN}"

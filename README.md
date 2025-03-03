@@ -1,6 +1,6 @@
 # Ops
 
-**Version 0.16.8**
+**Version 0.16.10**
 
 - A local development environment focused on PHP-based projects.
 - Create a new host by making a directory.

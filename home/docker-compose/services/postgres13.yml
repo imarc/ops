@@ -9,6 +9,6 @@ services:
     labels:
       - "ops.project=ops"
     ports:
-      - "127.0.0.1:5434:5433"
+      - "127.0.0.1:5434:5432"
     volumes:
       - "postgres13:/var/lib/postgresql/data/pgdata:delegated"

@@ -1,6 +1,6 @@
 services:
   apache-php82:
-    image: imarcagency/ops-apache-php82:${OPS_VERSION}
+    image: imarcagency/ops-apache-php82:${OPS_CONTAINER_VERSION}
     labels:
       - "ops.project=ops"
     environment:
