@@ -1,6 +1,8 @@
-FROM --platform=$BUILDPLATFORM php:8.1.31-apache-bullseye AS base
+FROM --platform=$BUILDPLATFORM php:8.5-rc-apache-bullseye AS base
 
 LABEL AUTHOR "Imarc <info@imarc.com>"
+
+ARG IMAGICK_COMMIT="b47e91c83b0eb8db951794d0ed363ae20748b795"
 
 # fix for postgresql-client
 RUN mkdir -p /usr/share/man/man1 && \
@@ -45,8 +47,9 @@ RUN apt-get update && apt-get install -y --fix-missing \
     vim \
     wget
 
-RUN curl https://packages.microsoft.com/keys/microsoft.asc | apt-key add -
-RUN curl https://packages.microsoft.com/config/debian/11/prod.list > /etc/apt/sources.list.d/mssql-release.list
+RUN curl -sSL https://packages.microsoft.com/keys/microsoft.asc | gpg --dearmor -o /usr/share/keyrings/microsoft.gpg
+RUN ARCH=$(dpkg --print-architecture) && echo "deb [arch=${ARCH} signed-by=/usr/share/keyrings/microsoft.gpg] https://packages.microsoft.com/debian/11/prod bullseye main" > /etc/apt/sources.list.d/mssql-release.list
+
 RUN apt-get update
 RUN ACCEPT_EULA=y apt-get install -y \
     msodbcsql18 \
@@ -86,8 +89,9 @@ FROM build-${TARGETARCH} AS final
 RUN docker-php-ext-configure exif --enable-exif
 
 # Install Imagick extension from source until there is pecl support
-#RUN mkdir -p /usr/src/php/ext/imagick; \
-#    curl -fsSL https://github.com/Imagick/imagick/archive/${IMAGICK_COMMIT}.tar.gz | tar xvz -C "/usr/src/php/ext/imagick" --strip 1
+# for the latest version. pecl tag 3.7.0 is broken with 8.3.
+RUN mkdir -p /usr/src/php/ext/imagick; \
+    curl -fsSL https://github.com/Imagick/imagick/archive/${IMAGICK_COMMIT}.tar.gz | tar xvz -C "/usr/src/php/ext/imagick" --strip 1
 
 # install officially supported php extensions
 RUN docker-php-ext-install \
@@ -97,6 +101,7 @@ RUN docker-php-ext-install \
     gettext \
     gd \
     iconv \
+    imagick \
     intl \
     ldap \
     mysqli \
@@ -108,14 +113,13 @@ RUN docker-php-ext-install \
     pdo_pgsql \
     pdo_sqlite \
     pgsql \
-    pspell \
     soap \
     zip
 
 # install pecl extensions
 RUN pecl install \
     memcached \
-    imagick \
+    pspell \
     redis \
     xdebug \
     sqlsrv \
@@ -123,8 +127,8 @@ RUN pecl install \
 
 # enable pecl extensions
 RUN docker-php-ext-enable \
-    imagick \
     memcached \
+    pspell \
     redis \
     xdebug \
     sqlsrv \
@@ -147,8 +151,8 @@ RUN a2enmod \
     cache_disk \
     expires \
     headers \
-    macro \
     include \
+    macro \
     http2 \
     lua \
     rewrite \

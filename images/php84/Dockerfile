@@ -99,6 +99,7 @@ RUN docker-php-ext-install \
     bcmath \
     curl \
     exif \
+    gettext \
     gd \
     iconv \
     imagick \
