@@ -764,7 +764,7 @@ ops-sync() {
             local mysqldump_port="$([[ ! -z $OPS_PROJECT_REMOTE_DB_PORT ]] && echo "-P $OPS_PROJECT_REMOTE_DB_PORT")"
             local mysqldump_user="$([[ ! -z $OPS_PROJECT_REMOTE_DB_USER ]] && echo "-u $OPS_PROJECT_REMOTE_DB_USER")"
 
-            ssh -C "$ssh_host" "mysqldump --complete-insert --single-transaction \
+            ssh -C "$ssh_host" "$OPS_PROJECT_REMOTE_MYSQLDUMP_PATH --complete-insert --single-transaction \
                 $mysqldump_port \
                 $mysqldump_host \
                 $mysqldump_user \
@@ -782,7 +782,7 @@ ops-sync() {
             #local pgdump_port="$([[ ! -z $OPS_PROJECT_REMOTE_DB_PORT ]] && echo "-P $OPS_PROJECT_REMOTE_DB_PORT")"
             #local pgdump_user="$([[ ! -z $OPS_PROJECT_REMOTE_DB_USER ]] && echo "-u $OPS_PROJECT_REMOTE_DB_USER")"
 
-            ssh -TC "$ssh_host" "pg_dump \
+            ssh -TC "$ssh_host" "$OPS_PROJECT_REMOTE_PGDUMP_PATH \
                 $pgdump_host \
                 $OPS_PROJECT_REMOTE_DB_NAME" 2>/dev/null | \
                     psql-import "$OPS_PROJECT_DB_NAME"
@@ -1433,6 +1433,8 @@ declare -x OPS_PROJECT_REMOTE_DB_NAME="${OPS_PROJECT_REMOTE_DB_NAME}"
 declare -x OPS_PROJECT_REMOTE_DB_USER="${OPS_PROJECT_REMOTE_DB_USER}"
 declare -x OPS_PROJECT_REMOTE_DB_PASSWORD="${OPS_PROJECT_REMOTE_DB_PASSWORD}"
 declare -x OPS_PROJECT_REMOTE_DB_PORT="${OPS_PROJECT_REMOTE_DB_PORT}"
+declare -x OPS_PROJECT_REMOTE_PGDUMP_PATH=${OPS_PROJECT_REMOTE_PGDUMP_PATH-"pg_dump"}
+declare -x OPS_PROJECT_REMOTE_MYSQLDUMP_PATH=${OPS_PROJECT_REMOTE_PGDUMP_PATH-"mysqldump"}
 declare -x OPS_SHELL_BACKEND=${OPS_SHELL_BACKEND-$OPS_PROJECT_BACKEND}
 declare -x OPS_SHELL_COMMAND=${OPS_SHELL_COMMAND-"bash"}
 declare -x OPS_SHELL_USER="${OPS_SHELL_USER-$OPS_PROJECT_SHELL_USER}"
