@@ -1,22 +1,31 @@
-defaultEntryPoints = ["https","http"]
-logLevel = "INFO"
+[log]
+  level = "ERROR"
+
+[accessLog]
+  format = "json"
+  bufferingSize = 0
+
+[api]
+  dashboard = true
 
 [entryPoints]
-  [entryPoints.http]
-  address = ":80"
-    [entryPoints.http.redirect]
-      entryPoint = "https"
-  [entryPoints.https]
-  address = ":443"
-    [entryPoints.https.tls]
+  [entryPoints.web]
+    address = ":80"
+    [entryPoints.web.http.redirections.entryPoint]
+      to = "websecure"
+      scheme = "https"
+  [entryPoints.websecure]
+    address = ":443"
+    [entryPoints.websecure.http.tls]
+  [entryPoints.traefik]
+    address = ":8080"
+    [entryPoints.traefik.http.tls]
 
-[retry]
+[providers]
+  [providers.docker]
+    endpoint = "unix:///var/run/docker.sock"
+    exposedByDefault = false
+    watch = true
 
-[docker]
-endpoint = "unix:///var/run/docker.sock"
-watch = true
-exposedbydefault = false
-
-[acme]
-storage = "/etc/traefik/acme/acme.json"
-entryPoint = "https"
+[certificatesResolvers.letsencrypt.acme]
+  storage = "/etc/traefik/acme/acme.json"

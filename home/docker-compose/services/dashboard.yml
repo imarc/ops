@@ -5,10 +5,14 @@ services:
       - "ops.project=ops"
       - "traefik.enable=true"
       - "traefik.docker.network=ops_gateway"
-      - "traefik.frontend.rule=Host:ops.${OPS_DOMAIN},dashboard.ops.${OPS_DOMAIN}"
-      - "traefik.frontend.priority=1"
-      - "traefik.port=80"
-      - "${OPS_ADMIN_AUTH_LABEL_PREFIX}traefik.frontend.auth.basic.users=${OPS_ADMIN_AUTH}"
+      - "traefik.http.routers.dashboard.rule=Host(`ops.${OPS_DOMAIN}`) || Host(`dashboard.ops.${OPS_DOMAIN}`)"
+      - "traefik.http.routers.dashboard.entrypoints=web,websecure"
+      - "traefik.http.routers.dashboard.priority=2"
+      - "traefik.http.routers.dashboard.tls=true"
+      - "traefik.http.routers.dashboard.service=dashboard"
+      - "traefik.http.services.dashboard.loadbalancer.server.port=80"
+      - "${OPS_ADMIN_AUTH_LABEL_PREFIX}traefik.http.middlewares.dashboard-auth.basicauth.users=${OPS_ADMIN_AUTH}"
+      - "${OPS_ADMIN_AUTH_LABEL_PREFIX}traefik.http.routers.dashboard.middlewares=dashboard-auth"
     environment:
       - APACHE_UID=${OPS_DOCKER_UID}
       - APACHE_GID=${OPS_DOCKER_GID}

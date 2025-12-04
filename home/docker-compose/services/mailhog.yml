@@ -3,10 +3,15 @@ services:
     image: mailhog/mailhog
     labels:
       - "ops.project=ops"
-      - "traefik.port=8025"
       - "traefik.enable=true"
       - "traefik.docker.network=ops_gateway"
-      - "${OPS_ADMIN_AUTH_LABEL_PREFIX}traefik.frontend.auth.basic.users=${OPS_ADMIN_AUTH}"
+      - "traefik.http.routers.mailhog.rule=Host(`mailhog.ops.${OPS_DOMAIN}`)"
+      - "traefik.http.routers.mailhog.entrypoints=web,websecure"
+      - "traefik.http.routers.mailhog.tls=true"
+      - "traefik.http.routers.mailhog.service=mailhog"
+      - "traefik.http.services.mailhog.loadbalancer.server.port=8025"
+      - "${OPS_ADMIN_AUTH_LABEL_PREFIX}traefik.http.middlewares.mailhog-auth.basicauth.users=${OPS_ADMIN_AUTH}"
+      - "${OPS_ADMIN_AUTH_LABEL_PREFIX}traefik.http.routers.mailhog.middlewares=mailhog-auth"
     networks:
       - gateway
       - backend

@@ -1,25 +1,26 @@
-defaultEntryPoints = ["https","http"]
-logLevel = "DEBUG"
+[log]
+  level = "ERROR"
+
+[accessLog]
+  format = "json"
+  bufferingSize = 0
+
+[api]
+  dashboard = true
 
 [entryPoints]
-  [entryPoints.http]
-  address = ":80"
-  [entryPoints.https]
-  address = ":443"
-    [entryPoints.https.tls]
-      [[entryPoints.https.tls.certificates]]
-      certFile = "/etc/traefik-certs/self-signed-cert.crt"
-      keyFile = "/etc/traefik-certs/self-signed-cert.key"
+  [entryPoints.web]
+    address = ":80"
+  [entryPoints.websecure]
+    address = ":443"
+  [entryPoints.traefik]
+    address = ":8080"
+    [entryPoints.traefik.http.tls]
 
-[retry]
-
-[web]
-readOnly = true
-users = ["admin:$apr1$vtw10abf$o.4QTNi9t2qXOV6GazY3U."]
-certFile = "/etc/traefik-certs/self-signed-cert.crt"
-keyFile  = "/etc/traefik-certs/self-signed-cert.key"
-
-[docker]
-endpoint = "unix:///var/run/docker.sock"
-watch = true
-exposedbydefault = false
+[providers]
+  [providers.docker]
+    endpoint = "unix:///var/run/docker.sock"
+    exposedByDefault = false
+    watch = true
+  [providers.file]
+    directory = "/etc/traefik/dynamic"

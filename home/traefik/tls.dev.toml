@@ -1,0 +1,4 @@
+[tls]
+  [[tls.certificates]]
+    certFile = "/etc/traefik-certs/self-signed-cert.crt"
+    keyFile = "/etc/traefik-certs/self-signed-cert.key"

@@ -5,9 +5,13 @@ services:
       - "ops.project=ops"
       - "traefik.enable=true"
       - "traefik.docker.network=ops_gateway"
-      - "traefik.frontend.rule=HostRegexp:{subdomain:.+}.${OPS_DOMAIN},localhost,{domain:.+}"
-      - "traefik.frontend.priority=1"
-      - "traefik.port=80"
+      - "disabled-traefik.http.routers.ops-nginx.rule=HostRegexp(`{subdomain:.+}.${OPS_DOMAIN}`,`localhost`,`{domain:.+}`)"
+      - "traefik.http.routers.ops-nginx.rule=HostRegexp(`.+.${OPS_DOMAIN}`) || Host(`localhost`) || HostRegexp(`.+`)"
+      - "traefik.http.routers.ops-nginx.entrypoints=web,websecure"
+      - "traefik.http.routers.ops-nginx.priority=1"
+      - "traefik.http.routers.ops-nginx.tls=true"
+      - "traefik.http.routers.ops-nginx.service=ops-nginx"
+      - "traefik.http.services.ops-nginx.loadbalancer.server.port=80"
     environment:
       - OPS_DOMAIN=${OPS_DOMAIN}
       - OPS_DOMAIN_ALIASES=${OPS_DOMAIN_ALIASES}
@@ -25,8 +29,10 @@ services:
       - ${OPS_SITES_DIR}:/var/www/html:cached
 
   traefik:
-    image: traefik:1.7.34-alpine
-    command: --docker.domain=${OPS_DOMAIN}
+    image: traefik:v3.6.2
+    command:
+      - --configFile=/etc/traefik/traefik.toml
+      - --providers.docker.defaultRule=Host(`{{ normalize .Name }}.ops.${OPS_DOMAIN}`)
     networks:
       gateway:
       services:
@@ -34,19 +40,31 @@ services:
     userns_mode: 'host'
     labels:
       - "ops.project=ops"
+      - "traefik.enable=true"
+      - "traefik.docker.network=ops_gateway"
+      - "traefik.http.routers.traefik.rule=Host(`ops.${OPS_DOMAIN}`)"
+      - "traefik.http.routers.traefik.entrypoints=traefik"
+      - "traefik.http.routers.traefik.tls=true"
+      - "traefik.http.routers.traefik.service=api@internal"
     volumes:
       - /var/run/docker.sock:/var/run/docker.sock
       - ${OPS_HOME}/traefik/traefik.dev.toml:/etc/traefik/traefik.toml
+      - ${OPS_HOME}/traefik/tls.dev.toml:/etc/traefik/dynamic/tls.dev.toml
       - ${OPS_HOME}/certs/:/etc/traefik-certs
       - ${OPS_HOME}/traefik/acme.json:/etc/traefik/acme/acme.json
 
   dnsmasq:
     image: jpillora/dnsmasq:1.1.0
     labels:
-      - "traefik.port=8080"
       - "traefik.enable=true"
       - "traefik.docker.network=ops_gateway"
-      - "${OPS_ADMIN_AUTH_LABEL_PREFIX}traefik.frontend.auth.basic.users=${OPS_ADMIN_AUTH}"
+      - "traefik.http.routers.dnsmasq.rule=Host(`dnsmasq.ops.${OPS_DOMAIN}`)"
+      - "traefik.http.routers.dnsmasq.entrypoints=web,websecure"
+      - "traefik.http.routers.dnsmasq.tls=true"
+      - "traefik.http.routers.dnsmasq.service=dnsmasq"
+      - "traefik.http.services.dnsmasq.loadbalancer.server.port=8080"
+      - "${OPS_ADMIN_AUTH_LABEL_PREFIX}traefik.http.middlewares.dnsmasq-auth.basicauth.users=${OPS_ADMIN_AUTH}"
+      - "${OPS_ADMIN_AUTH_LABEL_PREFIX}traefik.http.routers.dnsmasq.middlewares=dnsmasq-auth"
     networks:
       gateway:
       backend:

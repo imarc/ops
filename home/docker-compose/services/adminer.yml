@@ -8,6 +8,12 @@ services:
       - "ops.project=ops"
       - "traefik.enable=true"
       - "traefik.docker.network=ops_gateway"
-      - "${OPS_ADMIN_AUTH_LABEL_PREFIX}traefik.frontend.auth.basic.users=${OPS_ADMIN_AUTH}"
+      - "traefik.http.routers.adminer.rule=Host(`adminer.ops.${OPS_DOMAIN}`)"
+      - "traefik.http.routers.adminer.entrypoints=web,websecure"
+      - "traefik.http.routers.adminer.tls=true"
+      - "traefik.http.routers.adminer.service=adminer"
+      - "traefik.http.services.adminer.loadbalancer.server.port=8080"
+      - "${OPS_ADMIN_AUTH_LABEL_PREFIX}traefik.http.middlewares.adminer-auth.basicauth.users=${OPS_ADMIN_AUTH}"
+      - "${OPS_ADMIN_AUTH_LABEL_PREFIX}traefik.http.routers.adminer.middlewares=adminer-auth"
     volumes:
       - ${OPS_HOME}/adminer:/var/www/html/plugins-enabled:cached

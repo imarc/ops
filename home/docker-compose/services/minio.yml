@@ -5,8 +5,13 @@ services:
       - "ops.project=ops"
       - "traefik.enable=true"
       - "traefik.docker.network=ops_gateway"
-      - "traefik.port=8080"
-      - "${OPS_ADMIN_AUTH_LABEL_PREFIX}traefik.frontend.auth.basic.users=${OPS_ADMIN_AUTH}"
+      - "traefik.http.routers.minio.rule=Host(`minio.ops.${OPS_DOMAIN}`)"
+      - "traefik.http.routers.minio.entrypoints=web,websecure"
+      - "traefik.http.routers.minio.tls=true"
+      - "traefik.http.routers.minio.service=minio"
+      - "traefik.http.services.minio.loadbalancer.server.port=8080"
+      - "${OPS_ADMIN_AUTH_LABEL_PREFIX}traefik.http.middlewares.minio-auth.basicauth.users=${OPS_ADMIN_AUTH}"
+      - "${OPS_ADMIN_AUTH_LABEL_PREFIX}traefik.http.routers.minio.middlewares=minio-auth"
     command: server --console-address ":8080" --address ":9000" /data
     environment:
       - "MINIO_ROOT_USER=${OPS_MINIO_ROOT_USER}"
@@ -18,4 +23,3 @@ services:
       - backend
     volumes:
       - "minio:/data:delegated"
-

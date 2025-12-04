@@ -5,9 +5,12 @@ services:
         - "ops.project=ops"
         - "traefik.enable=true"
         - "traefik.docker.network=ops_gateway"
-        - "traefik.frontend.rule=HostRegexp:{subdomain:.+}.${OPS_DOMAIN},localhost"
-        - "traefik.frontend.priority=1"
-        - "traefik.port=80"
+        - "traefik.http.routers.ops-nginx.rule=Host(`imarc.imarc.io`)"
+        - "traefik.http.routers.ops-nginx.entrypoints=web,websecure"
+        - "traefik.http.routers.ops-nginx.priority=1"
+        - "traefik.http.routers.ops-nginx.tls=true"
+        - "traefik.http.routers.ops-nginx.service=ops-nginx"
+        - "traefik.http.services.ops-nginx.loadbalancer.server.port=80"
       environment:
         - OPS_DOMAIN=${OPS_DOMAIN}
         - OPS_ENABLED=1

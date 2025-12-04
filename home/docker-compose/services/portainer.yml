@@ -5,7 +5,13 @@ services:
       - "ops.project=ops"
       - "traefik.enable=true"
       - "traefik.docker.network=ops_gateway"
-      - "${OPS_ADMIN_AUTH_LABEL_PREFIX}traefik.frontend.auth.basic.users=${OPS_ADMIN_AUTH}"
+      - "traefik.http.routers.portainer.rule=Host(`portainer.ops.${OPS_DOMAIN}`)"
+      - "traefik.http.routers.portainer.entrypoints=web,websecure"
+      - "traefik.http.routers.portainer.tls=true"
+      - "traefik.http.routers.portainer.service=portainer"
+      - "traefik.http.services.portainer.loadbalancer.server.port=9000"
+      - "${OPS_ADMIN_AUTH_LABEL_PREFIX}traefik.http.middlewares.portainer-auth.basicauth.users=${OPS_ADMIN_AUTH}"
+      - "${OPS_ADMIN_AUTH_LABEL_PREFIX}traefik.http.routers.portainer.middlewares=portainer-auth"
     userns_mode: "host"
     networks:
       - gateway
