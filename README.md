@@ -265,6 +265,14 @@ The following settings can be placed in the project's `.env`
     # default: none
     OPS_PROJECT_REMOTE_USER=""
 
+    # additional SSH options for remote syncing, e.g. "-p 22022"
+    # default: none
+    OPS_PROJECT_REMOTE_SSH_OPTIONS=""
+
+    # remote command wrapper for sync commands
+    # default: none
+    OPS_PROJECT_REMOTE_COMMAND=""
+
     # the remote project path for the filesystem sync
     # default: none
     OPS_PROJECT_REMOTE_PATH=""
