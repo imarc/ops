@@ -731,6 +731,29 @@ ops-sync() {
     # ( set -o posix ; set ) | grep -E '^OPS_'
     local ssh_host="$([[ ! -z $OPS_PROJECT_REMOTE_USER ]] && echo "$OPS_PROJECT_REMOTE_USER@")"
     local ssh_host="$ssh_host$OPS_PROJECT_REMOTE_HOST"
+    local ssh_options=()
+    local rsync_ssh_options=()
+    local rsync_path_options=()
+
+    if [[ ! -z "$OPS_PROJECT_REMOTE_SSH_OPTIONS" ]]; then
+        read -ra ssh_options <<< "$OPS_PROJECT_REMOTE_SSH_OPTIONS"
+        rsync_ssh_options=(-e "ssh $OPS_PROJECT_REMOTE_SSH_OPTIONS")
+    fi
+
+    if [[ ! -z "$OPS_PROJECT_REMOTE_COMMAND" ]]; then
+        rsync_path_options=(--rsync-path="$OPS_PROJECT_REMOTE_COMMAND rsync")
+    fi
+
+    ops-sync-ssh() {
+        local ssh_flags="$1"
+        local remote_command="$2"
+
+        if [[ ! -z "$OPS_PROJECT_REMOTE_COMMAND" ]]; then
+            ssh $ssh_flags "${ssh_options[@]}" "$ssh_host" "$OPS_PROJECT_REMOTE_COMMAND" "$remote_command"
+        else
+            ssh $ssh_flags "${ssh_options[@]}" "$ssh_host" "$remote_command"
+        fi
+    }
 
     if [[ ! -z "$OPS_DEBUG" ]]; then
         # print out all OPS_ vars
@@ -752,7 +775,7 @@ ops-sync() {
         if [[ "$OPS_PROJECT_REMOTE_OPS" != 0 ]]; then
             echo "Syncing remote mariadb '$OPS_PROJECT_REMOTE_DB_NAME' to local '$OPS_PROJECT_DB_NAME'..."
 
-            ssh -C "$ssh_host" \
+            ops-sync-ssh -C \
                 "ops $OPS_PROJECT_REMOTE_DB_TYPE export $OPS_PROJECT_REMOTE_DB_NAME" | \
                 $OPS_PROJECT_DB_TYPE-import "$OPS_PROJECT_DB_NAME"
 
@@ -764,7 +787,7 @@ ops-sync() {
             local mysqldump_port="$([[ ! -z $OPS_PROJECT_REMOTE_DB_PORT ]] && echo "-P $OPS_PROJECT_REMOTE_DB_PORT")"
             local mysqldump_user="$([[ ! -z $OPS_PROJECT_REMOTE_DB_USER ]] && echo "-u $OPS_PROJECT_REMOTE_DB_USER")"
 
-            ssh -C "$ssh_host" "$OPS_PROJECT_REMOTE_MYSQLDUMP_PATH --complete-insert --single-transaction \
+            ops-sync-ssh -C "$OPS_PROJECT_REMOTE_MYSQLDUMP_PATH --complete-insert --single-transaction \
                 $mysqldump_port \
                 $mysqldump_host \
                 $mysqldump_user \
@@ -782,7 +805,7 @@ ops-sync() {
             #local pgdump_port="$([[ ! -z $OPS_PROJECT_REMOTE_DB_PORT ]] && echo "-P $OPS_PROJECT_REMOTE_DB_PORT")"
             #local pgdump_user="$([[ ! -z $OPS_PROJECT_REMOTE_DB_USER ]] && echo "-u $OPS_PROJECT_REMOTE_DB_USER")"
 
-            ssh -TC "$ssh_host" "$OPS_PROJECT_REMOTE_PGDUMP_PATH \
+            ops-sync-ssh -TC "$OPS_PROJECT_REMOTE_PGDUMP_PATH \
                 $pgdump_host \
                 $OPS_PROJECT_REMOTE_DB_NAME" 2>/dev/null | \
                     psql-import "$OPS_PROJECT_DB_NAME"
@@ -804,6 +827,8 @@ ops-sync() {
 
             # sync entire dir structure first
             rsync -a -f"+ */" -f"- *" \
+                "${rsync_ssh_options[@]}" \
+                "${rsync_path_options[@]}" \
                 "$ssh_host:$OPS_PROJECT_REMOTE_PATH/$sync_dir/" \
                 "$sync_dir" 1>/dev/null
 
@@ -813,6 +838,8 @@ ops-sync() {
             printf %"s\n" $OPS_PROJECT_SYNC_EXCLUDES | \
                 rsync -av --exclude-from=- \
                     --timeout=5 \
+                    "${rsync_ssh_options[@]}" \
+                    "${rsync_path_options[@]}" \
                     $max_size \
                     "$ssh_host:$OPS_PROJECT_REMOTE_PATH/$sync_dir/" \
                     "$sync_dir"
@@ -1357,8 +1384,8 @@ declare -x OPS_ENV="dev"
 declare -x OPS_CONTAINER_VERSION="0.16.10"
 declare -x OPS_DEBUG="${OPS_DEBUG}"
 declare -x OPS_TEST_MODE="${OPS_TEST_MODE}"
-declare -x OPS_BACKENDS=${OPS_BACKENDS-"apache-php74 apache-php83 apache-php84"}
-declare -x OPS_SERVICES=${OPS_SERVICES-"portainer dashboard mariadb postgres postgres16 redis adminer redis-commander"}
+declare -x OPS_BACKENDS="${OPS_BACKENDS-"apache-php74 apache-php83 apache-php84"}"
+declare -x OPS_SERVICES="${OPS_SERVICES-"portainer dashboard mariadb postgres postgres16 redis adminer redis-commander"}"
 declare -x OPS_EXTRA_SERVICES="${OPS_EXTRA_SERVICES}"
 declare -x OPS_DOCKER_COMPOSER_IMAGE=${OPS_DOCKER_COMPOSER_IMAGE-"imarcagency/ops-apache-php80:$OPS_CONTAINER_VERSION"}
 declare -x OPS_DOCKER_NODE_IMAGE=${OPS_DOCKER_NODE_IMAGE-"imarcagency/ops-node:$OPS_CONTAINER_VERSION"}
@@ -1426,6 +1453,8 @@ declare -x OPS_PROJECT_SYNC_MAXSIZE="${OPS_PROJECT_SYNC_MAXSIZE}"
 declare -x OPS_PROJECT_REMOTE_OPS="${OPS_PROJECT_REMOTE_OPS-0}"
 declare -x OPS_PROJECT_REMOTE_USER="${OPS_PROJECT_REMOTE_USER}"
 declare -x OPS_PROJECT_REMOTE_HOST="${OPS_PROJECT_REMOTE_HOST}"
+declare -x OPS_PROJECT_REMOTE_SSH_OPTIONS="${OPS_PROJECT_REMOTE_SSH_OPTIONS}"
+declare -x OPS_PROJECT_REMOTE_COMMAND="${OPS_PROJECT_REMOTE_COMMAND}"
 declare -x OPS_PROJECT_REMOTE_PATH="${OPS_PROJECT_REMOTE_PATH}"
 declare -x OPS_PROJECT_REMOTE_DB_HOST="${OPS_PROJECT_REMOTE_DB_HOST}"
 declare -x OPS_PROJECT_REMOTE_DB_TYPE="${OPS_PROJECT_REMOTE_DB_TYPE-$OPS_PROJECT_DB_TYPE}"
