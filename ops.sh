@@ -151,6 +151,17 @@ _ops-docker() {
     docker "$@"
 }
 
+_ops-docker-compose() {
+    if docker compose version > /dev/null 2>&1; then
+        docker compose "$@"
+    elif command -v docker-compose > /dev/null 2>&1; then
+        docker-compose "$@"
+    else
+        echo "Docker Compose was not found. Install either docker compose or docker-compose." >&2
+        return 127
+    fi
+}
+
 ops-exec() {
     cmd-doc "Execute a non-TTY (non-interactive) command in a container."
 
@@ -903,7 +914,7 @@ project-docker-compose() {
     OPS_PROJECT_NAME="$project_name" \
     COMPOSE_PROJECT_NAME="ops-$project_name" \
     COMPOSE_FILE="$OPS_PROJECT_COMPOSE_FILE" \
-    docker compose --project-directory "$OPS_SITES_DIR/$project_name" "$@"
+    _ops-docker-compose --project-directory "$OPS_SITES_DIR/$project_name" "$@"
 }
 
 project-dotenv-linter() {
@@ -1028,7 +1039,7 @@ system-docker-compose() {
 
     COMPOSE_PROJECT_NAME="ops" \
     COMPOSE_FILE=$COMPOSE_FILE \
-    docker compose "$@"
+    _ops-docker-compose "$@"
 }
 
 system-networking() {
@@ -1088,12 +1099,13 @@ system-check() {
     fi
 
     echo -n "docker-compose: "
-    if docker compose version; then
-        echo "found."
-    elif ! version-greater-than $(docker compose version | get-version) $OPS_DOCKER_COMPOSE_VERSION; then
+    local compose_version=$(_ops-docker-compose version 2> /dev/null | get-version)
+    if [[ -z $compose_version ]]; then
+        echo "not found"
+    elif version-greater-than $OPS_DOCKER_COMPOSE_VERSION $compose_version; then
         echo "version must be at least 1.22.0."
     else
-        echo "Error checking for docker compose version."
+        echo "found"
     fi
 
     echo -n "rsync: "
