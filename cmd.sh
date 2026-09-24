@@ -161,7 +161,7 @@ cmd-www() {
             linux)
                 xdg-open $1
                 ;;
-            mac)
+            mac|mac-arm)
                 open $1
                 ;;
             linux-wsl)

@@ -121,8 +121,8 @@ ops-composer() {
         exit 1
     fi
 
-    mkdir -p "$OPS_HOME/.composer"
-    mkdir -p "$OPS_HOME/.ssh"
+    mkdir -p "$HOME/.composer"
+    mkdir -p "$HOME/.ssh"
 
     local project="$(ops project name)"
 
@@ -131,7 +131,7 @@ ops-composer() {
         -v "$(pwd):/var/www/html/$project" \
         -v "$HOME/.composer:/var/www/.composer" \
         -v "$HOME/.ssh:/var/www/.ssh" \
-        -v "$ssh_agent:/ssh-agent" \
+        -v "${ssh_agent:-$SSH_AUTH_SOCK}:/ssh-agent" \
         -e "SSH_AUTH_SOCK=/ssh-agent" \
         -e "COMPOSER_HOME=/var/www/.composer" \
         -w "/var/www/html/$project" \
@@ -343,7 +343,7 @@ ops-npm() {
         -v "$(pwd):/var/www/html/$project" \
         -v "$HOME/.composer:/var/www/.composer" \
         -v "$HOME/.ssh:/var/www/.ssh" \
-        -v "$ssh_agent:/ssh-agent" \
+        -v "${ssh_agent:-$SSH_AUTH_SOCK}:/ssh-agent" \
         -e "SSH_AUTH_SOCK=/ssh-agent" \
         -e "COMPOSER_HOME=/var/www/.composer" \
         -w "/var/www/html/$project" \
@@ -532,21 +532,12 @@ ops-shell() {
         exit 1
     fi
 
-    if [[ -z "$id" ]]; then
-        echo "Unable to determine the container ID for current project's backend."
-        exit
-    fi
-
-    if [[ ! -z "$1" ]]; then
-        command="$@"
-    fi
-
-    if [[ -z "$id" ]]; then
+    if [[ -z "$id" && -z "$project_id" ]]; then
         echo "Unable to determine the container ID for current project's backend."
         exit 1
     fi
 
-    if [[ -z "$(docker ps -qf id=$id)" ]]; then
+    if [[ -z "$(docker ps -qf id=${id:-$project_id})" ]]; then
         echo "The project's backend container is not running. Run $(bold ops start) to start services."
         exit 1
     fi
@@ -562,12 +553,8 @@ ops-shell() {
 
     if [[ ! -z $id ]]; then
         _ops-docker exec -w "/var/www/html/$project" -u "$OPS_SHELL_USER" -i$t $id $command
-    elif [[ ! -z $project_id ]]; then
-        _ops-docker exec -u "$OPS_SHELL_USER" -i$t $project_id $command
     else
-        echo "ERROR: No such service: $OPS_SHELL_BACKEND"
-        exit 1
-
+        _ops-docker exec -u "$OPS_SHELL_USER" -i$t $project_id $command
     fi
 }
 
@@ -711,7 +698,7 @@ ops-sync() {
     RSYNC_BIN=$(which rsync)
 
     if [[ -z "$RSYNC_BIN" ]]; then
-        echo '$(bold rsync) is a required dependency. Please install.'
+        echo "$(bold rsync) is a required dependency. Please install."
         exit 1
     fi
 
@@ -722,6 +709,7 @@ ops-sync() {
 
     if [[ -z "$OPS_PROJECT_NAME" ]]; then
         echo "$(bold ops sync) must be run from a project directory."
+        exit 1
     fi
 
     cd "$OPS_SITES_DIR/$OPS_PROJECT_NAME"
@@ -750,7 +738,7 @@ ops-sync() {
         [[ ! -z "$OPS_PROJECT_REMOTE_DB_NAME" ]]
     then
         if [[ "$OPS_PROJECT_REMOTE_OPS" != 0 ]]; then
-            echo "Syncing remote mariadb '$OPS_PROJECT_REMOTE_DB_NAME' to local '$OPS_PROJECT_DB_NAME'..."
+            echo "Syncing remote $OPS_PROJECT_REMOTE_DB_TYPE '$OPS_PROJECT_REMOTE_DB_NAME' to local '$OPS_PROJECT_DB_NAME'..."
 
             ssh -C "$ssh_host" \
                 "ops $OPS_PROJECT_REMOTE_DB_TYPE export $OPS_PROJECT_REMOTE_DB_NAME" | \
@@ -759,16 +747,18 @@ ops-sync() {
         elif [[ "$OPS_PROJECT_REMOTE_DB_TYPE" = "mariadb" ]]; then
             echo "Syncing remote mariadb '$OPS_PROJECT_REMOTE_DB_NAME' to local '$OPS_PROJECT_DB_NAME'..."
 
-            local mysqldump_password="$([[ ! -z $OPS_PROJECT_REMOTE_DB_PASSWORD ]] && echo "-p\"$OPS_PROJECT_REMOTE_DB_PASSWORD\"")"
+            # the password is sent over ssh stdin and read into MYSQL_PWD on the
+            # remote, so it never appears in local or remote process arguments
+            local mysqldump_password="$([[ ! -z $OPS_PROJECT_REMOTE_DB_PASSWORD ]] && echo "IFS= read -r MYSQL_PWD; export MYSQL_PWD;")"
             local mysqldump_host="$([[ ! -z $OPS_PROJECT_REMOTE_DB_HOST ]] && echo "-h $OPS_PROJECT_REMOTE_DB_HOST")"
             local mysqldump_port="$([[ ! -z $OPS_PROJECT_REMOTE_DB_PORT ]] && echo "-P $OPS_PROJECT_REMOTE_DB_PORT")"
             local mysqldump_user="$([[ ! -z $OPS_PROJECT_REMOTE_DB_USER ]] && echo "-u $OPS_PROJECT_REMOTE_DB_USER")"
 
-            ssh -C "$ssh_host" "$OPS_PROJECT_REMOTE_MYSQLDUMP_PATH --complete-insert --single-transaction \
+            printf '%s\n' "$OPS_PROJECT_REMOTE_DB_PASSWORD" | \
+            ssh -C "$ssh_host" "$mysqldump_password $OPS_PROJECT_REMOTE_MYSQLDUMP_PATH --complete-insert --single-transaction \
                 $mysqldump_port \
                 $mysqldump_host \
                 $mysqldump_user \
-                $mysqldump_password \
                 $OPS_PROJECT_REMOTE_DB_NAME" 2>/dev/null | \
                     mariadb-import "$OPS_PROJECT_DB_NAME"
 
@@ -777,13 +767,18 @@ ops-sync() {
 
             echo "Importing database from $OPS_PROJECT_REMOTE_DB_NAME to '$OPS_PROJECT_DB_NAME' pgsql database..."
 
-            #local pgdump_password="$([[ ! -z $OPS_PROJECT_REMOTE_DB_PASSWORD ]] && echo "-p$OPS_PROJECT_REMOTE_DB_PASSWORD")"
+            # the password is sent over ssh stdin and read into PGPASSWORD on the
+            # remote, so it never appears in local or remote process arguments
+            local pgdump_password="$([[ ! -z $OPS_PROJECT_REMOTE_DB_PASSWORD ]] && echo "IFS= read -r PGPASSWORD; export PGPASSWORD;")"
             local pgdump_host="$([[ ! -z $OPS_PROJECT_REMOTE_DB_HOST ]] && echo "-h $OPS_PROJECT_REMOTE_DB_HOST")"
-            #local pgdump_port="$([[ ! -z $OPS_PROJECT_REMOTE_DB_PORT ]] && echo "-P $OPS_PROJECT_REMOTE_DB_PORT")"
-            #local pgdump_user="$([[ ! -z $OPS_PROJECT_REMOTE_DB_USER ]] && echo "-u $OPS_PROJECT_REMOTE_DB_USER")"
+            local pgdump_port="-p $OPS_PROJECT_REMOTE_DB_PORT"
+            local pgdump_user="$([[ ! -z $OPS_PROJECT_REMOTE_DB_USER ]] && echo "-U $OPS_PROJECT_REMOTE_DB_USER")"
 
-            ssh -TC "$ssh_host" "$OPS_PROJECT_REMOTE_PGDUMP_PATH \
+            printf '%s\n' "$OPS_PROJECT_REMOTE_DB_PASSWORD" | \
+            ssh -TC "$ssh_host" "$pgdump_password $OPS_PROJECT_REMOTE_PGDUMP_PATH \
                 $pgdump_host \
+                $pgdump_port \
+                $pgdump_user \
                 $OPS_PROJECT_REMOTE_DB_NAME" 2>/dev/null | \
                     psql-import "$OPS_PROJECT_DB_NAME"
         fi
@@ -966,7 +961,7 @@ project-stats() {
     cmd-doc "Display resource usage statistics for this project's containers."
     local ids=$(project-docker-compose ps -q)
 
-    if [[ -z $id ]]; then
+    if [[ -z $ids ]]; then
         exit
     fi
 
