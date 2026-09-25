@@ -1,0 +1,27 @@
+home/docker-compose/backends/apache-php73.yml
+  s_4a89459bac1ffa::t_f77731d760d82a 3
+home/docker-compose/backends/apache-php74.yml
+  s_4a89459bac1ffa::t_f77731d760d82a 3
+ops.sh
+  s_4a89459bac1ffa::t_f77731d760d82a 333,364,513,904,1396,1402-1404
+home/docker-compose/backends/apache-php80.yml
+  s_4a89459bac1ffa::t_f77731d760d82a 3
+home/docker-compose/backends/apache-php72.yml
+  s_4a89459bac1ffa::t_f77731d760d82a 3
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.4",
+  "base_commit_sha": "593a36dcf059f06751985dcd2491b6ebd8ef02da",
+  "prompts": {},
+  "sessions": {
+    "s_4a89459bac1ffa": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "6f490d8b-deb8-476d-9906-83510b6eb395",
+        "model": "claude-opus-5-5"
+      },
+      "human_author": "Kevin Hamer <kevin@imarc.com>"
+    }
+  }
+}
