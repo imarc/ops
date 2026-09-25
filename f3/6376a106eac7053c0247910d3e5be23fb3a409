@@ -1,0 +1,21 @@
+images/utils/Dockerfile
+  s_4a89459bac1ffa::t_db4a279350f445 1,3,9,19,23,26-27
+images/node/Dockerfile
+  s_4a89459bac1ffa::t_ee149cc432393e 1,3
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.4",
+  "base_commit_sha": "f36376a106eac7053c0247910d3e5be23fb3a409",
+  "prompts": {},
+  "sessions": {
+    "s_4a89459bac1ffa": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "6f490d8b-deb8-476d-9906-83510b6eb395",
+        "model": "claude-opus-5-5"
+      },
+      "human_author": "Kevin Hamer <kevin@imarc.com>"
+    }
+  }
+}
