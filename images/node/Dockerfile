@@ -1,6 +1,6 @@
-FROM node:21-alpine3.19
+FROM node:24-alpine
 
-MAINTAINER Imarc <info@imarc.com>
+LABEL maintainer="Imarc <info@imarc.com>"
 
 RUN npm install -g gulp
 

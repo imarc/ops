@@ -1,11 +1,12 @@
-FROM alpine:3.19
+FROM alpine:3.24
 
-MAINTAINER Imarc <info@imarc.com>
+LABEL maintainer="Imarc <info@imarc.com>"
 
 RUN apk add --update --no-cache \
         bash \
         curl \
         docker \
+        docker-cli-compose \
         git \
         jq \
         openssh \
@@ -15,16 +16,15 @@ RUN apk add --update --no-cache \
         nodejs \
         npm \
         netcat-openbsd \
-        py-pip \
+        py3-pip \
         unzip \
         wget \
         apache2 \
-        yq \
+        yq-go \
         && rm -rf /var/cache/apk/*
 
-# install docker-compose
-RUN curl -L https://github.com/docker/compose/releases/download/1.24.0/docker-compose-`uname -s`-`uname -m` -o /usr/local/bin/docker-compose
-RUN chmod +x /usr/local/bin/docker-compose
+# keep the standalone docker-compose command, backed by the compose v2 plugin
+RUN ln -s /usr/libexec/docker/cli-plugins/docker-compose /usr/local/bin/docker-compose
 
 # install npm dependencies
 #RUN npm install broken-link-checker -g
