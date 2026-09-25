@@ -330,7 +330,7 @@ _ops-node() {
         --label=ops.project="$(ops project id)" \
         --user "node" \
         --entrypoint "node" \
-        imarcagency/ops-node:$OPS_CONTAINER_VERSION \
+        imarcagency/ops-node:0.16.10 \
         "$@"
 }
 
@@ -361,7 +361,7 @@ ops-npm() {
         --label=ops.project="$project" \
         --user "$OPS_DOCKER_UID:$OPS_DOCKER_GID" \
         --entrypoint "npm" \
-        imarcagency/ops-node:$OPS_CONTAINER_VERSION \
+        imarcagency/ops-node:0.16.10 \
         "$@"
 }
 
@@ -510,7 +510,7 @@ _ops-gulp() {
         --label=ops.project="$(ops project id)" \
         --user "node" \
         --entrypoint "gulp" \
-        imarcagency/ops-node:$OPS_CONTAINER_VERSION \
+        imarcagency/ops-node:0.16.10 \
         "$@"
 }
 
@@ -901,7 +901,7 @@ _ops-yarn() {
         --label=ops.project="$(ops project name)" \
         --user "node" \
         --entrypoint "yarn" \
-        imarcagency/ops-node:$OPS_CONTAINER_VERSION \
+        imarcagency/ops-node:0.16.10 \
         "$@"
 }
 
@@ -1393,15 +1393,15 @@ fi
 # options that can be overridden by global config
 
 declare -x OPS_ENV="dev"
-declare -x OPS_CONTAINER_VERSION="0.16.10"
+declare -x OPS_CONTAINER_VERSION="0.17.0"
 declare -x OPS_DEBUG="${OPS_DEBUG}"
 declare -x OPS_TEST_MODE="${OPS_TEST_MODE}"
 declare -x OPS_BACKENDS="${OPS_BACKENDS-"apache-php74 apache-php83 apache-php84"}"
 declare -x OPS_SERVICES="${OPS_SERVICES-"portainer dashboard mariadb postgres postgres16 redis adminer redis-commander"}"
 declare -x OPS_EXTRA_SERVICES="${OPS_EXTRA_SERVICES}"
-declare -x OPS_DOCKER_COMPOSER_IMAGE=${OPS_DOCKER_COMPOSER_IMAGE-"imarcagency/ops-apache-php80:$OPS_CONTAINER_VERSION"}
-declare -x OPS_DOCKER_NODE_IMAGE=${OPS_DOCKER_NODE_IMAGE-"imarcagency/ops-node:$OPS_CONTAINER_VERSION"}
-declare -x OPS_DOCKER_UTILS_IMAGE=${OPS_DOCKER_UTILS_IMAGE-"imarcagency/ops-utils:$OPS_CONTAINER_VERSION"}
+declare -x OPS_DOCKER_COMPOSER_IMAGE=${OPS_DOCKER_COMPOSER_IMAGE-"imarcagency/ops-apache-php80:0.16.10"}
+declare -x OPS_DOCKER_NODE_IMAGE=${OPS_DOCKER_NODE_IMAGE-"imarcagency/ops-node:0.16.10"}
+declare -x OPS_DOCKER_UTILS_IMAGE=${OPS_DOCKER_UTILS_IMAGE-"imarcagency/ops-utils:0.16.10"}
 declare -x OPS_DOCKER_GID=${OPS_DOCKER_GID-""}
 declare -x OPS_DOCKER_UID=${OPS_DOCKER_UID-""}
 declare -x OPS_DOCKER_VERSION="18"

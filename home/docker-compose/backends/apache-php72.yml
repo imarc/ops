@@ -1,6 +1,6 @@
 services:
   apache-php72:
-    image: imarcagency/ops-apache-php72:${OPS_CONTAINER_VERSION}
+    image: imarcagency/ops-apache-php72:0.16.10
     labels:
       - "ops.project=ops"
     environment:
