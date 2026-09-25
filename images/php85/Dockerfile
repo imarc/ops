@@ -1,8 +1,8 @@
-FROM --platform=$BUILDPLATFORM php:8.5-rc-apache-bullseye AS base
+FROM --platform=$BUILDPLATFORM php:8.5-apache-bookworm AS base
 
 LABEL AUTHOR "Imarc <info@imarc.com>"
 
-ARG IMAGICK_COMMIT="b47e91c83b0eb8db951794d0ed363ae20748b795"
+ARG IMAGICK_COMMIT="70087bab33eab913e99ac77d64d04d1a2fd0b7b0"
 
 # fix for postgresql-client
 RUN mkdir -p /usr/share/man/man1 && \
@@ -19,7 +19,7 @@ RUN apt-get update && apt-get install -y --fix-missing \
     ffmpeg \
     freetds-dev \
     g++ \
-    git-core \
+    git \
     gnupg \
     imagemagick \
     iproute2 \
@@ -38,17 +38,17 @@ RUN apt-get update && apt-get install -y --fix-missing \
     libwebp-dev \
     libzip-dev \
     default-mysql-client \
-    netcat \
+    netcat-openbsd \
     net-tools \
     pkg-config \
     postgresql-client \
-    python \
+    python-is-python3 \
     unixodbc-dev \
     vim \
     wget
 
 RUN curl -sSL https://packages.microsoft.com/keys/microsoft.asc | gpg --dearmor -o /usr/share/keyrings/microsoft.gpg
-RUN ARCH=$(dpkg --print-architecture) && echo "deb [arch=${ARCH} signed-by=/usr/share/keyrings/microsoft.gpg] https://packages.microsoft.com/debian/11/prod bullseye main" > /etc/apt/sources.list.d/mssql-release.list
+RUN ARCH=$(dpkg --print-architecture) && echo "deb [arch=${ARCH} signed-by=/usr/share/keyrings/microsoft.gpg] https://packages.microsoft.com/debian/12/prod bookworm main" > /etc/apt/sources.list.d/mssql-release.list
 
 RUN apt-get update
 RUN ACCEPT_EULA=y apt-get install -y \
@@ -105,7 +105,6 @@ RUN docker-php-ext-install \
     intl \
     ldap \
     mysqli \
-    opcache \
     pcntl \
     pdo \
     pdo_dblib \
