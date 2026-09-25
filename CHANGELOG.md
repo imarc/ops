@@ -4,6 +4,9 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/)
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.17.1] - 2026-09-25
+- Created new images for PHP 8.1 through 8.5, node, and utils; PHP 8.0 and older will continue to use 0.16.10 images
+
 ## [0.17.0] - 2025-12-04
 
 ### Changed

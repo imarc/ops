@@ -1393,7 +1393,7 @@ fi
 # options that can be overridden by global config
 
 declare -x OPS_ENV="dev"
-declare -x OPS_CONTAINER_VERSION="0.17.0"
+declare -x OPS_CONTAINER_VERSION="0.17.1"
 declare -x OPS_DEBUG="${OPS_DEBUG}"
 declare -x OPS_TEST_MODE="${OPS_TEST_MODE}"
 declare -x OPS_BACKENDS="${OPS_BACKENDS-"apache-php74 apache-php83 apache-php84"}"

@@ -1,6 +1,6 @@
 {
   "name": "@imarc/ops",
-  "version": "0.17.0",
+  "version": "0.17.1",
   "private": false,
   "bin": {
     "ops": "./ops.sh"
