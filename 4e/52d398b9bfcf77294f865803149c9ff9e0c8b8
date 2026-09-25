@@ -1,0 +1,19 @@
+images/php85/Dockerfile
+  s_4a89459bac1ffa::t_60789748b00da9 94
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.4",
+  "base_commit_sha": "4e52d398b9bfcf77294f865803149c9ff9e0c8b8",
+  "prompts": {},
+  "sessions": {
+    "s_4a89459bac1ffa": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "6f490d8b-deb8-476d-9906-83510b6eb395",
+        "model": "claude-opus-5-5"
+      },
+      "human_author": "Kevin Hamer <kevin@imarc.com>"
+    }
+  }
+}
