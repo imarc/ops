@@ -91,7 +91,7 @@ RUN docker-php-ext-configure exif --enable-exif
 # Install Imagick extension from source until there is pecl support
 # for the latest version. pecl tag 3.7.0 is broken with 8.3.
 RUN mkdir -p /usr/src/php/ext/imagick; \
-    curl -fsSL https://github.com/Imagick/imagick/archive/${IMAGICK_COMMIT}.tar.gz | tar xvz -C "/usr/src/php/ext/imagick" --strip 1
+    curl -fsSL --retry 8 https://github.com/Imagick/imagick/archive/${IMAGICK_COMMIT}.tar.gz | tar xvz -C "/usr/src/php/ext/imagick" --strip 1
 
 # install officially supported php extensions
 RUN docker-php-ext-install \
