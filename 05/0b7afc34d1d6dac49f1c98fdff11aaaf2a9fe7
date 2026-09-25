@@ -1,0 +1,22 @@
+CHANGELOG.md
+  h_fa30cb431001ee 7-9
+README.md
+  h_fa30cb431001ee 3
+VERSION
+  h_fa30cb431001ee 1
+ops.sh
+  h_fa30cb431001ee 1396
+package.json
+  h_fa30cb431001ee 3
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.4",
+  "base_commit_sha": "050b7afc34d1d6dac49f1c98fdff11aaaf2a9fe7",
+  "prompts": {},
+  "humans": {
+    "h_fa30cb431001ee": {
+      "author": "Kevin Hamer <kevin@imarc.com>"
+    }
+  }
+}
