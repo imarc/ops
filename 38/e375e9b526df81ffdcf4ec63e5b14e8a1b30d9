@@ -1,0 +1,26 @@
+home/docker-compose/backends/apache-php85.yml
+  s_c332f75e24dde8::t_6deaaf0dca2b23 1-28
+images/php85/Dockerfile
+  s_c332f75e24dde8::t_05741568d879d4 1,22,41,45,51
+  s_c332f75e24dde8::t_c1787e152d0130 5
+images/php85/php.ini
+  s_c332f75e24dde8::t_6deaaf0dca2b23 11-12
+home/php/php85.ini
+  s_c332f75e24dde8::t_6deaaf0dca2b23 1-27
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.4",
+  "base_commit_sha": "38e375e9b526df81ffdcf4ec63e5b14e8a1b30d9",
+  "prompts": {},
+  "sessions": {
+    "s_c332f75e24dde8": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "20d0e252-5af5-4bce-b10d-add8924592cd",
+        "model": "claude-opus-5-5"
+      },
+      "human_author": "Kevin Hamer <kevin@imarc.com>"
+    }
+  }
+}
