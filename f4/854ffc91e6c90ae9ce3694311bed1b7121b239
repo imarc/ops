@@ -1,0 +1,19 @@
+cmd.sh
+  s_ef84a843a50159::t_9af2f15e8cef71 38
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.4",
+  "base_commit_sha": "f4854ffc91e6c90ae9ce3694311bed1b7121b239",
+  "prompts": {},
+  "sessions": {
+    "s_ef84a843a50159": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "2fd9cabf-8d9a-4c43-b869-9244bfa5f79b",
+        "model": "claude-opus-5-5"
+      },
+      "human_author": "Kevin Hamer <kevin@imarc.com>"
+    }
+  }
+}
