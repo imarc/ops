@@ -1,0 +1,25 @@
+ops.sh
+  s_ef84a843a50159::t_1ae83745391ab5 745-746
+  s_ef84a843a50159::t_541701bc3e64a5 1402
+cmd.sh
+  s_ef84a843a50159::t_1ae83745391ab5 129-132,134,136,162-163
+  s_ef84a843a50159::t_037bdc2c5869a3 133
+  s_ef84a843a50159::t_541701bc3e64a5 37
+  s_ef84a843a50159::t_562ce6294368dd 164-165
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.4",
+  "base_commit_sha": "2e15b4bcaf44b10612437697571e63c7452bc89d",
+  "prompts": {},
+  "sessions": {
+    "s_ef84a843a50159": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "2fd9cabf-8d9a-4c43-b869-9244bfa5f79b",
+        "model": "claude-opus-5-5"
+      },
+      "human_author": "Kevin Hamer <kevin@imarc.com>"
+    }
+  }
+}
