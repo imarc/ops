@@ -301,13 +301,22 @@ mariadb-import() {
     local sqlfile=${2--}
 
 
-    (
-        # don't let these commands grab stdin
-        ops-exec mariadb mariadb -e "DROP DATABASE IF EXISTS $db"
-        ops-exec mariadb mariadb -e "CREATE DATABASE $db"
-    ) </dev/null
+    cat "$sqlfile" | (
+        # wait for input before dropping, so a failed dump leaves the database alone
+        local first_line
+        if ! IFS= read -r first_line && [[ -z "$first_line" ]]; then
+            echo "No data received. Left database '$db' unchanged." >&2
+            exit 1
+        fi
 
-    cat "$sqlfile" | ops-exec mariadb mariadb "$db"
+        (
+            # don't let these commands grab stdin
+            ops-exec mariadb mariadb -e "DROP DATABASE IF EXISTS $db"
+            ops-exec mariadb mariadb -e "CREATE DATABASE $db"
+        ) </dev/null
+
+        { printf '%s\n' "$first_line"; cat; } | ops-exec mariadb mariadb "$db"
+    )
 }
 
 mariadb-www() {
@@ -451,13 +460,22 @@ psql-import() {
     local db="$1"
     local sqlfile=${2--}
 
-    (
-        # don't let these commands capture stdin
-        ops-exec "$OPS_POSTGRES_SERVICE" psql -U postgres -c "DROP DATABASE IF EXISTS $db"
-        ops-exec "$OPS_POSTGRES_SERVICE" psql -U postgres -c "CREATE DATABASE $db"
-    ) </dev/null
+    cat "$sqlfile" | (
+        # wait for input before dropping, so a failed dump leaves the database alone
+        local first_line
+        if ! IFS= read -r first_line && [[ -z "$first_line" ]]; then
+            echo "No data received. Left database '$db' unchanged." >&2
+            exit 1
+        fi
 
-    cat "$sqlfile" | ops-exec "$OPS_POSTGRES_SERVICE" psql -U postgres "$db"
+        (
+            # don't let these commands capture stdin
+            ops-exec "$OPS_POSTGRES_SERVICE" psql -U postgres -c "DROP DATABASE IF EXISTS $db"
+            ops-exec "$OPS_POSTGRES_SERVICE" psql -U postgres -c "CREATE DATABASE $db"
+        ) </dev/null
+
+        { printf '%s\n' "$first_line"; cat; } | ops-exec "$OPS_POSTGRES_SERVICE" psql -U postgres "$db"
+    )
 }
 
 psql-help() {
@@ -748,8 +766,11 @@ ops-sync() {
 
     if [[ ! -z "$OPS_PROJECT_REMOTE_SSH_OPTIONS" ]]; then
         read -ra ssh_options <<< "$OPS_PROJECT_REMOTE_SSH_OPTIONS"
-        rsync_ssh_options=(-e "ssh $OPS_PROJECT_REMOTE_SSH_OPTIONS")
     fi
+
+    # ssh uses the first value it sees, so user options can override this
+    ssh_options+=(-o ConnectTimeout="$OPS_SSH_CONNECT_TIMEOUT")
+    rsync_ssh_options=(-e "ssh ${ssh_options[*]}")
 
     if [[ ! -z "$OPS_PROJECT_REMOTE_COMMAND" ]]; then
         rsync_path_options=(--rsync-path="$OPS_PROJECT_REMOTE_COMMAND rsync")
@@ -766,6 +787,33 @@ ops-sync() {
         fi
     }
 
+    local ssh_log="$(mktemp)"
+    trap 'rm -f "$ssh_log"' EXIT
+
+    ops-sync-check-ssh() {
+        local ssh_status="$1"
+
+        [[ $ssh_status == 0 ]] && return
+
+        if [[ $ssh_status == 255 ]]; then
+            echo "$(bold ops sync): could not connect to $ssh_host over SSH." >&2
+        else
+            echo "$(bold ops sync): remote database dump failed." >&2
+        fi
+
+        cat "$ssh_log" >&2
+
+        if grep -q "timed out" "$ssh_log"; then
+            echo >&2
+            echo "The server didn't respond. Its firewall may only allow SSH from certain IPs:" >&2
+            echo "connect to the VPN, or ask for your public IP to be allowed." >&2
+            echo "If SSH goes through a different host than the site, set" >&2
+            echo "OPS_PROJECT_REMOTE_HOST or OPS_PROJECT_REMOTE_SSH_OPTIONS (e.g. -J bastion)." >&2
+        fi
+
+        exit 1
+    }
+
     if [[ ! -z "$OPS_DEBUG" ]]; then
         # print out all OPS_ vars
         echo
@@ -773,6 +821,11 @@ ops-sync() {
         ( set -o posix ; set ) | grep -E '^OPS_'
         echo '=== END DEBUG ==='
         echo
+    fi
+
+    if [[ -z "$OPS_PROJECT_REMOTE_HOST" ]]; then
+        echo "$(bold ops sync): OPS_PROJECT_REMOTE_HOST is not set." >&2
+        exit 1
     fi
 
     # sync database
@@ -787,8 +840,9 @@ ops-sync() {
             echo "Syncing remote mariadb '$OPS_PROJECT_REMOTE_DB_NAME' to local '$OPS_PROJECT_DB_NAME'..."
 
             ops-sync-ssh -C \
-                "ops $OPS_PROJECT_REMOTE_DB_TYPE export $OPS_PROJECT_REMOTE_DB_NAME" | \
+                "ops $OPS_PROJECT_REMOTE_DB_TYPE export $OPS_PROJECT_REMOTE_DB_NAME" 2>"$ssh_log" | \
                 $OPS_PROJECT_DB_TYPE-import "$OPS_PROJECT_DB_NAME"
+            ops-sync-check-ssh "${PIPESTATUS[0]}"
 
         elif [[ "$OPS_PROJECT_REMOTE_DB_TYPE" = "mariadb" ]]; then
             echo "Syncing remote mariadb '$OPS_PROJECT_REMOTE_DB_NAME' to local '$OPS_PROJECT_DB_NAME'..."
@@ -803,8 +857,9 @@ ops-sync() {
                 $mysqldump_host \
                 $mysqldump_user \
                 $mysqldump_password \
-                $OPS_PROJECT_REMOTE_DB_NAME" 2>/dev/null | \
+                $OPS_PROJECT_REMOTE_DB_NAME" 2>"$ssh_log" | \
                     mariadb-import "$OPS_PROJECT_DB_NAME"
+            ops-sync-check-ssh "${PIPESTATUS[0]}"
 
         elif [[ "$OPS_PROJECT_REMOTE_DB_TYPE" = "psql" ]]; then
             OPS_PROJECT_REMOTE_DB_PORT="${OPS_PROJECT_REMOTE_DB_PORT:-"5432"}"
@@ -818,8 +873,9 @@ ops-sync() {
 
             ops-sync-ssh -TC "$OPS_PROJECT_REMOTE_PGDUMP_PATH \
                 $pgdump_host \
-                $OPS_PROJECT_REMOTE_DB_NAME" 2>/dev/null | \
+                $OPS_PROJECT_REMOTE_DB_NAME" 2>"$ssh_log" | \
                     psql-import "$OPS_PROJECT_DB_NAME"
+            ops-sync-check-ssh "${PIPESTATUS[0]}"
         fi
     fi
 
@@ -1354,7 +1410,7 @@ main() {
         docker ps > /dev/null
 
         if [[ $? != 0 ]]; then
-            exit
+            exit 1
         fi
 
         validate-config
@@ -1407,6 +1463,7 @@ declare -x OPS_DOCKER_UID=${OPS_DOCKER_UID-""}
 declare -x OPS_DOCKER_VERSION="18"
 declare -x OPS_DOCKER_COMPOSE_VERSION="1.22"
 declare -x OPS_PHP_XDEBUG=${OPS_PHP_XDEBUG-"0"}
+declare -x OPS_SSH_CONNECT_TIMEOUT=${OPS_SSH_CONNECT_TIMEOUT-"10"}
 declare -x OPS_DOMAIN=${OPS_DOMAIN-"imarc.io"}
 declare -x OPS_DOMAIN_ALIASES=${OPS_DOMAIN_ALIASES-""}
 declare -x OPS_MINIO_ROOT_USER=${OPS_MINIO_ROOT_USER-"minio-user"}

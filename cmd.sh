@@ -147,9 +147,13 @@ cmd-run() {
         $prefix-$command "$@"
     fi
 
+    local status=$?
+
     if [[ $has_after_command != 0 ]]; then
         $prefix-$command--after "$@"
     fi
+
+    return $status
 }
 
 cmd-www() {

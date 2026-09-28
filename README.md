@@ -176,6 +176,13 @@ The following options can be set within your $HOME/.ops/config file.
     # Default: 0
     OPS_PHP_XDEBUG="0"
 
+    # Seconds to wait for an SSH connection during 'ops sync' before giving up.
+    #
+    # Can also be set in a project's .env file.
+    #
+    # Default: 10
+    OPS_SSH_CONNECT_TIMEOUT="10"
+
 ## Connect to Services
 
 You can connect your app to the following shared services:
