@@ -35,7 +35,7 @@ cmd-get-doc() {
     local pad=""
 
     if (( indent > 0 )); then
-        pad=$(seq -f " " -s "" $indent)
+        pad=$(printf '%*s' "$indent" '')
     fi
 
     declare -f $1 | \
