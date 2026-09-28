@@ -98,14 +98,6 @@ get-version() {
     awk 'match($0, /([0-9][0-9\.a-z-]+)/) { print substr($0, RSTART, RLENGTH) }'
 }
 
-run() {
-    if [[ $OPS_TEST_MODE == 1 ]]; then
-        echo $@
-    else
-        $@
-    fi
-}
-
 # Main Commands
 
 ops-composer() {
@@ -750,7 +742,8 @@ ops-sync() {
     (
 
     if [[ -z "$OPS_PROJECT_NAME" ]]; then
-        echo "$(bold ops sync) must be run from a project directory."
+        echo "$(bold ops sync) must be run from a project directory." >&2
+        exit 1
     fi
 
     cd "$OPS_SITES_DIR/$OPS_PROJECT_NAME"
@@ -1406,7 +1399,7 @@ system-help() {
 }
 
 main() {
-    if [[ "$@" != "system install" ]]; then
+    if [[ ! ( ( $1 == system || $1 == sys ) && $2 == install ) ]]; then
         docker ps > /dev/null
 
         if [[ $? != 0 ]]; then
@@ -1451,7 +1444,6 @@ fi
 declare -x OPS_ENV="dev"
 declare -x OPS_CONTAINER_VERSION="0.17.1"
 declare -x OPS_DEBUG="${OPS_DEBUG}"
-declare -x OPS_TEST_MODE="${OPS_TEST_MODE}"
 declare -x OPS_BACKENDS="${OPS_BACKENDS-"apache-php74 apache-php83 apache-php84"}"
 declare -x OPS_SERVICES="${OPS_SERVICES-"portainer dashboard mariadb postgres postgres16 redis adminer redis-commander"}"
 declare -x OPS_EXTRA_SERVICES="${OPS_EXTRA_SERVICES}"

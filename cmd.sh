@@ -34,7 +34,7 @@ cmd-get-doc() {
     local indent="${3-0}"
     local pad=""
 
-    if [[ $indent > 0 ]]; then
+    if (( indent > 0 )); then
         pad=$(seq -f " " -s "" $indent)
     fi
 
@@ -126,8 +126,14 @@ cmd-run() {
         }"
     fi
 
-    if [[ ( -z "$command" || $has_hidden_command == 0 && $has_command == 0 ) ]]; then
+    local unknown_command=0
+
+    if [[ -z "$command" ]]; then
         command='help'
+    elif [[ $has_hidden_command == 0 && $(type -t $prefix-$command) != 'function' ]]; then
+        echo "Unknown command: $command" >&2
+        command='help'
+        unknown_command=1
     fi
 
     [[ $(type -t $prefix-$command--before) != 'function' ]]
@@ -151,6 +157,10 @@ cmd-run() {
 
     if [[ $has_after_command != 0 ]]; then
         $prefix-$command--after "$@"
+    fi
+
+    if [[ $unknown_command == 1 ]]; then
+        return 1
     fi
 
     return $status
