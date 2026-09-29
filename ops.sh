@@ -783,10 +783,17 @@ ops-sync() {
     local ssh_log="$(mktemp)"
     trap 'rm -f "$ssh_log"' EXIT
 
-    ops-sync-check-ssh() {
+    ops-sync-check() {
         local ssh_status="$1"
+        local import_status="$2"
 
-        [[ $ssh_status == 0 ]] && return
+        [[ $ssh_status == 0 && $import_status == 0 ]] && return
+
+        # an empty log means ssh only failed because the import stopped reading
+        if [[ $ssh_status == 0 ]] || [[ $import_status != 0 && ! -s "$ssh_log" ]]; then
+            echo "$(bold ops sync): local database import failed." >&2
+            exit "$import_status"
+        fi
 
         if [[ $ssh_status == 255 ]]; then
             echo "$(bold ops sync): could not connect to $ssh_host over SSH." >&2
@@ -835,7 +842,7 @@ ops-sync() {
             ops-sync-ssh -C \
                 "ops $OPS_PROJECT_REMOTE_DB_TYPE export $OPS_PROJECT_REMOTE_DB_NAME" 2>"$ssh_log" | \
                 $OPS_PROJECT_DB_TYPE-import "$OPS_PROJECT_DB_NAME"
-            ops-sync-check-ssh "${PIPESTATUS[0]}"
+            ops-sync-check "${PIPESTATUS[@]}"
 
         elif [[ "$OPS_PROJECT_REMOTE_DB_TYPE" = "mariadb" ]]; then
             echo "Syncing remote mariadb '$OPS_PROJECT_REMOTE_DB_NAME' to local '$OPS_PROJECT_DB_NAME'..."
@@ -852,7 +859,7 @@ ops-sync() {
                 $mysqldump_password \
                 $OPS_PROJECT_REMOTE_DB_NAME" 2>"$ssh_log" | \
                     mariadb-import "$OPS_PROJECT_DB_NAME"
-            ops-sync-check-ssh "${PIPESTATUS[0]}"
+            ops-sync-check "${PIPESTATUS[@]}"
 
         elif [[ "$OPS_PROJECT_REMOTE_DB_TYPE" = "psql" ]]; then
             OPS_PROJECT_REMOTE_DB_PORT="${OPS_PROJECT_REMOTE_DB_PORT:-"5432"}"
@@ -868,7 +875,7 @@ ops-sync() {
                 $pgdump_host \
                 $OPS_PROJECT_REMOTE_DB_NAME" 2>"$ssh_log" | \
                     psql-import "$OPS_PROJECT_DB_NAME"
-            ops-sync-check-ssh "${PIPESTATUS[0]}"
+            ops-sync-check "${PIPESTATUS[@]}"
         fi
     fi
 
@@ -1442,7 +1449,7 @@ fi
 # options that can be overridden by global config
 
 declare -x OPS_ENV="dev"
-declare -x OPS_CONTAINER_VERSION="0.17.1"
+declare -x OPS_CONTAINER_VERSION="0.18.0"
 declare -x OPS_DEBUG="${OPS_DEBUG}"
 declare -x OPS_BACKENDS="${OPS_BACKENDS-"apache-php74 apache-php83 apache-php84"}"
 declare -x OPS_SERVICES="${OPS_SERVICES-"portainer dashboard mariadb postgres postgres16 redis adminer redis-commander"}"
