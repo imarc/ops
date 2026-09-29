@@ -1,0 +1,27 @@
+package.json
+  s_c7dc0094a8b984::t_b3936e6d9b1539 3
+home/docker-compose/backends/apache-php81.yml
+  s_c7dc0094a8b984::t_b3936e6d9b1539 3
+README.md
+  s_c7dc0094a8b984::t_b3936e6d9b1539 3
+CHANGELOG.md
+  s_c7dc0094a8b984::t_b3936e6d9b1539 7-22
+VERSION
+  s_c7dc0094a8b984::t_b3936e6d9b1539 1
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.4",
+  "base_commit_sha": "8d667d1ae04d7a26bb469c3f4a8eb948041359c9",
+  "prompts": {},
+  "sessions": {
+    "s_c7dc0094a8b984": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "98ac67c5-6c8f-49b6-87b4-aa2fa97ea3b0",
+        "model": "claude-opus-5-5"
+      },
+      "human_author": "Kevin Hamer <kevin@imarc.com>"
+    }
+  }
+}
