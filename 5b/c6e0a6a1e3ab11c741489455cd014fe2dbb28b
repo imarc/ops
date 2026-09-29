@@ -1,0 +1,38 @@
+images/php83/Dockerfile
+  s_c7dc0094a8b984::t_788caa87e1327d 1,22,26,37,45,49,55
+  s_c7dc0094a8b984::t_09d9c4be94357e 54
+  s_c7dc0094a8b984::t_22737b4ce616c8 66-69,125,134
+  s_c7dc0094a8b984::t_9c376ec5f4e345 9-14,48
+images/php84/Dockerfile
+  s_c7dc0094a8b984::t_788caa87e1327d 1,22,26,37,45,49,55
+  s_c7dc0094a8b984::t_09d9c4be94357e 54
+  s_c7dc0094a8b984::t_9c376ec5f4e345 9-14,48
+  s_c7dc0094a8b984::t_22737b4ce616c8 66-69,124,134
+images/php85/Dockerfile
+  s_c7dc0094a8b984::t_09d9c4be94357e 54
+  s_c7dc0094a8b984::t_788caa87e1327d 1,22,37,55
+  s_c7dc0094a8b984::t_9c376ec5f4e345 9-14,48
+  s_c7dc0094a8b984::t_22737b4ce616c8 66-69,122,132
+images/php82/Dockerfile
+  s_c7dc0094a8b984::t_788caa87e1327d 1,22,26,37,45,49,55
+  s_c7dc0094a8b984::t_068382c36e2613 125-126
+  s_c7dc0094a8b984::t_9c376ec5f4e345 9-14,48
+  s_c7dc0094a8b984::t_22737b4ce616c8 66-69
+  s_c7dc0094a8b984::t_09d9c4be94357e 54
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.4",
+  "base_commit_sha": "5bc6e0a6a1e3ab11c741489455cd014fe2dbb28b",
+  "prompts": {},
+  "sessions": {
+    "s_c7dc0094a8b984": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "98ac67c5-6c8f-49b6-87b4-aa2fa97ea3b0",
+        "model": "claude-opus-5-5"
+      },
+      "human_author": "Kevin Hamer <kevin@imarc.com>"
+    }
+  }
+}
