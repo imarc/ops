@@ -1451,7 +1451,7 @@ fi
 declare -x OPS_ENV="dev"
 declare -x OPS_CONTAINER_VERSION="0.18.0"
 declare -x OPS_DEBUG="${OPS_DEBUG}"
-declare -x OPS_BACKENDS="${OPS_BACKENDS-"apache-php74 apache-php83 apache-php84"}"
+declare -x OPS_BACKENDS="${OPS_BACKENDS-"apache-php83 apache-php84 apache-php85"}"
 declare -x OPS_SERVICES="${OPS_SERVICES-"portainer dashboard mariadb postgres postgres16 redis adminer redis-commander"}"
 declare -x OPS_EXTRA_SERVICES="${OPS_EXTRA_SERVICES}"
 declare -x OPS_DOCKER_COMPOSER_IMAGE=${OPS_DOCKER_COMPOSER_IMAGE-"imarcagency/ops-apache-php80:0.16.10"}
