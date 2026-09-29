@@ -1,10 +1,16 @@
-FROM --platform=$BUILDPLATFORM php:8.2.27-apache-bullseye AS base
+FROM --platform=$BUILDPLATFORM php:8.2.34-apache-trixie AS base
 
 LABEL AUTHOR "Imarc <info@imarc.com>"
 
 # fix for postgresql-client
 RUN mkdir -p /usr/share/man/man1 && \
     mkdir -p /usr/share/man/man7
+
+# add PostgreSQL apt repo (PGDG) for newer postgresql-client/libpq
+RUN install -d /usr/share/postgresql-common/pgdg && \
+    curl -fsSL -o /usr/share/postgresql-common/pgdg/apt.postgresql.org.asc https://www.postgresql.org/media/keys/ACCC4CF8.asc && \
+    . /etc/os-release && \
+    echo "deb [signed-by=/usr/share/postgresql-common/pgdg/apt.postgresql.org.asc] https://apt.postgresql.org/pub/repos/apt ${VERSION_CODENAME}-pgdg main" > /etc/apt/sources.list.d/pgdg.list
 
 # install supporting packages
 RUN apt-get update && apt-get install -y --fix-missing \
@@ -13,11 +19,11 @@ RUN apt-get update && apt-get install -y --fix-missing \
     build-essential \
     chrpath \
     curl \
-    dnsutils \
+    bind9-dnsutils \
     ffmpeg \
     freetds-dev \
     g++ \
-    git-core \
+    git \
     gnupg \
     imagemagick \
     iproute2 \
@@ -28,7 +34,7 @@ RUN apt-get update && apt-get install -y --fix-missing \
     libmagickwand-dev \
     libmcrypt-dev \
     libmemcached-dev \
-    libmemcached11 \
+    libmemcached11t64 \
     libpng-dev \
     libpq-dev \
     libpspell-dev \
@@ -36,17 +42,17 @@ RUN apt-get update && apt-get install -y --fix-missing \
     libwebp-dev \
     libzip-dev \
     default-mysql-client \
-    netcat \
+    netcat-openbsd \
     net-tools \
     pkg-config \
-    postgresql-client \
-    python \
+    postgresql-client-18 \
+    python-is-python3 \
     unixodbc-dev \
     vim \
     wget
 
-RUN curl -sSL https://packages.microsoft.com/keys/microsoft.asc | gpg --dearmor -o /usr/share/keyrings/microsoft.gpg
-RUN ARCH=$(dpkg --print-architecture) && echo "deb [arch=${ARCH} signed-by=/usr/share/keyrings/microsoft.gpg] https://packages.microsoft.com/debian/11/prod bullseye main" > /etc/apt/sources.list.d/mssql-release.list
+RUN curl -sSL https://packages.microsoft.com/keys/microsoft-2025.asc | gpg --dearmor -o /usr/share/keyrings/microsoft.gpg
+RUN ARCH=$(dpkg --print-architecture) && echo "deb [arch=${ARCH} signed-by=/usr/share/keyrings/microsoft.gpg] https://packages.microsoft.com/debian/13/prod trixie main" > /etc/apt/sources.list.d/mssql-release.list
 
 RUN apt-get update
 RUN ACCEPT_EULA=y apt-get install -y \
@@ -56,6 +62,10 @@ RUN ACCEPT_EULA=y apt-get install -y \
 # link libsysbdb libs. (required for sqlsrv extension)
 RUN ln -s /usr/lib/x86_64-linux-gnu/libsybdb.so /usr/lib/libsybdb.so
 RUN ln -s /usr/lib/x86_64-linux-gnu/libsybdb.a /usr/lib/libsybdb.a
+
+# MariaDB 11.4+ client requires a verified TLS cert by default, which fails
+# against the ops mariadb service (self-signed cert, passwordless root)
+RUN printf "[client]\nssl-verify-server-cert=0\n" > /etc/mysql/conf.d/ops-client.cnf
 
 # Configure GD with jpeg
 RUN docker-php-ext-configure gd --with-freetype --with-jpeg --with-webp
@@ -112,8 +122,8 @@ RUN pecl install \
     imagick \
     redis \
     xdebug-3.2.0RC2 \
-    sqlsrv \
-    pdo_sqlsrv
+    sqlsrv-5.12.0 \
+    pdo_sqlsrv-5.12.0
 
 # enable pecl extensions
 RUN docker-php-ext-enable \

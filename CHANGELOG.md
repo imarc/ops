@@ -4,6 +4,22 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/)
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.18.0] - 2026-09-29
+
+### Changed
+- PHP 8.2 through 8.5 images moved to Debian trixie with current PHP patch releases (8.2.34, 8.3.35, 8.4.26, 8.5.x)
+- PHP 8.2 through 8.5 images now include PostgreSQL 18 client tools (from apt.postgresql.org), which can dump PostgreSQL 9.2 through 18
+- PHP 8.2 through 8.5 images install imagick 3.8.1 from PECL (built against ImageMagick 7); fixes a crash reading `Imagick::$format` on PHP 8.4
+- MariaDB client in PHP 8.2 through 8.5 images no longer requires a verified TLS certificate, so `mysql`/`mysqldump` work against the ops mariadb service
+- PHP 8.1 now stays on the 0.17.0 image; PHP 8.0 and older continue to use 0.16.10 images
+- Unknown commands now exit 1
+
+### Added
+- `OPS_SSH_CONNECT_TIMEOUT` setting (default 10) and better error detection for `ops sync`
+
+### Removed
+- `OPS_TEST_MODE`
+
 ## [0.17.1] - 2026-09-25
 - Created new images for PHP 8.1 through 8.5, node, and utils; PHP 8.0 and older will continue to use 0.16.10 images
 

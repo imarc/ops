@@ -1,6 +1,6 @@
 # Ops
 
-**Version 0.17.1**
+**Version 0.18.0**
 
 - A local development environment focused on PHP-based projects.
 - Create a new host by making a directory.
@@ -175,6 +175,13 @@ The following options can be set within your $HOME/.ops/config file.
     #
     # Default: 0
     OPS_PHP_XDEBUG="0"
+
+    # Seconds to wait for an SSH connection during 'ops sync' before giving up.
+    #
+    # Can also be set in a project's .env file.
+    #
+    # Default: 10
+    OPS_SSH_CONNECT_TIMEOUT="10"
 
 ## Connect to Services
 
