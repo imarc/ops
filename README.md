@@ -88,10 +88,38 @@ Within your project's .env file you can set the following options:
     OPS_PROJECT_BASIC_AUTH_FILE=".htpasswd"
 
     # allow the use of subdomains.
-    # may require 'ops system regenerate-certs' for HTTPS
+    # may require 'ops system refresh-certs' for HTTPS
     #
     # Default: 0
     OPS_PROJECT_ALLOW_SUBDOMAINS=1
+
+## Serving Git Worktrees
+
+A git worktree of a project is served at `<worktree>.<project>.imarc.io` when
+the worktree's directory is inside `OPS_SITES_DIR`. Ops finds it through the
+main checkout's `.git/worktrees/<worktree>/gitdir`, so any tool that creates
+worktrees works. `<worktree>` is git's name for the worktree, which is usually
+its directory name.
+
+Keep worktrees in a hidden folder so ops doesn't list that folder as a project,
+for example `~/Sites/.worktrees`. For [Paseo](https://paseo.sh), set
+`worktrees.root` in `~/.paseo/config.json`:
+
+    { "worktrees": { "root": "/home/you/Sites/.worktrees" } }
+
+The worktree's `.env` is used if it has one, otherwise the main project's.
+Worktrees don't include untracked files, so copy `.env` and install
+dependencies after creating one. Copy `.env`; don't symlink it, because the
+symlink target doesn't exist inside the containers. With Paseo, you can do
+this in `paseo.json`:
+
+    {
+      "worktree": {
+        "setup": "cp \"$PASEO_SOURCE_CHECKOUT_PATH/.env\" .env\ncomposer install\nnpm ci"
+      }
+    }
+
+HTTPS works for any project that existed at the last `ops system refresh-certs`.
 
 ## Global Configuration
 
