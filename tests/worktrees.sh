@@ -49,6 +49,7 @@ page "$fixtures/.wt/def/blue/web/index.html" "blue"
 # gitdirs outside OPS_SITES_DIR are ignored
 worktree main outside "/somewhere/else/outside/.git"
 worktree main evil "$sites_dir-evil/evil/.git"
+worktree main trav "$sites_dir/../../../etc/.git"
 
 # subs: allows subdomains, default docroot (public/)
 page "$fixtures/subs/.env" "OPS_PROJECT_ALLOW_SUBDOMAINS=1"
@@ -117,6 +118,9 @@ expect green.main.ops.test 200 green
 expect blue.main.ops.test 200 blue
 expect outside.main.ops.test 404 ""
 expect evil.main.ops.test 404 ""
+expect trav.main.ops.test 404 ""
+expect "foo~bar.ops.test" 404 ""
+expect "x.foo~bar.ops.test" 404 ""
 expect a.green.main.ops.test 404 ""
 expect main.ops.test 200 main -H "X-Ops-Project-Path: /var/www/html/subs"
 
