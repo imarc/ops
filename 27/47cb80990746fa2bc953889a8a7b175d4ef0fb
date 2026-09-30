@@ -1,0 +1,22 @@
+CHANGELOG.md
+  s_454aec4fdc984a::t_19b642df81ce2e 7-11
+README.md
+  s_454aec4fdc984a::t_b2ee956d2549ca 91,96-122
+  s_454aec4fdc984a::t_288431d5c6085a 123
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.4",
+  "base_commit_sha": "2747cb80990746fa2bc953889a8a7b175d4ef0fb",
+  "prompts": {},
+  "sessions": {
+    "s_454aec4fdc984a": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "af2d643f-9c33-4c89-9289-4f94ad0c2ecd",
+        "model": "claude-opus-5-5"
+      },
+      "human_author": "Kevin Hamer <kevin@imarc.com>"
+    }
+  }
+}
