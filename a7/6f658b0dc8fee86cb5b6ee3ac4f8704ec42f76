@@ -1,0 +1,24 @@
+home/nginx/nginx.conf
+  s_454aec4fdc984a::t_c286e6a0e7eecc 206
+  s_454aec4fdc984a::t_dc5118f3c8597e 128-154,159
+  s_454aec4fdc984a::t_24866fc50fe0da 46
+  s_454aec4fdc984a::t_84c83c25535617 160
+home/apache/set_docroot.lua
+  s_454aec4fdc984a::t_476a9d89af5982 8-9
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.4",
+  "base_commit_sha": "a76f658b0dc8fee86cb5b6ee3ac4f8704ec42f76",
+  "prompts": {},
+  "sessions": {
+    "s_454aec4fdc984a": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "af2d643f-9c33-4c89-9289-4f94ad0c2ecd",
+        "model": "claude-opus-5-5"
+      },
+      "human_author": "Kevin Hamer <kevin@imarc.com>"
+    }
+  }
+}
