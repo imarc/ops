@@ -203,7 +203,7 @@ git commit -m "Add integration harness for serving git worktrees"
 ### Task 2: Worktree routing in nginx and Apache
 
 **Files:**
-- Modify: `home/nginx/nginx.conf` (the `set` directives at `:39-45`, the subdomain block at `:124-131`, and the proxy headers at `:167-169`)
+- Modify: `home/nginx/nginx.conf` (the `set` directive at `:45`, the subdomain block at `:124-131`, and the proxy header at `:177`)
 - Modify: `home/apache/set_docroot.lua:8`
 
 **Interfaces:**
