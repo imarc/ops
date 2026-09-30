@@ -1,0 +1,19 @@
+tests/worktrees.sh
+  s_454aec4fdc984a::t_ed240a49fd9054 1-128
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.4",
+  "base_commit_sha": "f53682eba80273be5b5d785ad4be7ec1997a4a79",
+  "prompts": {},
+  "sessions": {
+    "s_454aec4fdc984a": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "af2d643f-9c33-4c89-9289-4f94ad0c2ecd",
+        "model": "claude-opus-5-5"
+      },
+      "human_author": "Kevin Hamer <kevin@imarc.com>"
+    }
+  }
+}
