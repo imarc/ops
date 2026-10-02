@@ -1,0 +1,23 @@
+home/www/dashboard/src/helpers.php
+  s_06e8939b4f4424::t_1b55d2767f48a1 74-114
+home/www/dashboard/resources/templates/index.php
+  s_06e8939b4f4424::t_4587d7ba20bd4f 47-55
+CHANGELOG.md
+  s_06e8939b4f4424::t_36d18f4e95ea5d 11
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.4",
+  "base_commit_sha": "35a49c9b5e0cb32c6f79ca91cdd20c5221f8824c",
+  "prompts": {},
+  "sessions": {
+    "s_06e8939b4f4424": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "f88e2a23-935c-4599-b257-e7a82f540c9a",
+        "model": "claude-opus-5-5"
+      },
+      "human_author": "Kevin Hamer <kevin@imarc.com>"
+    }
+  }
+}
