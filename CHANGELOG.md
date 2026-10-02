@@ -8,6 +8,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 - Git worktrees inside `OPS_SITES_DIR` are served at `<worktree>.<project>.OPS_DOMAIN`
+- Dashboard lists served worktrees under each project
 
 ## [0.18.0] - 2026-09-29
 

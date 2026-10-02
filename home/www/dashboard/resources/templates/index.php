@@ -44,6 +44,15 @@
 
                 <?php else: ?>
                     <a class="site" href="https://<?= $site ?>.<?= $domain ?>"><?= $site ?></a>
+
+                    <?php $worktrees = Imarc\Ops\Dashboard\Helpers\getWorktrees($dir, $sitesDir) ?>
+                    <?php if ($worktrees): ?>
+                        <ul>
+                            <?php foreach ($worktrees as $worktree): ?>
+                                <li><a href="https://<?= $worktree ?>.<?= $site ?>.<?= $domain ?>"><?= $worktree ?></a></li>
+                            <?php endforeach ?>
+                        </ul>
+                    <?php endif ?>
                 <?php endif ?>
 
 

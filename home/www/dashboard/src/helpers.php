@@ -71,3 +71,44 @@ function parseEnv($dir)
 
     return $values;
 }
+
+/**
+ * Worktrees of a project that nginx serves at <worktree>.<project>.OPS_DOMAIN.
+ * Mirrors the gitdir lookup in nginx.conf.
+ */
+function getWorktrees($dir, $sitesDir)
+{
+    $sitesDir = rtrim($sitesDir, '/');
+    $worktrees = [];
+
+    foreach (glob($dir . '/.git/worktrees/*/gitdir') as $file) {
+        $name = basename(dirname($file));
+
+        if (!preg_match('/^[a-zA-Z0-9_-]+$/', $name)) {
+            continue;
+        }
+
+        $path = preg_replace('#/\.git$#', '', trim(strtok(file_get_contents($file), "\n")));
+
+        if ($path === '' || $path[0] !== '/') {
+            // relative to the gitdir file's folder (worktree.useRelativePaths)
+            $path = realpath(dirname($file) . '/' . $path);
+
+            if ($path === false || strpos($path, '/var/www/html/') !== 0) {
+                continue;
+            }
+        } elseif (strpos($path, $sitesDir . '/') === 0 && strpos($path, '..') === false) {
+            $path = '/var/www/html' . substr($path, strlen($sitesDir));
+        } else {
+            continue;
+        }
+
+        if (is_dir($path)) {
+            $worktrees[] = $name;
+        }
+    }
+
+    sort($worktrees);
+
+    return $worktrees;
+}
