@@ -1,0 +1,26 @@
+docs/superpowers/specs/2026-09-30-worktree-serving-design.md
+  s_06e8939b4f4424::t_c3530dc896598e 159-164
+tests/worktrees.sh
+  s_06e8939b4f4424::t_2e609c5c8fc06e 54-61,83,130-131
+home/nginx/nginx.conf
+  s_06e8939b4f4424::t_f0b649b9e2e31e 149-155,161-168
+  s_06e8939b4f4424::t_eba9a5b8280f0a 77-91
+README.md
+  s_06e8939b4f4424::t_fd998a02697046 124-127
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.4",
+  "base_commit_sha": "bfb744c93b8871f12da39e4e2e332509de1ec95d",
+  "prompts": {},
+  "sessions": {
+    "s_06e8939b4f4424": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "f88e2a23-935c-4599-b257-e7a82f540c9a",
+        "model": "claude-opus-5-5"
+      },
+      "human_author": "Kevin Hamer <kevin@imarc.com>"
+    }
+  }
+}
