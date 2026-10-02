@@ -51,6 +51,14 @@ worktree main outside "/somewhere/else/outside/.git"
 worktree main evil "$sites_dir-evil/evil/.git"
 worktree main trav "$sites_dir/../../../etc/.git"
 
+# rel: relative gitdir (git worktree.useRelativePaths), relative to the
+# folder holding the gitdir file
+worktree main rel "../../../../.wt/ghi/rel/.git"
+page "$fixtures/.wt/ghi/rel/web/index.html" "rel"
+
+# relative gitdirs that leave the sites dir are ignored
+worktree main reltrav "../../../../../../etc/.git"
+
 # subs: allows subdomains, default docroot (public/)
 page "$fixtures/subs/.env" "OPS_PROJECT_ALLOW_SUBDOMAINS=1"
 page "$fixtures/subs/public/index.html" "subs"
@@ -72,7 +80,7 @@ docker run -d --name "$prefix-backend" --network "$prefix" --network-alias backe
 
 docker run -d --name "$prefix-nginx" --network "$prefix" -p 127.0.0.1::80 \
     -e OPS_DOMAIN=ops.test \
-    -e OPS_SITES_DIR="$sites_dir" \
+    -e OPS_SITES_DIR="$sites_dir/" \
     -e OPS_DEFAULT_BACKEND=backend \
     -e OPS_DEFAULT_DOCROOT=public \
     -v "$root/home/nginx/nginx.conf:/usr/local/openresty/nginx/conf/nginx.conf" \
@@ -119,6 +127,8 @@ expect blue.main.ops.test 200 blue
 expect outside.main.ops.test 404 ""
 expect evil.main.ops.test 404 ""
 expect trav.main.ops.test 404 ""
+expect rel.main.ops.test 200 rel
+expect reltrav.main.ops.test 404 ""
 expect "foo~bar.ops.test" 404 ""
 expect "x.foo~bar.ops.test" 404 ""
 expect a.green.main.ops.test 404 ""

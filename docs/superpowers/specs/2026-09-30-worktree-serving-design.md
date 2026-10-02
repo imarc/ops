@@ -156,6 +156,12 @@ Add one entry under the next version.
   sourcing are not worktree-aware. That is out of scope.
 - Existing worktrees under `~/.paseo/worktrees` are not served. Only worktrees
   created after the Paseo root change are.
+- Git writes the worktree's real path (symlinks resolved) to `gitdir`. If
+  `OPS_SITES_DIR` is or contains a symlink, the prefix never matches and the
+  worktree returns 404. Set `OPS_SITES_DIR` to the real path. Relative
+  `gitdir` entries (`worktree.useRelativePaths`) don't depend on
+  `OPS_SITES_DIR`; they resolve against the container path and must stay
+  under `/var/www/html/`.
 - If the main project's `.git` is itself a file (the main checkout is a
   worktree), no lookup happens and the 404/subdomain fallback applies.
 

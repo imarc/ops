@@ -121,6 +121,10 @@ this in `paseo.json`:
 
 HTTPS works for any project that existed at the last `ops system refresh-certs`.
 
+Git records a worktree's real path, with symlinks resolved. If
+`OPS_SITES_DIR` is or contains a symlink, set it to the real path, or
+worktrees won't be served.
+
 ## Global Configuration
 
 The following options can be set within your $HOME/.ops/config file.
