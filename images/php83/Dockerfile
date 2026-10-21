@@ -1,4 +1,4 @@
-FROM --platform=$BUILDPLATFORM php:8.3.35-apache-trixie AS base
+FROM --platform=$BUILDPLATFORM php:8.3.36-apache-trixie AS base
 
 LABEL AUTHOR "Imarc <info@imarc.com>"
 
