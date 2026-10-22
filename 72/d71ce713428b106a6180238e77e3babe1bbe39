@@ -1,0 +1,28 @@
+ops.sh
+  s_31e8cdcf73900f::t_df4e34826930fb 1452
+package.json
+  s_31e8cdcf73900f::t_df4e34826930fb 3
+CHANGELOG.md
+  s_31e8cdcf73900f::t_df4e34826930fb 7,13-14
+  s_31e8cdcf73900f::t_a1c872e296f9c3 15
+README.md
+  s_31e8cdcf73900f::t_df4e34826930fb 3
+VERSION
+  s_31e8cdcf73900f::t_df4e34826930fb 1
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "72d71ce713428b106a6180238e77e3babe1bbe39",
+  "prompts": {},
+  "sessions": {
+    "s_31e8cdcf73900f": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "01a164ab-840e-7470-bfa1-047ae59dbbf4",
+        "model": "gpt-6-luna"
+      },
+      "human_author": "Kevin Hamer <kevin@imarc.com>"
+    }
+  }
+}
