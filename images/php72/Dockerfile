@@ -1,4 +1,4 @@
-FROM --platform=$BUILDPLATFORM php:7.2.34-apache-stretch AS base
+FROM --platform=$BUILDPLATFORM php:7.2-apache-stretch AS base
 
 LABEL AUTHOR "Imarc <info@imarc.com>"
 
