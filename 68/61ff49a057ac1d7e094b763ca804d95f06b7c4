@@ -1,0 +1,33 @@
+images/php82/Dockerfile
+  s_31e8cdcf73900f::t_4c1f1e8cdbed60 1
+images/php72/Dockerfile
+  s_31e8cdcf73900f::t_4c1f1e8cdbed60 1
+images/php81/Dockerfile
+  s_31e8cdcf73900f::t_4c1f1e8cdbed60 1
+images/php80/Dockerfile
+  s_31e8cdcf73900f::t_4c1f1e8cdbed60 1
+images/php83/Dockerfile
+  s_31e8cdcf73900f::t_4c1f1e8cdbed60 1
+images/php73/Dockerfile
+  s_31e8cdcf73900f::t_4c1f1e8cdbed60 1
+images/php74/Dockerfile
+  s_31e8cdcf73900f::t_4c1f1e8cdbed60 1
+images/php84/Dockerfile
+  s_31e8cdcf73900f::t_4c1f1e8cdbed60 1
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "6861ff49a057ac1d7e094b763ca804d95f06b7c4",
+  "prompts": {},
+  "sessions": {
+    "s_31e8cdcf73900f": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "01a164ab-840e-7470-bfa1-047ae59dbbf4",
+        "model": "gpt-6-luna"
+      },
+      "human_author": "Kevin Hamer <kevin@imarc.com>"
+    }
+  }
+}
